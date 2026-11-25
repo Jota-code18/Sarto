@@ -10,23 +10,23 @@ import type { Custo } from "@/lib/tipos";
 
 const MODULOS = ["IA", "WhatsApp", "Certidões", "Coleta dos portais", "Asaas", "Servidor e banco", "Claude da equipe", "Outros"];
 const INTEG: { nome: string; faz: string; st: "pronta" | "manual" | "espera"; falta: string }[] = [
-  { nome: "Site da Sarto", faz: "Carteira e nota dos anúncios, toda segunda", st: "pronta", falta: "" },
+  { nome: "Site da Sarto", faz: "Carteira e preço divergente, toda segunda", st: "pronta", falta: "" },
   { nome: "Banco Central", faz: "IGP-M, IPCA e INPC para reajuste", st: "pronta", falta: "" },
   { nome: "ViaCEP", faz: "Endereço pelo CEP", st: "pronta", falta: "" },
   { nome: "DJEN", faz: "Publicações judiciais por nome", st: "pronta", falta: "" },
   { nome: "BrasilAPI", faz: "Dados de empresa pelo CNPJ", st: "pronta", falta: "" },
   { nome: "Google Agenda", faz: "Link e arquivo .ics", st: "manual", falta: "Conta Google da Sarto para agenda compartilhada" },
   { nome: "WhatsApp", faz: "Mensagem pronta para enviar", st: "manual", falta: "Chip novo e verificação no Meta para a IA responder" },
-  { nome: "JetImob", faz: "Lista de leads para lançar", st: "manual", falta: "Chave do webservice" },
+  { nome: "Jetimob", faz: "Alerta de anúncio pela captura e lista de leads para lançar. A API lê imóveis e grava lead; não cadastra imóvel, não sobe foto e não tem nota", st: "manual", falta: "Chaves do webservice e de leads, quando a IA do WhatsApp entrar" },
   { nome: "Banco da Sarto", faz: "Importa extrato OFX ou CSV", st: "manual", falta: "Open Finance ou API do banco" },
   { nome: "Portais de certidão", faz: "Abre com os dados prontos e lê o PDF", st: "manual", falta: "Infosimples, Direct Data e RI Digital (pagos)" },
   { nome: "Supabase", faz: "Banco compartilhado e login", st: "espera", falta: "Conta em nome da Sarto" },
   { nome: "API da Anthropic", faz: "IA do sistema", st: "espera", falta: "Conta com cartão da Sarto" },
   { nome: "Asaas", faz: "Boleto, Pix e baixa automática", st: "espera", falta: "Conta empresarial" },
   { nome: "ClickSign", faz: "Assinatura", st: "espera", falta: "Plano com API" },
-  { nome: "Apify", faz: "Coleta de ZAP, Viva Real e OLX", st: "espera", falta: "Conta e padrão Sarto definido" },
+  { nome: "Portais (varredura)", faz: "Captura pelo navegador em ZAP, Viva Real, OLX e 62imóveis; importa arquivo da Apify", st: "manual", falta: "Conta na Apify para coletar sem ninguém clicar (grátis até US$ 5 por mês)" },
   { nome: "Instagram e Meta Ads", faz: "Resultado orgânico e pago", st: "espera", falta: "Acesso profissional" },
-  { nome: "Canal Pro", faz: "Nota oficial dos anúncios", st: "espera", falta: "Usuário de leitura" },
+  { nome: "Canal Pro", faz: "Importa o relatório com a nota de qualidade", st: "manual", falta: "Usuário da Sarto no Canal Pro" },
 ];
 const ST = { pronta: { n: "Funcionando", t: "ok" }, manual: { n: "Modo manual", t: "alerta" }, espera: { n: "Esperando a Sarto", t: "neutro" } } as const;
 

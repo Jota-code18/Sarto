@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { conflitosVideo, horariosLivres, ics, prazoEntrega } from "./agenda";
 import { conferirLeitura, lerCertidao, resumoDossie, situacaoCert } from "./certidoes";
-import { avaliarVarredura, faltando, leadRepetido, notaAnuncio, tipoDoSite } from "./comercial";
+import { faltando, leadRepetido } from "./comercial";
 import { diaNoMes, maisMeses, segundaDe } from "./datas";
 import { dadosDemo, dadosVazios } from "./demo";
 import { lerCsv, lerExtratoCsv, lerOfx } from "./extrato";
@@ -11,7 +11,7 @@ import { acrescimos, alertasContrato, calcularRepasse, corContrato, gerarCobranc
 import { MODELOS_PROVISORIOS } from "./modelos";
 import { acumulado12, novoAluguel } from "./reajuste";
 import { REGRAS } from "./regras";
-import type { Certidao, Cobranca, Contrato, Evento, ImovelSite, Parte, Venda } from "./tipos";
+import type { Certidao, Cobranca, Contrato, Evento, Parte, Venda } from "./tipos";
 
 const contrato = (p: Partial<Contrato> = {}): Contrato => ({
   id: "k", codigo: "L1", imovel: "Ap 1", endereco: "", bairro: "", proprietario: { nome: "D", doc: "", tel: "", email: "", pix: "" },
@@ -234,39 +234,12 @@ describe("pós-venda", () => {
   });
 });
 
-const imovel = (p: Partial<ImovelSite> = {}): ImovelSite => ({
-  cod: "1", titulo: "Casa com 3 suítes no Residencial Anaville", tipo: "Casa de Condomínio", bairro: "Residencial Anaville", cidade: "Anápolis", cond: "", venda: 2395000, aluguel: null,
-  quartos: 4, suites: 4, banheiros: 5, vagas: 4, area: 330, terreno: 450, condominio: 900, excl: false, fotos: 30, fotosZap: 0, video: true, descTam: 900, precoNoTexto: null, capa: null, url: "", ...p,
-});
-
 describe("comercial", () => {
-  it("anúncio completo tira 100 e problema grave derruba", () => {
-    expect(notaAnuncio(imovel(), REGRAS).total).toBe(100);
-    const n = notaAnuncio(imovel({ precoNoTexto: 2500000, fotos: 4, fotosZap: 4, descTam: 100, video: false }), REGRAS);
-    expect(n.total).toBeLessThan(35);
-    expect(n.graves).toHaveLength(3);
-    expect(n.itens.find((i) => i.nome === "Origem das fotos")?.corrigir).toContain("WhatsApp");
-  });
-  it("classifica o tipo do site", () => {
-    expect(tipoDoSite("Casa de Condomínio")).toBe("condominio");
-    expect(tipoDoSite("Sala Comercial")).toBe("comercial");
-    expect(tipoDoSite("Terreno Comercial")).toBe("lote");
-    expect(tipoDoSite("Sobrado")).toBe("casa_rua");
-  });
   it("acha lead repetido pelos 8 últimos dígitos", () => {
     const l = { id: "a", tel: "(62) 98322-1010", email: "" } as never;
     expect(leadRepetido({ id: "b", tel: "5562983221010", email: "" }, [l])).toBe(l);
     expect(leadRepetido({ id: "b", tel: "62911112222", email: "" }, [l])).toBeUndefined();
     expect(leadRepetido({ id: "a", tel: "62983221010", email: "" }, [l])).toBeUndefined();
-  });
-  it("varredura: prioriza, junta repetidos e acha o que já está na carteira", () => {
-    const d = dadosDemo();
-    const r = avaliarVarredura(d.anuncios, [imovel()], REGRAS);
-    const a0 = r.find((x) => x.id === "an_0");
-    expect(a0?.repetidos).toBe(1);
-    expect(a0?.naCarteira?.cod).toBe("1");
-    expect(r.find((x) => x.id === "an_4")?.noPadrao).toBe(false);
-    expect(r[0].prioridade).toBeGreaterThanOrEqual(r[1].prioridade);
   });
   it("captação diz o que falta por tipo", () => {
     const d = dadosDemo();

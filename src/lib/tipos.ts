@@ -86,16 +86,31 @@ export interface Anuncio {
   titulo: string;
   tipo: string;
   bairro: string;
+  cidade: string;
   preco: number;
   precoAnterior: number;
   area: number;
   quartos: number;
   anunciante: string;
+  /** código do imóvel na imobiliária que anuncia */
+  codAnunciante: string;
   particular: boolean;
   publicadoEm?: Dia;
+  primeiraVez: Dia;
   vistoEm: Dia;
   status: "abordar" | "contatado" | "captado" | "descartado";
   obs: string;
+}
+
+/** Nota ou alerta de um anúncio, sempre vindo do Canal Pro ou do Jetimob */
+export interface NotaPortal {
+  id: string;
+  cod: string;
+  portal: string;
+  nota: number | null;
+  anterior?: number;
+  motivo: string;
+  em: Dia;
 }
 
 export interface Pessoa {
@@ -439,6 +454,7 @@ export interface Regras {
   padraoPrecoMin: number;
   padraoPrecoMax: number;
   padraoBairros: string;
+  padraoCidade: string;
   diaFornecedores: number;
   validadeCert: Record<string, number>;
   limiteCustos: number;
@@ -453,6 +469,7 @@ export interface Dados {
   leads: Lead[];
   captacoes: Captacao[];
   anuncios: Anuncio[];
+  notas: NotaPortal[];
   contratos: Contrato[];
   cobrancas: Cobranca[];
   contasInquilino: ContaInquilino[];
@@ -498,9 +515,6 @@ export interface ImovelSite {
   condominio: number | null;
   excl: boolean;
   fotos: number;
-  fotosZap: number;
-  video: boolean;
-  descTam: number;
   precoNoTexto: number | null;
   capa: string | null;
   url: string;

@@ -5,7 +5,7 @@ import { agora } from "./datas";
 import { dadosDemo, dadosVazios } from "./demo";
 import { novoId } from "./formato";
 import { PERFIS, REGRAS } from "./regras";
-import type { Colecao, Dados, Feito, Perfil, Regras } from "./tipos";
+import type { Anuncio, Colecao, Dados, Feito, Perfil, Regras } from "./tipos";
 
 /**
  * Banco local do MVP: fica só no navegador de quem usa. A troca para Supabase
@@ -33,7 +33,28 @@ interface Estado {
 
 type ComId = { id: string };
 const MAX_LOGS = 400;
-export const VERSAO = 1;
+export const VERSAO = 2;
+
+/** Completa dados salvos por versões anteriores do painel */
+function completar(d: Partial<Dados>): Partial<Dados> {
+  return {
+    ...d,
+    anuncios: (d.anuncios ?? []).map((a: Anuncio) => ({ ...a, cidade: a.cidade ?? "Anápolis", codAnunciante: a.codAnunciante ?? "", primeiraVez: a.primeiraVez ?? a.vistoEm })),
+  };
+}
+
+/** Avisa quando o navegador fica sem espaço, em vez de derrubar a tela */
+const guarda = {
+  getItem: (k: string) => localStorage.getItem(k),
+  removeItem: (k: string) => localStorage.removeItem(k),
+  setItem: (k: string, v: string) => {
+    try {
+      localStorage.setItem(k, v);
+    } catch {
+      setTimeout(() => useSarto.getState().avisar("Sem espaço neste navegador: a última mudança não foi salva. Limpe anúncios antigos da varredura.", "erro"));
+    }
+  },
+};
 
 export const useSarto = create<Estado>()(
   persist(
@@ -76,6 +97,7 @@ export const useSarto = create<Estado>()(
         // só aceita coleções conhecidas e que sejam lista
         for (const k of Object.keys(base) as Colecao[])
           if (Array.isArray(b.dados[k])) (base as unknown as Record<string, unknown>)[k] = b.dados[k];
+        Object.assign(base, completar(base));
         set({ dados: base, regras: { ...REGRAS, ...b.regras }, modo: b.modo === "demo" ? "demo" : "real" });
         return true;
       },
@@ -83,7 +105,8 @@ export const useSarto = create<Estado>()(
     {
       name: "sarto-painel",
       version: VERSAO,
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(() => guarda),
+      migrate: (salvo) => salvo as Estado,
       skipHydration: true,
       partialize: (s) => ({ dados: s.dados, regras: s.regras, perfil: s.perfil, modo: s.modo }),
       merge: (salvo, atual) => {
@@ -91,7 +114,7 @@ export const useSarto = create<Estado>()(
         return {
           ...atual,
           ...g,
-          dados: { ...atual.dados, ...(g.dados ?? {}) },
+          dados: { ...atual.dados, ...completar(g.dados ?? {}) },
           regras: { ...atual.regras, ...(g.regras ?? {}) },
         };
       },

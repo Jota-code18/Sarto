@@ -28,6 +28,7 @@ export const REGRAS: Regras = {
   padraoPrecoMin: 1000000,
   padraoPrecoMax: 0,
   padraoBairros: "",
+  padraoCidade: "Anápolis",
   diaFornecedores: 10,
   validadeCert: {},
   limiteCustos: 0,

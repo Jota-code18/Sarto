@@ -27,7 +27,7 @@ const GRUPOS: GrupoDef[] = [
   },
   {
     grupo: "Padrão Sarto para a varredura",
-    campos: [c("padraoPrecoMin", "Preço mínimo", "dinheiro", 3), c("padraoPrecoMax", "Preço máximo (0 = sem limite)", "dinheiro", 3), { ...c("padraoBairros", "Bairros e condomínios, separados por vírgula", "area", 6), linhas: 2 }],
+    campos: [c("padraoPrecoMin", "Preço mínimo", "dinheiro", 3), c("padraoPrecoMax", "Preço máximo (0 = sem limite)", "dinheiro", 3), c("padraoCidade", "Cidade", "texto", 3), { ...c("padraoBairros", "Bairros e condomínios, separados por vírgula", "area", 6), linhas: 2 }],
   },
   {
     grupo: "Videomaker",

@@ -1,72 +1,124 @@
 "use client";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Upload } from "lucide-react";
 import { useMemo, useState } from "react";
-import { Abas, Barras, Botao, Busca, Cabecalho, Cartao, Copiar, cx, Escolha, estiloBotao, Fita, Gaveta, Nota, Numero, Numeros, Selo, Vazio } from "@/componentes/ui";
-import { useCarteira } from "@/componentes/uso";
-import { notaAnuncio } from "@/lib/comercial";
-import { brHora, hoje } from "@/lib/datas";
+import { BotaoFavorito, ColarCaptura } from "@/componentes/captura";
+import { Formulario } from "@/componentes/formulario";
+import { Abas, Botao, Busca, Cabecalho, Cartao, Copiar, Escolha, estiloBotao, Gaveta, ListaInfo, Nota, Numero, Numeros, Selo, Vazio } from "@/componentes/ui";
+import { useCarteira, useParam } from "@/componentes/uso";
+import { type Captura, notasDaCaptura } from "@/lib/captura";
+import { br, brHora, hoje } from "@/lib/datas";
 import { baixarArquivo, brl, csv, num, semAcento } from "@/lib/formato";
-import { useSarto } from "@/lib/store";
-import type { ImovelSite } from "@/lib/tipos";
+import { idNota, juntarNotas, lerNotas, mostrarNota, porImovel, type ResumoNota } from "@/lib/notas";
+import { lerArquivo, type Linha } from "@/lib/planilha";
+import { acao, useSarto } from "@/lib/store";
+import type { ImovelSite, NotaPortal } from "@/lib/tipos";
 
-type Linha = ImovelSite & { nota: ReturnType<typeof notaAnuncio> };
-const tomNota = (n: number) => (n >= 75 ? "ok" : n >= 55 ? "alerta" : "erro") as "ok" | "alerta" | "erro";
+type Item = { cod: string; im: ImovelSite | null; r: ResumoNota | null };
+type Aba = "atencao" | "nota" | "preco" | "todos";
 
 export default function Carteira() {
-  const { regras } = useSarto();
+  const { dados } = useSarto();
+  const { avisar, registrar, salvar, remover } = acao();
   const { carteira, atualizadoEm, carregando, erro } = useCarteira();
-  const [aba, setAba] = useState<"graves" | "nota" | "todos">("graves");
+  const notas = dados.notas;
+  const pa = useParam("aba") as Aba | null;
+  const [aba, setAba] = useState<Aba>(pa ?? (notas.some((n) => n.motivo) ? "atencao" : notas.length ? "nota" : "todos"));
   const [q, setQ] = useState("");
   const [tipo, setTipo] = useState("");
   const [op, setOp] = useState<"" | "venda" | "aluguel">("");
-  const [ab, setAb] = useState<Linha | null>(null);
+  const [ab, setAb] = useState<Item | null>(null);
   const [lim, setLim] = useState(40);
+  const [novo, setNovo] = useState<{ portal: string; nota: number; motivo: string }>({ portal: "Canal Pro", nota: 0, motivo: "" });
 
-  const linhas: Linha[] = useMemo(() => carteira.map((i) => ({ ...i, nota: notaAnuncio(i, regras) })), [carteira, regras]);
+  const itens: Item[] = useMemo(() => {
+    const m = porImovel(notas);
+    const site = carteira.map((im): Item => ({ cod: im.cod, im, r: m.get(im.cod.toUpperCase()) ?? null }));
+    const tem = new Set(carteira.map((i) => i.cod.toUpperCase()));
+    // o portal pode ter imóvel que não está no site
+    const fora = [...m].filter(([c]) => !tem.has(c)).map(([cod, r]): Item => ({ cod, im: null, r }));
+    return [...site, ...fora];
+  }, [carteira, notas]);
+
+  const comNota = itens.filter((i) => i.r?.nota != null);
+  const atencao = itens.filter((i) => i.r?.atencao.length);
+  const preco = itens.filter((i) => i.im?.precoNoTexto);
+  const media = comNota.length ? comNota.reduce((a, i) => a + (i.r?.nota ?? 0), 0) / comNota.length : null;
   const t = semAcento(q);
-  const lista = linhas
-    .filter((l) => (aba === "graves" ? l.nota.graves.length > 0 : aba === "nota" ? l.nota.total < 55 : true))
-    .filter((l) => !tipo || l.tipo === tipo)
-    .filter((l) => !op || l[op])
-    .filter((l) => !t || semAcento(`${l.cod} ${l.titulo} ${l.bairro} ${l.cond}`).includes(t))
-    .sort((a, b) => (aba === "todos" ? (b.venda ?? 0) - (a.venda ?? 0) : a.nota.total - b.nota.total));
+  const base: Record<Aba, Item[]> = {
+    atencao,
+    nota: [...comNota].sort((a, b) => (a.r?.nota ?? 0) - (b.r?.nota ?? 0)),
+    preco,
+    todos: [...itens].sort((a, b) => (b.im?.venda ?? 0) - (a.im?.venda ?? 0)),
+  };
+  const lista = base[aba]
+    .filter((i) => !tipo || i.im?.tipo === tipo)
+    .filter((i) => !op || i.im?.[op])
+    .filter((i) => !t || semAcento(`${i.cod} ${i.im?.titulo ?? ""} ${i.im?.bairro ?? ""} ${i.im?.cond ?? ""}`).includes(t));
   const tipos = [...new Set(carteira.map((c) => c.tipo))].sort();
-  const media = linhas.length ? Math.round(linhas.reduce((a, l) => a + l.nota.total, 0) / linhas.length) : 0;
-  const preco = linhas.filter((l) => l.precoNoTexto);
-  const zap = linhas.filter((l) => l.fotosZap > 0).length;
 
-  const problemas = useMemo(() => {
-    const m = new Map<string, number>();
-    for (const l of linhas) for (const i of l.nota.itens) if (i.corrigir) m.set(i.nome, (m.get(i.nome) ?? 0) + 1);
-    return [...m].map(([nome, valor]) => ({ nome, valor, rotulo: `${valor} anúncios` })).sort((a, b) => b.valor - a.valor);
-  }, [linhas]);
+  const guardar = (novas: NotaPortal[], de: string) => {
+    if (!novas.length) return avisar("Não achei coluna de código com nota ou alerta neste arquivo", "erro");
+    const s = useSarto.getState();
+    useSarto.setState({ dados: { ...s.dados, notas: juntarNotas(s.dados.notas, novas) } });
+    registrar("Carteira", `recebeu ${novas.length} ${novas.length === 1 ? "nota ou alerta" : "notas ou alertas"} de ${de}`);
+    avisar(`${novas.length} ${novas.length === 1 ? "imóvel atualizado" : "imóveis atualizados"}`);
+    setAba(novas.some((n) => n.nota != null) ? "nota" : "atencao");
+  };
+  const importar = async (f?: File) => {
+    if (!f) return;
+    try {
+      guardar(lerNotas((await lerArquivo(f)) as Linha[], /jetimob/i.test(f.name) ? "Jetimob" : "Canal Pro", hoje()), f.name);
+    } catch {
+      avisar("Não consegui abrir o arquivo. Use .xlsx ou .csv.", "erro");
+    }
+  };
+  const colar = (c: Captura) => {
+    const novas = notasDaCaptura(c, hoje());
+    if (!/jetimob/.test(c.host)) return avisar("Esta captura é de um portal. Cole em Varredura.", "erro");
+    // o que estava em alerta neste portal e não veio agora foi resolvido
+    const portal = novas[0]?.portal;
+    const vivos = new Set(novas.map((n) => n.id));
+    for (const n of notas) if (portal && n.portal === portal && n.motivo && !vivos.has(n.id)) n.nota == null ? remover("notas", n.id) : salvar("notas", { ...n, motivo: "" });
+    guardar(novas, "Jetimob");
+  };
 
-  const resumo = useMemo(() => {
-    const piores = linhas.filter((l) => l.nota.graves.length).sort((a, b) => a.nota.total - b.nota.total).slice(0, 15);
-    return [
-      `Anúncios para corrigir nesta semana (${linhas.filter((l) => l.nota.graves.length).length} com problema grave, nota média ${media}).`,
-      "",
-      ...piores.map((l) => `Cód. ${l.cod}, ${l.bairro ?? ""}: ${l.nota.graves.join("; ")}`),
-    ].join("\n");
-  }, [linhas, media]);
+  const resumo = [
+    `Anúncios para corrigir (${br(hoje())})`,
+    ...(atencao.length ? ["", "Requer atenção no Jetimob:", ...atencao.slice(0, 20).map((i) => `- ${i.cod}${i.im?.bairro ? `, ${i.im.bairro}` : ""}: ${i.r?.atencao.map((a) => a.motivo).join("; ")}`)] : []),
+    ...(comNota.length ? ["", "Menores notas:", ...base.nota.slice(0, 15).map((i) => `- ${i.cod}${i.im?.bairro ? `, ${i.im.bairro}` : ""}: nota ${mostrarNota(i.r?.nota ?? 0)}${i.r?.atencao.length ? ` (${i.r.atencao.map((a) => a.motivo).join("; ")})` : ""}`)] : []),
+    ...(preco.length ? ["", `Preço do texto diferente do cadastro: ${preco.length}`, ...preco.slice(0, 10).map((i) => `- ${i.cod}: cadastro ${brl(i.im?.venda ?? i.im?.aluguel, false)}, texto ${brl(i.im?.precoNoTexto, false)}`)] : []),
+  ].join("\n");
 
   const exportar = () =>
     baixarArquivo(
-      `anuncios-${hoje()}.csv`,
+      `carteira-${hoje()}.csv`,
       csv([
-        ["Código", "Nota", "Problemas graves", "O que corrigir", "Título", "Tipo", "Bairro", "Venda", "Aluguel", "Fotos", "Fotos do WhatsApp", "Link"],
-        ...lista.map((l) => [l.cod, l.nota.total, l.nota.graves.join("; "), l.nota.itens.filter((i) => i.corrigir).map((i) => i.corrigir).join("; "), l.titulo, l.tipo, l.bairro, l.venda, l.aluguel, l.fotos, l.fotosZap, l.url]),
+        ["Código", "Nota", "Portal", "Atenção", "Título", "Tipo", "Bairro", "Venda", "Aluguel", "Preço no texto", "Link"],
+        ...lista.map((i) => [i.cod, i.r?.nota ?? "", i.r?.todas.map((n) => n.portal).join(", "), i.r?.atencao.map((a) => a.motivo).join("; "), i.im?.titulo, i.im?.tipo, i.im?.bairro, i.im?.venda, i.im?.aluguel, i.im?.precoNoTexto, i.im?.url]),
       ]),
       "text/csv;charset=utf-8",
     );
+  const atual = ab && (itens.find((i) => i.cod === ab.cod) ?? ab);
 
   return (
     <>
-      <Cabecalho area="COMERCIAL CARTEIRA" titulo="Carteira e nota dos anúncios" texto="Lê o site da Sarto toda segunda às 5h e aponta o que corrigir em cada anúncio antes da reunião das 9h.">
+      <Cabecalho area="COMERCIAL CARTEIRA" titulo="Carteira e nota dos anúncios" texto="A nota e os alertas vêm do Canal Pro e do Jetimob. O painel não calcula nota própria.">
+        <label className={estiloBotao()}>
+          <Upload size={16} /> Importar nota
+          <input
+            type="file"
+            accept=".xlsx,.csv,.json"
+            className="sr-only"
+            onChange={(e) => {
+              importar(e.target.files?.[0]);
+              e.target.value = "";
+            }}
+          />
+        </label>
+        <ColarCaptura onLer={colar}>Colar alerta do Jetimob</ColarCaptura>
         <Copiar texto={resumo} pequeno={false}>
           Copiar resumo do Igor
         </Copiar>
-        <Botao onClick={exportar}>Exportar planilha</Botao>
       </Cabecalho>
 
       {erro && <Nota tom="erro">Não consegui ler a carteira. Recarregue a página.</Nota>}
@@ -75,24 +127,33 @@ export default function Carteira() {
         <>
           <Numeros>
             <Numero valor={num(carteira.length)} nome="Imóveis no site" nota={atualizadoEm && `lido em ${brHora(atualizadoEm)}`} />
-            <Numero valor={media} nome="Nota média" nota="de 0 a 100, critério próprio" />
-            <Numero valor={preco.length} nome="Preço divergente" nota="texto diferente do anúncio" />
-            <Numero valor={zap} nome="Com foto do WhatsApp" nota={`${num((zap / carteira.length) * 100)}% da carteira`} />
+            <Numero valor={media == null ? "—" : mostrarNota(media)} nome="Nota média" nota={comNota.length ? `${comNota.length} com nota` : "nenhuma nota recebida"} />
+            <Numero valor={atencao.length} nome="Requer atenção" nota="Jetimob e Canal Pro" />
+            <Numero valor={preco.length} nome="Preço divergente" nota="texto diferente do cadastro" />
           </Numeros>
 
-          <div className="mb-6 grid gap-5 lg:grid-cols-[1fr_1.1fr]">
-            <Cartao titulo="O que mais derruba a nota">
-              <Barras dados={problemas} />
-            </Cartao>
-            <Cartao titulo="Como a nota é feita" escuro>
-              <p className="text-[13px] leading-relaxed text-papel/85">
-                Fotos pelo mínimo do tipo (30), descrição (20), origem das fotos (15), dados preenchidos (15), título (10) e vídeo ou tour (10). Cada problema grave tira 5 pontos: preço divergente, menos de 5 fotos, descrição muito curta ou sem metragem.
-              </p>
-              <p className="mt-3 text-[13px] leading-relaxed text-papel/85">
-                Não é a nota do Canal Pro. A oficial entra quando houver um usuário de leitura. Os mínimos de foto são provisórios, até o Igor confirmar em Configurações.
-              </p>
-            </Cartao>
-          </div>
+          <details className="mb-7 bg-linho" open={notas.length === 0}>
+            <summary className="px-5 py-4 text-[13px] font-semibold uppercase tracking-wide">Como a nota chega aqui</summary>
+            <div className="grid gap-6 px-5 pb-5 lg:grid-cols-2">
+              <div className="text-[13px] leading-relaxed">
+                <h3 className="mb-1 font-semibold">Jetimob: requer atenção</h3>
+                <p>O Jetimob não dá nota por imóvel: nem na API (90 campos, versão 6), nem nas telas. Ele marca o anúncio que requer atenção e diz o motivo, em Portais.</p>
+                <ol className="mt-2 list-decimal space-y-1 pl-5">
+                  <li>Arraste o botão abaixo para a barra de favoritos, uma vez só.</li>
+                  <li>No Jetimob, abra Portais, entre no portal e filtre Requer atenção: Sim.</li>
+                  <li>Clique no favorito, em Copiar para o painel, e depois em Colar alerta do Jetimob.</li>
+                </ol>
+                <div className="mt-3">
+                  <BotaoFavorito />
+                </div>
+              </div>
+              <div className="text-[13px] leading-relaxed">
+                <h3 className="mb-1 font-semibold">Canal Pro: nota de qualidade</h3>
+                <p>A nota que o ZAP, o Viva Real e a OLX usam fica no Canal Pro. Exporte o relatório de anúncios de lá e use Importar nota: o arquivo precisa ter uma coluna de código e uma de nota ou qualidade (.xlsx ou .csv).</p>
+                <p className="mt-2">A cada importação o painel guarda a nota anterior e mostra quem subiu e quem caiu. Também dá para digitar a nota de um imóvel, abrindo-o na lista.</p>
+              </div>
+            </div>
+          </details>
 
           <Abas
             atual={aba}
@@ -101,39 +162,61 @@ export default function Carteira() {
               setLim(40);
             }}
             itens={[
-              { id: "graves", nome: "Problema grave", n: linhas.filter((l) => l.nota.graves.length).length },
-              { id: "nota", nome: "Nota abaixo de 55", n: linhas.filter((l) => l.nota.total < 55).length },
-              { id: "todos", nome: "Carteira inteira", n: linhas.length },
+              { id: "atencao", nome: "Requer atenção", n: atencao.length },
+              { id: "nota", nome: "Menor nota primeiro", n: comNota.length },
+              { id: "preco", nome: "Preço divergente", n: preco.length },
+              { id: "todos", nome: "Carteira inteira", n: itens.length },
             ]}
           />
           <div className="mb-4 flex flex-wrap gap-3">
             <Busca valor={q} onMuda={setQ} placeholder="Código, bairro ou condomínio" />
             <Escolha rotulo="Tipo" valor={tipo} onMuda={setTipo} opcoes={[{ id: "", nome: "Todos os tipos" }, ...tipos.map((x) => ({ id: x, nome: x }))]} />
             <Escolha rotulo="Operação" valor={op} onMuda={setOp} opcoes={[{ id: "", nome: "Venda e locação" }, { id: "venda", nome: "Venda" }, { id: "aluguel", nome: "Locação" }]} />
+            <Botao onClick={exportar}>Exportar</Botao>
           </div>
 
           {lista.length === 0 ? (
-            <Vazio>Nenhum imóvel com esse filtro.</Vazio>
+            <Vazio>
+              {aba === "atencao" ? "Nenhum alerta do Jetimob colado ainda." : aba === "nota" ? "Nenhuma nota recebida. Importe o relatório do Canal Pro." : "Nenhum imóvel com esse filtro."}
+            </Vazio>
           ) : (
             <ul className="divide-y divide-linha border-y border-linha">
-              {lista.slice(0, lim).map((l) => (
-                <li key={l.cod}>
-                  <button type="button" onClick={() => setAb(l)} className="flex w-full items-center gap-4 py-2.5 text-left hover:bg-linho">
+              {lista.slice(0, lim).map((i) => (
+                <li key={i.cod}>
+                  <button type="button" onClick={() => setAb(i)} className="flex w-full items-center gap-4 py-2.5 text-left hover:bg-linho">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    {l.capa ? <img src={l.capa} alt="" loading="lazy" referrerPolicy="no-referrer" className="h-16 w-20 shrink-0 bg-linho object-cover" /> : <span className="h-16 w-20 shrink-0 bg-linho" />}
+                    {i.im?.capa ? <img src={i.im.capa} alt="" loading="lazy" referrerPolicy="no-referrer" className="h-16 w-20 shrink-0 bg-linho object-cover" /> : <span className="h-16 w-20 shrink-0 bg-linho" />}
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate font-medium">{l.titulo}</span>
+                      <span className="block truncate font-medium">{i.im?.titulo ?? `Imóvel ${i.cod}`}</span>
                       <span className="block truncate text-[13px] text-cinza">
-                        Cód. {l.cod}, {l.tipo}, {l.bairro ?? "sem bairro"}
+                        {i.im ? `Cód. ${i.cod}, ${i.im.tipo}, ${i.im.bairro ?? "sem bairro"}` : "Fora do site"}
                       </span>
-                      <span className="mt-0.5 block truncate text-[13px] text-erro">{l.nota.graves.join("; ")}</span>
+                      {i.r?.atencao.map((a) => (
+                        <span key={a.id} className="mt-0.5 block truncate text-[13px] text-erro">
+                          {a.motivo}
+                        </span>
+                      ))}
+                      {aba === "preco" && i.im?.precoNoTexto && (
+                        <span className="mt-0.5 block truncate text-[13px] text-erro">
+                          Cadastro {brl(i.im.venda ?? i.im.aluguel, false)}, texto {brl(i.im.precoNoTexto, false)}
+                        </span>
+                      )}
                     </span>
                     <span className="hidden w-32 shrink-0 text-right tabular-nums sm:block">
-                      {l.venda ? brl(l.venda, false) : ""}
-                      {l.aluguel ? <span className="block text-[13px] text-cinza">{brl(l.aluguel, false)}/mês</span> : null}
+                      {i.im?.venda ? brl(i.im.venda, false) : ""}
+                      {i.im?.aluguel ? <span className="block text-[13px] text-cinza">{brl(i.im.aluguel, false)}/mês</span> : null}
                     </span>
-                    <span className="w-14 shrink-0 text-right">
-                      <Selo tom={tomNota(l.nota.total)}>{l.nota.total}</Selo>
+                    <span className="w-20 shrink-0 text-right">
+                      {i.r?.nota != null ? (
+                        <>
+                          <span className="block text-[22px] font-light leading-none tabular-nums">{mostrarNota(i.r.nota)}</span>
+                          {i.r.anterior != null && <span className="text-[12px] text-cinza">era {mostrarNota(i.r.anterior)}</span>}
+                        </>
+                      ) : i.r?.atencao.length ? (
+                        <Selo tom="alerta">Atenção</Selo>
+                      ) : (
+                        <span className="text-[12px] text-cinza">sem nota</span>
+                      )}
                     </span>
                   </button>
                 </li>
@@ -149,53 +232,96 @@ export default function Carteira() {
       )}
 
       <Gaveta
-        aberta={!!ab}
-        titulo={ab?.titulo ?? ""}
-        sub={ab && `Cód. ${ab.cod}, ${ab.bairro ?? ""}`}
+        aberta={!!atual}
+        titulo={atual?.im?.titulo ?? (atual ? `Imóvel ${atual.cod}` : "")}
+        sub={atual && `Cód. ${atual.cod}${atual.im?.bairro ? `, ${atual.im.bairro}` : ""}`}
         onFecha={() => setAb(null)}
         rodape={
-          ab && (
+          atual && (
             <>
-              <Copiar
-                pequeno={false}
-                texto={`Anúncio cód. ${ab.cod} (${ab.bairro ?? ""}), nota ${ab.nota.total}.\n\nCorrigir:\n${[...ab.nota.graves, ...ab.nota.itens.filter((i) => i.corrigir).map((i) => i.corrigir)].map((x) => `- ${x}`).join("\n")}\n\n${ab.url}`}
-              >
-                Copiar para o corretor
-              </Copiar>
-              <a className={estiloBotao("cheio")} href={ab.url} target="_blank" rel="noreferrer">
-                <ExternalLink size={16} /> Ver no site
+              <a className={estiloBotao()} href={`https://app.jetimob.com/imoveis/${encodeURIComponent(atual.cod)}/editar`} target="_blank" rel="noreferrer">
+                Editar no Jetimob
               </a>
+              {atual.im && (
+                <a className={estiloBotao("cheio")} href={atual.im.url} target="_blank" rel="noreferrer">
+                  <ExternalLink size={16} /> Ver no site
+                </a>
+              )}
             </>
           )
         }
       >
-        {ab && (
-          <div className="space-y-6">
-            <div className="flex items-end gap-4">
-              <span className="text-[56px] font-light leading-none tabular-nums">{ab.nota.total}</span>
-              <span className="pb-1 text-cinza">de 100</span>
-            </div>
-            {ab.nota.graves.length > 0 && (
-              <Nota tom="erro">
-                {ab.nota.graves.map((g) => (
-                  <p key={g}>{g}</p>
+        {atual && (
+          <div className="space-y-7">
+            {atual.r && atual.r.todas.length > 0 ? (
+              <ul className="divide-y divide-linha border-y border-linha">
+                {atual.r.todas.map((n) => (
+                  <li key={n.id} className="flex items-start justify-between gap-4 py-3">
+                    <span>
+                      <span className="block font-medium">{n.portal}</span>
+                      <span className="block text-[13px] text-cinza">{n.motivo || "Sem alerta"}</span>
+                      <span className="block text-[12px] text-cinza">recebido em {br(n.em)}</span>
+                    </span>
+                    <span className="text-right">
+                      <span className="block text-[26px] font-light leading-none tabular-nums">{n.nota == null ? "—" : mostrarNota(n.nota)}</span>
+                      {n.anterior != null && <span className="block text-[12px] text-cinza">era {mostrarNota(n.anterior)}</span>}
+                      <button type="button" className="text-[12px] text-cinza underline" onClick={() => remover("notas", n.id)}>
+                        Remover
+                      </button>
+                    </span>
+                  </li>
                 ))}
+              </ul>
+            ) : (
+              <Nota>Nenhuma nota recebida para este imóvel.</Nota>
+            )}
+            {atual.im?.precoNoTexto && (
+              <Nota tom="erro">
+                O cadastro diz {brl(atual.im.venda ?? atual.im.aluguel, false)} e o texto do anúncio diz {brl(atual.im.precoNoTexto, false)}.
               </Nota>
             )}
-            <ul className="space-y-4">
-              {ab.nota.itens.map((i) => (
-                <li key={i.nome}>
-                  <div className="mb-1 flex justify-between gap-3">
-                    <span className="font-medium">{i.nome}</span>
-                    <span className="tabular-nums text-cinza">
-                      {i.pontos} de {i.max}
-                    </span>
-                  </div>
-                  <Fita parte={i.pontos} total={i.max} />
-                  <p className={cx("mt-1 text-[13px]", i.corrigir ? "text-carvao" : "text-cinza")}>{i.corrigir ?? "Está certo"}</p>
-                </li>
-              ))}
-            </ul>
+            <Cartao titulo="Digitar nota ou alerta">
+              <Formulario
+                grupos={[
+                  {
+                    grupo: "",
+                    campos: [
+                      { k: "portal", nome: "De onde veio", tipo: "opcoes", opcoes: ["Canal Pro", "Canal Pro (Jetimob)", "62imóveis", "Site"], col: 4 },
+                      { k: "nota", nome: "Nota", tipo: "numero", col: 2 },
+                      { k: "motivo", nome: "O que o portal pede para corrigir", col: 6 },
+                    ],
+                  },
+                ]}
+                valor={novo}
+                onMuda={setNovo}
+              />
+              <Botao
+                className="mt-3"
+                pequeno
+                disabled={!novo.nota && !novo.motivo.trim()}
+                onClick={() => {
+                  const n: NotaPortal = { id: idNota(atual.cod, novo.portal), cod: atual.cod, portal: novo.portal, nota: novo.nota || null, motivo: novo.motivo.trim(), em: hoje() };
+                  guardar([n], "digitação");
+                  setNovo({ ...novo, nota: 0, motivo: "" });
+                }}
+              >
+                Guardar
+              </Botao>
+            </Cartao>
+            {atual.im && (
+              <ListaInfo
+                itens={[
+                  ["Tipo", atual.im.tipo],
+                  ["Venda", brl(atual.im.venda, false)],
+                  ["Aluguel", brl(atual.im.aluguel, false)],
+                  ["Área", atual.im.area ? `${num(atual.im.area)} m²` : ""],
+                  ["Terreno", atual.im.terreno ? `${num(atual.im.terreno)} m²` : ""],
+                  ["Quartos", atual.im.quartos ?? atual.im.suites],
+                  ["Fotos", atual.im.fotos],
+                  ["Exclusivo", atual.im.excl ? "Sim" : "Não"],
+                ]}
+              />
+            )}
           </div>
         )}
       </Gaveta>

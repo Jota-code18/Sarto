@@ -10,7 +10,7 @@ import type { Captacao, Certidao, Checklist, Cobranca, Contrato, Corretor, Dados
 /** Base vazia: o que existe antes de qualquer cadastro */
 export function dadosVazios(): Dados {
   return {
-    corretores: [], leads: [], captacoes: [], anuncios: [], contratos: [], cobrancas: [], contasInquilino: [], repasses: [],
+    corretores: [], leads: [], captacoes: [], anuncios: [], notas: [], contratos: [], cobrancas: [], contasInquilino: [], repasses: [],
     funil: [], chamados: [], multas: [], vendas: [], dossies: [], modelos: structuredClone(MODELOS_PROVISORIOS), minutas: [],
     contasPagar: [], lancamentos: [], posts: [], metricas: [], eventos: reunioesFixas(), rotinas: [], estoque: [],
     aniversarios: [], registros: [], custos: [], pendencias: structuredClone(PENDENCIAS), logs: [],
@@ -87,15 +87,16 @@ export function dadosDemo(): Dados {
 
   /* Varredura */
   const an = (i: number, p: Partial<Dados["anuncios"][number]>) => ({
-    id: `an_${i}`, portal: "ZAP Imóveis", url: "", titulo: "", tipo: "Casa de Condomínio", bairro: "Residencial Anaville", preco: 0, precoAnterior: 0,
-    area: 0, quartos: 3, anunciante: "", particular: false, vistoEm: segundaDe(h), status: "abordar" as const, obs: "", ...p,
+    id: `an_${i}`, portal: "ZAP Imóveis", url: "", titulo: "", tipo: "Casa em condomínio", bairro: "Residencial Anaville", cidade: "Anápolis", preco: 0, precoAnterior: 0, area: 0, quartos: 3,
+    anunciante: "", codAnunciante: "", particular: false, primeiraVez: segundaDe(h), vistoEm: segundaDe(h), status: "abordar" as const, obs: "", ...p,
   });
   d.anuncios = [
-    an(0, { titulo: "Casa moderna com 4 suítes", preco: 2400000, precoAnterior: 2650000, area: 330, quartos: 4, anunciante: "Imobiliária A", publicadoEm: maisDias(h, -140) }),
+    an(0, { titulo: "Casa moderna com 4 suítes", preco: 2400000, precoAnterior: 2650000, area: 330, quartos: 4, anunciante: "Imobiliária A", publicadoEm: maisDias(h, -140), primeiraVez: maisDias(h, -21) }),
     an(1, { portal: "OLX", titulo: "Vendo casa em condomínio", preco: 1390000, area: 240, anunciante: "Proprietário", particular: true, publicadoEm: maisDias(h, -18) }),
-    an(2, { portal: "Viva Real", titulo: "Casa moderna 4 suítes Anaville", preco: 2390000, area: 331, quartos: 4, anunciante: "Imobiliária B", publicadoEm: maisDias(h, -95) }),
+    an(2, { portal: "62imóveis", titulo: "Casa 4 suítes Anaville", preco: 2390000, area: 331, quartos: 4, anunciante: "Imobiliária B", publicadoEm: maisDias(h, -95), primeiraVez: maisDias(h, -21) }),
     an(3, { portal: "62imóveis", titulo: "Cobertura duplex", tipo: "Cobertura", bairro: "Jundiaí", preco: 1750000, area: 260, anunciante: "Imobiliária C", publicadoEm: maisDias(h, -35), status: "contatado" }),
     an(4, { portal: "OLX", titulo: "Apartamento 2 quartos", tipo: "Apartamento", bairro: "Centro", preco: 310000, area: 68, quartos: 2, anunciante: "Imobiliária D", publicadoEm: maisDias(h, -12) }),
+    an(5, { titulo: "Casa térrea", bairro: "Jardim Exemplo", preco: 1850000, area: 268, anunciante: "Sarto Imóveis", publicadoEm: maisDias(h, -30) }),
   ];
 
   /* Locação */

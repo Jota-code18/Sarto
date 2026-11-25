@@ -97,7 +97,6 @@ export function extrair(html, url) {
   };
   const venda = preco(1);
   const aluguel = preco(2);
-  const arquivo = (f) => (f.src ?? "").split("/").pop();
   const capa400 = [(fotos[0]?.srcset ?? "").split(" ")[0], fotos[0]?.src].find((u) => /^https:/.test(u ?? "")) ?? null;
 
   // preço citado no texto que não bate com nenhum preço cadastrado
@@ -127,9 +126,6 @@ export function extrair(html, url) {
     condominio: valor(im.condominiumValue) ? valor(im.condominiumValue) / 100 : null,
     excl: !!im.exclusivity,
     fotos: fotos.length,
-    fotosZap: fotos.filter((f) => /whatsapp/i.test(arquivo(f))).length,
-    video: (ref(im.videos) ?? []).length + (ref(im.tours) ?? []).length > 0,
-    descTam: desc.trim().length,
     precoNoTexto: divergente,
     capa: capa400,
     url,

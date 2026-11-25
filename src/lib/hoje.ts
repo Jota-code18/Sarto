@@ -6,6 +6,7 @@ import { brl } from "./formato";
 import { dividirComissao, ETAPAS_VENDA, horasAte, prazoPix } from "./juridico";
 import { alertasContrato, situacao } from "./locacao";
 import type { Dados, Perfil, Regras } from "./tipos";
+import { dentroPadrao } from "./varredura";
 
 export interface Pend {
   id: string;
@@ -90,8 +91,11 @@ export function pendencias(d: Dados, r: Regras): Pend[] {
     const falta = CHECK_CORRETOR.flatMap((g) => g.itens).filter((i) => !c.checklist[i.id]);
     if (falta.length) add({ id: `cor${c.id}`, area: "Corretores", texto: `${c.nome}: ${falta.length} ${falta.length === 1 ? "item" : "itens"} para concluir a entrada`, detalhe: falta.slice(0, 3).map((i) => i.nome).join(", "), href: "/corretores", grave: diasEntre(c.entrada, h) > 10, perfis: falta.some((i) => i.quem === "Yan") ? ["comercial", "marketing"] : ["comercial"] });
   }
-  const abordar = d.anuncios.filter((a) => a.status === "abordar").length;
-  if (abordar) add({ id: "varr", area: "Varredura", texto: `${abordar} ${abordar === 1 ? "anúncio" : "anúncios"} para abordar`, href: "/varredura", grave: false, perfis: ["comercial"] });
+  const abordar = d.anuncios.filter((a) => a.status === "abordar" && !/\bsarto\b/i.test(a.anunciante) && dentroPadrao(a, r));
+  const novos = abordar.filter((a) => diasEntre(a.primeiraVez, h) < 7).length;
+  if (abordar.length) add({ id: "varr", area: "Varredura", texto: `${abordar.length} ${abordar.length === 1 ? "anúncio" : "anúncios"} no padrão para abordar`, detalhe: novos ? `${novos} ${novos === 1 ? "novo" : "novos"} na semana` : undefined, href: "/varredura", grave: false, perfis: ["comercial"] });
+  const alertas = d.notas.filter((n) => n.motivo).length;
+  if (alertas) add({ id: "jetat", area: "Carteira", texto: `${alertas} ${alertas === 1 ? "anúncio requer" : "anúncios requerem"} atenção`, href: "/carteira?aba=atencao", grave: true, perfis: ["comercial", "marketing"] });
 
   /* Agenda, financeiro, rotina */
   for (const e of d.eventos.filter((e) => e.agenda === "videomaker" && e.entrega && !e.entregue)) {
