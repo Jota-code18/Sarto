@@ -3,7 +3,7 @@ import { anunciosDaCaptura, CODIGO_FAVORITO, favorito, lerCaptura, notasDaCaptur
 import { juntarNotas, lerNotas, porImovel } from "./notas";
 import { REGRAS } from "./regras";
 import type { ImovelSite } from "./tipos";
-import { type Bruto, custoApify, mesclar, montarGrupos, normalizar } from "./varredura";
+import { type Bruto, custoApify, mesclar, melhorContato, montarGrupos, normalizar, precoM2 } from "./varredura";
 
 const REF = "2026-11-25";
 // textos reais dos cartões, copiados das páginas de busca em 25/11/2026
@@ -263,5 +263,67 @@ describe("varredura", () => {
     const t0 = performance.now();
     montarGrupos(l, [], REGRAS, REF);
     expect(performance.now() - t0).toBeLessThan(4000);
+  });
+});
+
+describe("saída real dos coletores", () => {
+  const olx = (p: object = {}) => ({
+    listingId: "1",
+    url: "https://go.olx.com.br/x/casa-1508484603",
+    title: "Sobrado",
+    categoryName: "Casas",
+    city: "Anápolis",
+    neighborhood: "Anápolis City",
+    price: 1700000,
+    priceDisplay: "R$ 1.700.000",
+    seller: { type: "private" },
+    foto: "https://img.olx.com.br/a.jpg",
+    telefone: "62999990000",
+    properties: [
+      { name: "category", value: "Casas" },
+      { name: "real_estate_type", value: "Venda - casa em condominio fechado" },
+      { name: "size", value: "370m²" },
+      { name: "rooms", value: "5 ou mais" },
+    ],
+    ...p,
+  });
+  it("OLX: área, quartos, tipo, foto e telefone", () => {
+    const a = normalizar(olx());
+    expect(a).toMatchObject({ area: 370, quartos: 5, tipo: "Casa em condomínio", particular: true, foto: "https://img.olx.com.br/a.jpg", telefone: "62999990000" });
+    expect(Math.round(precoM2(a as Bruto))).toBe(4595);
+  });
+  it("OLX: área de 1 m² é ignorada e o tipo cai para a categoria", () => {
+    const a = normalizar(
+      olx({
+        categoryName: "Terrenos, sítios e fazendas",
+        properties: [
+          { name: "real_estate_type", value: "Fazendas" },
+          { name: "size", value: "1m²" },
+        ],
+      }),
+    );
+    expect(a).toMatchObject({ area: 0, tipo: "Rural" });
+    expect(precoM2(a as Bruto)).toBe(0);
+    expect(normalizar(olx({ properties: [{ name: "size", value: "24000m²" }] }))).toMatchObject({ area: 24000, tipo: "Casa" });
+  });
+  it("coleta sem foto ou telefone não apaga o que já se sabia", () => {
+    const b = normalizar(olx()) as Bruto;
+    const l = mesclar([], [b], "Anápolis", REF).lista;
+    const r = mesclar(l, [{ ...b, foto: undefined, telefone: undefined }], "Anápolis", REF).lista[0];
+    expect(r).toMatchObject({ foto: b.foto, telefone: b.telefone });
+  });
+  it("contato preferido é o do dono", () => {
+    const b = normalizar(olx()) as Bruto;
+    const [dono, imob] = mesclar(
+      [],
+      [
+        { ...b, telefone: undefined },
+        { ...b, url: "https://x/9999999", particular: false, telefone: "6233000000" },
+      ],
+      "Anápolis",
+      REF,
+    ).lista;
+    expect(melhorContato({ principal: imob, outros: [dono] })).toBe(dono);
+    expect(melhorContato({ principal: imob, outros: [] })).toBe(imob);
   });
 });

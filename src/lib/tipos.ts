@@ -95,6 +95,9 @@ export interface Anuncio {
   /** código do imóvel na imobiliária que anuncia */
   codAnunciante: string;
   particular: boolean;
+  /** só quando o anúncio publica */
+  telefone?: string;
+  foto?: string;
   publicadoEm?: Dia;
   primeiraVez: Dia;
   vistoEm: Dia;

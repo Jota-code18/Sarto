@@ -1,6 +1,7 @@
 "use client";
-import { ExternalLink, MessageCircle, Plus } from "lucide-react";
+import { MessageCircle, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
+import { Contato, FotoAnuncio, LinkPortal } from "@/componentes/anuncio";
 import { Coleta } from "@/componentes/coleta";
 import { Formulario, type GrupoDef } from "@/componentes/formulario";
 import {
@@ -25,11 +26,11 @@ import {
 } from "@/componentes/ui";
 import { useCarteira } from "@/componentes/uso";
 import { br, diasEntre, hoje, prazo, segundaDe } from "@/lib/datas";
-import { baixarArquivo, brl, csv, linkWhats, novoId, num, semAcento } from "@/lib/formato";
+import { baixarArquivo, brl, csv, linkWhats, mascaraTel, novoId, num, semAcento } from "@/lib/formato";
 import { linkSeguro } from "@/lib/protecao";
 import { acao, useSarto } from "@/lib/store";
 import type { Anuncio } from "@/lib/tipos";
-import { type Grupo, montarGrupos } from "@/lib/varredura";
+import { type Grupo, melhorContato, montarGrupos, precoM2 } from "@/lib/varredura";
 
 const PORTAIS = ["ZAP Imóveis", "Viva Real", "OLX", "62imóveis"];
 const STATUS: Record<Anuncio["status"], string> = { abordar: "Abordar", contatado: "Contatado", captado: "Captado", descartado: "Descartado" };
@@ -72,6 +73,7 @@ const GRUPOS: GrupoDef[] = [
       { k: "publicadoEm", nome: "Publicado em", tipo: "data", col: 2 },
       { k: "anunciante", nome: "Anunciante", col: 4 },
       { k: "particular", nome: "É o dono", tipo: "sim", col: 2 },
+      { k: "telefone", nome: "Telefone", tipo: "tel", col: 3 },
     ],
   },
 ];
@@ -229,7 +231,7 @@ export default function Varredura() {
               baixarArquivo(
                 `varredura-${hoje()}.csv`,
                 csv([
-                  ["Título", "Bairro", "Cidade", "Tipo", "Preço", "Preço anterior", "Área", "Quartos", "Anunciantes", "Sinais", "Situação", "Link"],
+                  ["Título", "Bairro", "Cidade", "Tipo", "Preço", "Preço anterior", "Área", "Preço por m²", "Quartos", "Anunciantes", "Telefone", "Sinais", "Situação", "Link"],
                   ...lista.map((x) => [
                     x.principal.titulo,
                     x.principal.bairro,
@@ -238,11 +240,13 @@ export default function Varredura() {
                     x.principal.preco,
                     x.principal.precoAnterior || "",
                     x.principal.area || "",
+                    Math.round(precoM2(x.principal)) || "",
                     x.principal.quartos || "",
                     [x.principal, ...x.outros]
                       .map((a) => a.anunciante)
                       .filter(Boolean)
                       .join("; "),
+                    mascaraTel(melhorContato(x).telefone ?? ""),
                     x.motivos.join("; "),
                     STATUS[st(x)],
                     x.principal.url,
@@ -263,12 +267,13 @@ export default function Varredura() {
             <Vazio>{dados.anuncios.length ? "Nada com esse filtro." : "Nenhuma varredura ainda."}</Vazio>
           ) : (
             <div className="overflow-x-auto">
-              <table className="tabela min-w-[740px]">
+              <table className="tabela min-w-[900px]">
                 <thead>
                   <tr>
                     <th>Imóvel</th>
                     <th className="n">Preço</th>
-                    <th className="n">Área</th>
+                    <th className="n">Área e m²</th>
+                    <th>Contato</th>
                     <th>{aba === "sarto" ? "Na Sarto" : "Por que abordar"}</th>
                     <th>Situação</th>
                   </tr>
@@ -278,17 +283,31 @@ export default function Varredura() {
                     const a = x.principal;
                     return (
                       <tr key={x.id} className="clica">
-                        <td className="max-w-[320px]">
-                          <button type="button" className="text-left font-medium hover:underline" onClick={() => setVer(x.id)}>
-                            {a.titulo}
-                          </button>
-                          <span className="block text-[13px] text-cinza">{[a.bairro, a.anunciante || a.portal].filter(Boolean).join(", ")}</span>
+                        <td className="max-w-[380px]">
+                          <span className="flex gap-3">
+                            <FotoAnuncio foto={[a, ...x.outros].find((y) => y.foto)?.foto} className="h-16 w-20" />
+                            <span className="min-w-0">
+                              <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                                <button type="button" className="text-left font-medium hover:underline" onClick={() => setVer(x.id)}>
+                                  {a.titulo}
+                                </button>
+                                <LinkPortal a={a} />
+                              </span>
+                              <span className="block text-[13px] text-cinza">{[a.bairro, a.anunciante].filter(Boolean).join(", ")}</span>
+                            </span>
+                          </span>
                         </td>
                         <td className="n">
                           {brl(a.preco, false)}
                           {a.precoAnterior > a.preco && <span className="block text-[12px] text-cinza line-through">{brl(a.precoAnterior, false)}</span>}
                         </td>
-                        <td className="n">{a.area ? `${num(a.area)} m²` : "—"}</td>
+                        <td className="n">
+                          {a.area ? `${num(a.area)} m²` : "—"}
+                          {precoM2(a) > 0 && <span className="block text-[12px] text-cinza">{brl(precoM2(a), false)}/m²</span>}
+                        </td>
+                        <td>
+                          <Contato a={melhorContato(x)} />
+                        </td>
                         <td>
                           {aba === "sarto" ? (
                             typeof x.sarto === "object" && x.sarto ? (
@@ -370,6 +389,7 @@ export default function Varredura() {
       >
         {g && (
           <div className="space-y-7">
+            <FotoAnuncio foto={[g.principal, ...g.outros].find((y) => y.foto)?.foto} className="aspect-[4/3] w-full max-w-sm" />
             <div className="flex flex-wrap items-end justify-between gap-3">
               <p className="text-[34px] font-light leading-none tabular-nums">{brl(g.principal.preco, false)}</p>
               <span className="flex flex-wrap gap-1">
@@ -389,7 +409,7 @@ export default function Varredura() {
                 ["Quartos", g.principal.quartos || ""],
                 ["Publicado", g.principal.publicadoEm ? `${br(g.principal.publicadoEm)} (${prazo(g.principal.publicadoEm)})` : ""],
                 ["Visto pela primeira vez", br(g.principal.primeiraVez)],
-                ["Preço por m²", g.principal.area ? brl(g.principal.preco / g.principal.area, false) : ""],
+                ["Preço por m²", precoM2(g.principal) ? brl(precoM2(g.principal), false) : ""],
               ]}
             />
             <div>
@@ -403,14 +423,14 @@ export default function Varredura() {
                       </span>
                       <span className="text-[13px] text-cinza">
                         {a.portal}, {brl(a.preco, false)}
+                        {a.telefone && `, ${mascaraTel(a.telefone)}`}
                         {diasEntre(a.vistoEm, hoje()) > 21 && ", não aparece há mais de 3 semanas"}
                       </span>
                     </span>
-                    {linkSeguro(a.url) && (
-                      <a className={estiloBotao("linha", true)} href={linkSeguro(a.url)} target="_blank" rel="noreferrer">
-                        <ExternalLink size={14} /> Abrir
-                      </a>
-                    )}
+                    <span className="flex flex-wrap gap-2">
+                      <LinkPortal a={a} />
+                      <Contato a={a} />
+                    </span>
                   </li>
                 ))}
               </ul>
