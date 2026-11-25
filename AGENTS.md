@@ -47,6 +47,7 @@ Toda tela precisa funcionar em 360 px de largura, sem rolagem lateral, com alvo 
 | `src/app/api`      | rotas de servidor                       | `src/lib`                    |
 
 - `src/lib/apify.ts` e tudo que lê segredo rodam só no servidor: tela nunca importa.
+- Exceção ao envio direto: a ação `carteira.yml` grava só `public/data/carteira.json` na `main`.
 - `src/lib/store.ts` é o único ponto de gravação. A troca para o Supabase acontece ali.
 - Rota de API valida a entrada, devolve só os campos que a tela usa e não repassa erro interno.
 - Link vindo de fora só vira `href` depois de conferido como `https`.

@@ -1,3 +1,4 @@
+import { mesmaOrigem } from "@/lib/protecao";
 import { gastoDoMes, iniciar, itens, rodadas, rodando } from "@/lib/apify";
 
 export const dynamic = "force-dynamic";
@@ -17,7 +18,7 @@ export async function GET(req: Request) {
     if (pedida) {
       const r = rs.find((x) => x.id === pedida);
       if (!r) return Response.json({ erro: "Varredura não encontrada" }, { status: 404 });
-      return Response.json({ itens: await itens(r, Math.max(0, Number(q.get("offset")) || 0)) });
+      return Response.json({ itens: await itens(r, Math.min(20000, Math.max(0, Math.trunc(Number(q.get("offset")) || 0)))) });
     }
     // últimos 35 dias, da mais antiga para a mais nova: o painel traz as que ainda não leu
     const prontas = rs.filter((r) => r.status === "SUCCEEDED" && Date.now() - Date.parse(r.inicio) < 35 * 864e5).reverse();
@@ -31,7 +32,8 @@ export async function GET(req: Request) {
   }
 }
 
-export async function POST() {
+export async function POST(req: Request) {
+  if (!mesmaOrigem(req)) return Response.json({ erro: "Pedido recusado" }, { status: 403 });
   if (falta().length) return Response.json({ erro: "Varredura desligada" }, { status: 503 });
   try {
     return Response.json(await iniciar(12));
