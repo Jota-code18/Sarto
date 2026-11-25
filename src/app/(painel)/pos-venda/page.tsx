@@ -24,15 +24,40 @@ export default function PosVenda() {
   const [apaga, setApaga] = useState(false);
 
   const nova = (): Venda => ({
-    id: novoId(), imovel: "", imovelCod: "", vendedor: vazia, comprador: vazia, valor: 0, comissaoPct: regras.comissaoVenda, forma: "avista", financiado: 0, banco: "", sinal: 0, condicoes: "", corretorId: "",
-    etapa: 1, desde: agora(), checklist: {}, participantes: [], comissaoStatus: "calcular", avisos: [], obs: "", criadaEm: hoje(),
+    id: novoId(),
+    imovel: "",
+    imovelCod: "",
+    vendedor: vazia,
+    comprador: vazia,
+    valor: 0,
+    comissaoPct: regras.comissaoVenda,
+    forma: "avista",
+    financiado: 0,
+    banco: "",
+    sinal: 0,
+    condicoes: "",
+    corretorId: "",
+    etapa: 1,
+    desde: agora(),
+    checklist: {},
+    participantes: [],
+    comissaoStatus: "calcular",
+    avisos: [],
+    obs: "",
+    criadaEm: hoje(),
   });
   const nomeCor = (id: string) => dados.corretores.find((c) => c.id === id)?.nome ?? "";
   const corTel = (id: string) => dados.corretores.find((c) => c.id === id)?.tel ?? "";
   const existe = !!ed && dados.vendas.some((v) => v.id === ed.id);
   const dossie = ed ? dados.dossies.find((d) => d.origem === "venda" && d.origemId === ed.id) : undefined;
   const minutas = ed ? dados.minutas.filter((m) => m.vendaId === ed.id) : [];
-  const trava = ed ? impedimentos(ed, dossie, minutas.some((m) => m.status === "liberada")) : [];
+  const trava = ed
+    ? impedimentos(
+        ed,
+        dossie,
+        minutas.some((m) => m.status === "liberada"),
+      )
+    : [];
   const div = ed ? dividirComissao(ed, regras, nomeCor(ed.corretorId)) : null;
   const gravar = (v: Venda) => {
     setEd(v);
@@ -48,7 +73,17 @@ export default function PosVenda() {
         { k: "valor", nome: "Valor da venda", tipo: "dinheiro", col: 2, obrigatorio: true },
         { k: "comissaoPct", nome: "Comissão (%)", tipo: "numero", col: 2 },
         { k: "sinal", nome: "Sinal", tipo: "dinheiro", col: 2 },
-        { k: "forma", nome: "Pagamento", tipo: "opcoes", col: 2, opcoes: [{ id: "avista", nome: "À vista" }, { id: "financiado", nome: "Financiado" }, { id: "permuta", nome: "Com permuta" }] },
+        {
+          k: "forma",
+          nome: "Pagamento",
+          tipo: "opcoes",
+          col: 2,
+          opcoes: [
+            { id: "avista", nome: "À vista" },
+            { id: "financiado", nome: "Financiado" },
+            { id: "permuta", nome: "Com permuta" },
+          ],
+        },
         { k: "financiado", nome: "Valor financiado", tipo: "dinheiro", col: 2, se: (v) => v.forma === "financiado" },
         { k: "banco", nome: "Banco", col: 2, se: (v) => v.forma === "financiado" },
         { k: "corretorId", nome: "Corretor", tipo: "opcoes", col: 3, opcoes: [{ id: "", nome: "Escolha" }, ...dados.corretores.map((c) => ({ id: c.id, nome: c.nome }))] },
@@ -81,7 +116,17 @@ export default function PosVenda() {
     ];
     const id = novoId();
     salvar("vendas", ed);
-    salvar("dossies", { id, titulo: ed.imovel, origem: "venda", origemId: ed.id, partes, parecer: "", risco: "a_analisar", criadoEm: hoje(), certidoes: partes.flatMap((p) => certidoesPadrao(p.tipo).map((t) => ({ id: novoId(), parteId: p.id, tipo: t, status: "pendente" as const }))) });
+    salvar("dossies", {
+      id,
+      titulo: ed.imovel,
+      origem: "venda",
+      origemId: ed.id,
+      partes,
+      parecer: "",
+      risco: "a_analisar",
+      criadoEm: hoje(),
+      certidoes: partes.flatMap((p) => certidoesPadrao(p.tipo).map((t) => ({ id: novoId(), parteId: p.id, tipo: t, status: "pendente" as const }))),
+    });
     registrar("Certidões", `abriu dossiê de ${ed.imovel}`);
     window.location.assign(`/certidoes?d=${id}`);
   };
@@ -92,7 +137,18 @@ export default function PosVenda() {
     const m = dados.modelos.find((x) => x.id === modelo) ?? dados.modelos[0];
     if (!m) return avisar("Nenhum modelo cadastrado", "erro");
     const id = novoId();
-    salvar("minutas", { id, titulo: `${m.nome}: ${ed.imovel}`, modeloId: m.id, vendaId: ed.id, campos: camposDaVenda(ed), texto: "", status: "rascunho", criadaEm: agora(), prazo: new Date(Date.now() + regras.prazoMinutaHoras * 36e5).toISOString(), notas: "" });
+    salvar("minutas", {
+      id,
+      titulo: `${m.nome}: ${ed.imovel}`,
+      modeloId: m.id,
+      vendaId: ed.id,
+      campos: camposDaVenda(ed),
+      texto: "",
+      status: "rascunho",
+      criadaEm: agora(),
+      prazo: new Date(Date.now() + regras.prazoMinutaHoras * 36e5).toISOString(),
+      notas: "",
+    });
     window.location.assign(`/minutas?m=${id}`);
   };
 
@@ -388,7 +444,14 @@ export default function PosVenda() {
                         disabled={perfil !== "locacao" && perfil !== "socios"}
                         onClick={() => {
                           gravar({ ...ed, comissaoStatus: "lancada", checklist: { ...ed.checklist, lancada: acao().feito() } });
-                          salvar("lancamentos", { id: novoId(), data: hoje(), descricao: `Comissão ${ed.imovel} (parte da Sarto)`, valor: div.linhas.find((l) => l.nome === "Sarto")?.valor ?? 0, categoria: "Comissões", origem: "comissao" });
+                          salvar("lancamentos", {
+                            id: novoId(),
+                            data: hoje(),
+                            descricao: `Comissão ${ed.imovel} (parte da Sarto)`,
+                            valor: div.linhas.find((l) => l.nome === "Sarto")?.valor ?? 0,
+                            categoria: "Comissões",
+                            origem: "comissao",
+                          });
                           registrar("Comissão", `lançou a comissão de ${ed.imovel}`);
                           avisar("Lançada no financeiro");
                         }}

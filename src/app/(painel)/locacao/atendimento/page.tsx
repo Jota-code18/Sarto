@@ -16,15 +16,21 @@ const ST: Record<Chamado["status"], { nome: string; tom: Tom }> = {
 };
 const RESPOSTAS: { t: string; r: string }[] = [
   { t: "Como pago o aluguel?", r: "O pagamento é feito pelo boleto ou Pix enviado todo mês. Se precisar da segunda via, me avise por aqui." },
-  { t: "Quero passar água e luz para o meu nome", r: "A transferência é feita direto na Saneago (água) e na Equatorial (energia), com o contrato de locação em mãos. O prazo pelo contrato é de 30 dias a partir do início. Quando concluir, me envie o comprovante." },
-  { t: "Vou atrasar o aluguel", r: "Obrigada por avisar. O contrato prevê multa e juros a partir do vencimento. Me diga a data em que consegue pagar para eu registrar e te passar o valor atualizado." },
+  {
+    t: "Quero passar água e luz para o meu nome",
+    r: "A transferência é feita direto na Saneago (água) e na Equatorial (energia), com o contrato de locação em mãos. O prazo pelo contrato é de 30 dias a partir do início. Quando concluir, me envie o comprovante.",
+  },
+  {
+    t: "Vou atrasar o aluguel",
+    r: "Obrigada por avisar. O contrato prevê multa e juros a partir do vencimento. Me diga a data em que consegue pagar para eu registrar e te passar o valor atualizado.",
+  },
   { t: "Quero sair do imóvel", r: "Para iniciar a saída preciso do aviso por escrito. Depois agendamos a vistoria e conferimos as contas até a data da entrega das chaves." },
   { t: "Algo quebrou no imóvel", r: "Me envie fotos ou vídeo e uma descrição do problema. Vou abrir um chamado e verificar de quem é a responsabilidade pelo reparo." },
 ];
 
 export default function Atendimento() {
   const { dados } = useSarto();
-  const { salvar, avisar, registrar, mudar } = acao();
+  const { salvar, avisar, registrar } = acao();
   const [aba, setAba] = useState<"chamados" | "multas" | "respostas">("chamados");
   const [ch, setCh] = useState<Chamado | null>(null);
   const [mu, setMu] = useState<MultaProposta | null>(null);
@@ -64,7 +70,10 @@ export default function Atendimento() {
             <Plus size={16} /> Propor multa
           </Botao>
         ) : (
-          <Botao tom="cheio" onClick={() => setCh({ id: novoId(), contratoId: "", titulo: "", descricao: "", quemPaga: "a definir", custo: 0, status: "aberto", abertoEm: hoje() })}>
+          <Botao
+            tom="cheio"
+            onClick={() => setCh({ id: novoId(), contratoId: "", titulo: "", descricao: "", quemPaga: "a definir", custo: 0, status: "aberto", abertoEm: hoje() })}
+          >
             <Plus size={16} /> Abrir chamado
           </Botao>
         )}
@@ -169,7 +178,10 @@ export default function Atendimento() {
           ch && (
             <>
               {ch.custo > 0 && ch.contratoId && (
-                <Copiar texto={`Olá, ${k(ch.contratoId)?.proprietario.nome.split(" ")[0]}. No imóvel ${k(ch.contratoId)?.imovel} há um reparo: ${ch.titulo}. ${ch.descricao} Orçamento: ${brl(ch.custo)}. Posso aprovar?`} pequeno={false}>
+                <Copiar
+                  texto={`Olá, ${k(ch.contratoId)?.proprietario.nome.split(" ")[0]}. No imóvel ${k(ch.contratoId)?.imovel} há um reparo: ${ch.titulo}. ${ch.descricao} Orçamento: ${brl(ch.custo)}. Posso aprovar?`}
+                  pequeno={false}
+                >
                   Copiar pedido ao proprietário
                 </Copiar>
               )}

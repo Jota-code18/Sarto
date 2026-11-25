@@ -20,8 +20,8 @@ export type GrupoDef = { grupo: string; campos: CampoDef[] };
 // biome-ignore lint: valores de formulário são dinâmicos
 type Qualquer = any;
 
-export const lerCaminho = (o: Qualquer, k: string) => k.split(".").reduce((a, p) => a?.[p], o);
-export function porCaminho<T>(o: T, k: string, v: unknown): T {
+const lerCaminho = (o: Qualquer, k: string) => k.split(".").reduce((a, p) => a?.[p], o);
+function porCaminho<T>(o: T, k: string, v: unknown): T {
   const [p, ...r] = k.split(".");
   const base = (o ?? {}) as Qualquer;
   return { ...base, [p]: r.length ? porCaminho(base[p], r.join("."), v) : v };
@@ -59,7 +59,7 @@ function Dinheiro({ id, valor, onMuda }: { id: string; valor: number; onMuda: (v
   );
 }
 
-export function Campo({ def, valor, onMuda }: { def: CampoDef; valor: Qualquer; onMuda: (v: unknown) => void }) {
+function Campo({ def, valor, onMuda }: { def: CampoDef; valor: Qualquer; onMuda: (v: unknown) => void }) {
   const id = useId();
   const t = def.tipo ?? "texto";
   const ops = def.opcoes?.map((o) => (typeof o === "string" ? { id: o, nome: o } : o));

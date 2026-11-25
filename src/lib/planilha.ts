@@ -22,11 +22,13 @@ const textos = (xml: string) => [...xml.matchAll(/<t(?:\s[^>]*)?>([\s\S]*?)<\/t>
 const coluna = (ref: string) => [...ref.replace(/\d+/g, "")].reduce((n, c) => n * 26 + c.charCodeAt(0) - 64, 0) - 1;
 
 /** Só o que a importação precisa do .xlsx: primeira aba, texto e número. */
-export async function lerXlsx(dados: ArrayBuffer): Promise<Linha[]> {
+async function lerXlsx(dados: ArrayBuffer): Promise<Linha[]> {
   const { default: PizZip } = await import("pizzip");
   const z = new PizZip(dados);
   const comp = [...(z.file("xl/sharedStrings.xml")?.asText() ?? "").matchAll(/<si>([\s\S]*?)<\/si>/g)].map((m) => textos(m[1]));
-  const abas = Object.keys(z.files).filter((f) => /^xl\/worksheets\/sheet\d+\.xml$/.test(f)).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+  const abas = Object.keys(z.files)
+    .filter((f) => /^xl\/worksheets\/sheet\d+\.xml$/.test(f))
+    .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
   const xml = abas.length ? (z.file(abas[0])?.asText() ?? "") : "";
   const linhas: string[][] = [];
   for (const l of xml.matchAll(/<row[^>]*>([\s\S]*?)<\/row>/g)) {

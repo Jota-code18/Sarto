@@ -20,7 +20,17 @@ export default function Agenda() {
 
   const evs = dados.eventos.filter((e) => !ag || e.agenda === ag);
   const semana = [0, 1, 2, 3, 4, 5].map((n) => maisDias(seg, n));
-  const novo = (data = hoje(), agenda = ag || "reunioes", inicio = "09:00", fim = "10:00"): Evento => ({ id: novoId(), agenda, titulo: "", data, inicio, fim, local: "", quem: "", obs: "" });
+  const novo = (data = hoje(), agenda = ag || "reunioes", inicio = "09:00", fim = "10:00"): Evento => ({
+    id: novoId(),
+    agenda,
+    titulo: "",
+    data,
+    inicio,
+    fim,
+    local: "",
+    quem: "",
+    obs: "",
+  });
   const conf = ed?.agenda === "videomaker" ? conflitosVideo(ed, dados.eventos, regras) : [];
   const entregas = dados.eventos.filter((e) => e.agenda === "videomaker" && e.entrega && !e.entregue).sort((a, b) => (a.entrega as string).localeCompare(b.entrega as string));
   const livres = horariosLivres(diaV, 90, dados.eventos, regras);
@@ -48,7 +58,9 @@ export default function Agenda() {
     <>
       <Cabecalho area="GESTÃO AGENDA" titulo="Agenda" texto="Reuniões, visitas, vistorias, marketing e videomaker. Sai para o Google Agenda por link ou arquivo.">
         <Escolha rotulo="Agenda" valor={ag} onMuda={setAg} opcoes={[{ id: "", nome: "Todas as agendas" }, ...AGENDAS]} />
-        <Botao onClick={() => baixarArquivo(`agenda-sarto-${hoje()}.ics`, ics(evs.filter((e) => e.semanal || e.data >= hoje())), "text/calendar;charset=utf-8")}>Exportar .ics</Botao>
+        <Botao onClick={() => baixarArquivo(`agenda-sarto-${hoje()}.ics`, ics(evs.filter((e) => e.semanal || e.data >= hoje())), "text/calendar;charset=utf-8")}>
+          Exportar .ics
+        </Botao>
         <Botao tom="cheio" onClick={() => setEd(novo())}>
           <Plus size={16} /> Compromisso
         </Botao>
@@ -83,7 +95,15 @@ export default function Agenda() {
               </h2>
               <div className="space-y-1.5">
                 {doDia(evs, d).map((e) => (
-                  <button key={e.id} type="button" onClick={() => setEd(e)} className={cx("block w-full p-2 text-left text-[13px] leading-snug", e.agenda === "reunioes" ? "bg-carvao text-papel hover:bg-tinta" : "bg-linho hover:bg-linha")}>
+                  <button
+                    key={e.id}
+                    type="button"
+                    onClick={() => setEd(e)}
+                    className={cx(
+                      "block w-full p-2 text-left text-[13px] leading-snug",
+                      e.agenda === "reunioes" ? "bg-carvao text-papel hover:bg-tinta" : "bg-linho hover:bg-linha",
+                    )}
+                  >
                     <span className="block tabular-nums opacity-75">
                       {e.inicio} às {e.fim}
                     </span>
@@ -113,7 +133,13 @@ export default function Agenda() {
           ) : (
             <div className="flex flex-wrap gap-2">
               {livres.map((h) => (
-                <Botao key={h} pequeno onClick={() => setEd({ ...novo(diaV, "videomaker", h, hora(min(h) + 90)), titulo: "Gravação: ", quem: "Videomaker", entrega: prazoEntrega(diaV, regras.videoEntregaDias) })}>
+                <Botao
+                  key={h}
+                  pequeno
+                  onClick={() =>
+                    setEd({ ...novo(diaV, "videomaker", h, hora(min(h) + 90)), titulo: "Gravação: ", quem: "Videomaker", entrega: prazoEntrega(diaV, regras.videoEntregaDias) })
+                  }
+                >
                   {h}
                 </Botao>
               ))}
@@ -160,7 +186,12 @@ export default function Agenda() {
               <a className={estiloBotao()} href={linkGoogle(ed)} target="_blank" rel="noreferrer">
                 <CalendarPlus size={16} /> Google Agenda
               </a>
-              <a className={estiloBotao()} href={linkWhats("", `${ed.titulo}\n${br(ed.data)}, ${ed.inicio} às ${ed.fim}${ed.local ? `\n${ed.local}` : ""}${ed.quem ? `\nCom: ${ed.quem}` : ""}`)} target="_blank" rel="noreferrer">
+              <a
+                className={estiloBotao()}
+                href={linkWhats("", `${ed.titulo}\n${br(ed.data)}, ${ed.inicio} às ${ed.fim}${ed.local ? `\n${ed.local}` : ""}${ed.quem ? `\nCom: ${ed.quem}` : ""}`)}
+                target="_blank"
+                rel="noreferrer"
+              >
                 Lembrar no WhatsApp
               </a>
               <Botao

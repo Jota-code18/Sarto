@@ -14,20 +14,15 @@ export function brlCurto(v: number) {
   return brl(v, false);
 }
 
-export const num = (v: number, casas = 0) =>
-  v.toLocaleString("pt-BR", { minimumFractionDigits: casas, maximumFractionDigits: casas });
+export const num = (v: number, casas = 0) => v.toLocaleString("pt-BR", { minimumFractionDigits: casas, maximumFractionDigits: casas });
 
-export const pct = (v: number, casas = 2) => `${num(v, casas)}%`;
+const pct = (v: number, casas = 2) => `${num(v, casas)}%`;
 
 /** Lê "1.234,56", "1234,56", "1234.56" ou "R$ 1.234" */
 export function lerValor(t: string): number {
   const s = t.replace(/[^\d,.-]/g, "");
   if (!s) return 0;
-  const limpo = s.includes(",")
-    ? s.replace(/\./g, "").replace(",", ".")
-    : /\.\d{3}(\.|$)/.test(s)
-      ? s.replace(/\./g, "")
-      : s;
+  const limpo = s.includes(",") ? s.replace(/\./g, "").replace(",", ".") : /\.\d{3}(\.|$)/.test(s) ? s.replace(/\./g, "") : s;
   return Number(limpo) || 0;
 }
 
@@ -81,14 +76,29 @@ export function linkWhats(tel: string, texto: string) {
 }
 
 const UN = [
-  "", "um", "dois", "três", "quatro", "cinco", "seis", "sete", "oito", "nove", "dez", "onze", "doze", "treze",
-  "quatorze", "quinze", "dezesseis", "dezessete", "dezoito", "dezenove",
+  "",
+  "um",
+  "dois",
+  "três",
+  "quatro",
+  "cinco",
+  "seis",
+  "sete",
+  "oito",
+  "nove",
+  "dez",
+  "onze",
+  "doze",
+  "treze",
+  "quatorze",
+  "quinze",
+  "dezesseis",
+  "dezessete",
+  "dezoito",
+  "dezenove",
 ];
 const DEZ = ["", "", "vinte", "trinta", "quarenta", "cinquenta", "sessenta", "setenta", "oitenta", "noventa"];
-const CEM = [
-  "", "cento", "duzentos", "trezentos", "quatrocentos", "quinhentos", "seiscentos", "setecentos", "oitocentos",
-  "novecentos",
-];
+const CEM = ["", "cento", "duzentos", "trezentos", "quatrocentos", "quinhentos", "seiscentos", "setecentos", "oitocentos", "novecentos"];
 
 function ate999(n: number): string {
   if (n === 100) return "cem";
@@ -103,7 +113,7 @@ function ate999(n: number): string {
   return p.join(" e ");
 }
 
-export function inteiroExtenso(n: number): string {
+function inteiroExtenso(n: number): string {
   if (n === 0) return "zero";
   const bases: [number, string, string][] = [
     [1e9, "bilhão", "bilhões"],
@@ -117,14 +127,7 @@ export function inteiroExtenso(n: number): string {
     const g = Math.floor(resto / base);
     resto %= base;
     if (!g) continue;
-    const texto =
-      base === 1
-        ? ate999(g)
-        : base === 1e3
-          ? g === 1
-            ? "mil"
-            : `${ate999(g)} mil`
-          : `${ate999(g)} ${g === 1 ? um : varios}`;
+    const texto = base === 1 ? ate999(g) : base === 1e3 ? (g === 1 ? "mil" : `${ate999(g)} mil`) : `${ate999(g)} ${g === 1 ? um : varios}`;
     partes.push({ texto, valor: g });
   }
   return partes.reduce((acc, p, i) => {
@@ -140,17 +143,12 @@ export function valorExtenso(v: number): string {
   const reais = Math.floor(c / 100);
   const cent = c % 100;
   const p: string[] = [];
-  if (reais)
-    p.push(`${inteiroExtenso(reais)}${reais >= 1e6 && reais % 1e6 === 0 ? " de" : ""} ${reais === 1 ? "real" : "reais"}`);
+  if (reais) p.push(`${inteiroExtenso(reais)}${reais >= 1e6 && reais % 1e6 === 0 ? " de" : ""} ${reais === 1 ? "real" : "reais"}`);
   if (cent) p.push(`${inteiroExtenso(cent)} ${cent === 1 ? "centavo" : "centavos"}`);
   return p.length ? p.join(" e ") : "zero real";
 }
 
-export const semAcento = (t: string) =>
-  (t ?? "")
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .toLowerCase();
+export const semAcento = (t: string) => (t ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
 export const novoId = () => Math.random().toString(36).slice(2, 8) + Date.now().toString(36).slice(-4);
 

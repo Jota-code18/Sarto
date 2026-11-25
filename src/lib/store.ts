@@ -33,7 +33,7 @@ interface Estado {
 
 type ComId = { id: string };
 const MAX_LOGS = 400;
-export const VERSAO = 2;
+const VERSAO = 2;
 /** Varreduras já trazidas; esquecer faz o painel trazer de novo */
 export const CHAVE_COLETAS = "sarto-coletas-lidas";
 const relerColetas = () => localStorage.removeItem(CHAVE_COLETAS);
@@ -104,8 +104,7 @@ export const useSarto = create<Estado>()(
         if (b?.app !== "sarto-painel" || !b.dados || typeof b.dados !== "object") return false;
         const base = dadosVazios();
         // só aceita coleções conhecidas e que sejam lista
-        for (const k of Object.keys(base) as Colecao[])
-          if (Array.isArray(b.dados[k])) (base as unknown as Record<string, unknown>)[k] = b.dados[k];
+        for (const k of Object.keys(base) as Colecao[]) if (Array.isArray(b.dados[k])) (base as unknown as Record<string, unknown>)[k] = b.dados[k];
         Object.assign(base, completar(base));
         relerColetas();
         set({ dados: base, regras: { ...REGRAS, ...b.regras }, modo: b.modo === "demo" ? "demo" : "real" });

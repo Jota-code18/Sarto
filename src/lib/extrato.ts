@@ -43,10 +43,17 @@ function partirCsv(linha: string, sep: string) {
 
 /** Planilha genérica: devolve objetos com o cabeçalho sem acento */
 export function lerCsv(t: string): Record<string, string>[] {
-  const linhas = t.replace(/^﻿/, "").split(/\r?\n/).filter((l) => l.trim());
+  const linhas = t
+    .replace(/^﻿/, "")
+    .split(/\r?\n/)
+    .filter((l) => l.trim());
   if (linhas.length < 2) return [];
   const sep = [";", "\t", ","].sort((a, b) => linhas[0].split(b).length - linhas[0].split(a).length)[0];
-  const cab = partirCsv(linhas[0], sep).map((c) => semAcento(c).replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, ""));
+  const cab = partirCsv(linhas[0], sep).map((c) =>
+    semAcento(c)
+      .replace(/[^a-z0-9]+/g, "_")
+      .replace(/^_|_$/g, ""),
+  );
   return linhas.slice(1).map((l) => {
     const p = partirCsv(l, sep);
     return Object.fromEntries(cab.map((c, i) => [c, p[i] ?? ""]));

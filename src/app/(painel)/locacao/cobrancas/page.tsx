@@ -82,9 +82,21 @@ export default function Cobrancas() {
 
       <Numeros>
         <Numero valor={brl(soma(doMes), false)} nome="Cobrado no mês" nota={`${doMes.length} cobranças`} />
-        <Numero valor={brl(doMes.reduce((a, c) => a + (c.valorPago ?? 0), 0), false)} nome="Recebido" />
+        <Numero
+          valor={brl(
+            doMes.reduce((a, c) => a + (c.valorPago ?? 0), 0),
+            false,
+          )}
+          nome="Recebido"
+        />
         <Numero valor={brl(soma(atrasos), false)} nome="Em atraso, todos os meses" nota={`${atrasos.length} ${atrasos.length === 1 ? "cobrança" : "cobranças"}`} />
-        <Numero valor={brl(reps.reduce((a, r) => a + r.taxa, 0), false)} nome="Taxa da Sarto no mês" />
+        <Numero
+          valor={brl(
+            reps.reduce((a, r) => a + r.taxa, 0),
+            false,
+          )}
+          nome="Taxa da Sarto no mês"
+        />
       </Numeros>
 
       <Abas
@@ -203,7 +215,15 @@ export default function Cobrancas() {
                       <td className="n font-semibold">{brl(r.liquido)}</td>
                       <td>{br(r.previsto)}</td>
                       <td>
-                        <Selo tom={r.status === "pago" ? "ok" : r.status === "aprovado" ? "forte" : "alerta"}>{r.status === "pago" ? (r.liquido === 0 ? "Sem repasse" : `Pago em ${br(r.pagoEm)}`) : r.status === "aprovado" ? `Aprovado por ${r.aprovado?.por}` : "Espera aprovação"}</Selo>
+                        <Selo tom={r.status === "pago" ? "ok" : r.status === "aprovado" ? "forte" : "alerta"}>
+                          {r.status === "pago"
+                            ? r.liquido === 0
+                              ? "Sem repasse"
+                              : `Pago em ${br(r.pagoEm)}`
+                            : r.status === "aprovado"
+                              ? `Aprovado por ${r.aprovado?.por}`
+                              : "Espera aprovação"}
+                        </Selo>
                       </td>
                       <td>
                         <span className="flex justify-end gap-1.5">

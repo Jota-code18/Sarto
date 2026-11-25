@@ -5,7 +5,19 @@ import { Formulario, type GrupoDef } from "@/componentes/formulario";
 import { Botao, Cabecalho, Cartao, Confirmar, Copiar, cx, estiloBotao, Fita, Gaveta, Nota, Numero, Numeros, Selo, type Tom, Vazio } from "@/componentes/ui";
 import { useParam } from "@/componentes/uso";
 import { abrir, apagar, guardar, textoDoPdf } from "@/lib/arquivos";
-import { certidoesPadrao, conferirLeitura, diasValidade, type Leitura, lerCertidao, NOME_RESULTADO, resumoDossie, type SituacaoCert, situacaoCert, TIPOS_CERT, tipoCert } from "@/lib/certidoes";
+import {
+  certidoesPadrao,
+  conferirLeitura,
+  diasValidade,
+  type Leitura,
+  lerCertidao,
+  NOME_RESULTADO,
+  resumoDossie,
+  type SituacaoCert,
+  situacaoCert,
+  TIPOS_CERT,
+  tipoCert,
+} from "@/lib/certidoes";
 import { br, brHora, hoje, maisDias, prazo } from "@/lib/datas";
 import { mascaraDoc, novoId, soDigitos } from "@/lib/formato";
 import { pode, quemPode } from "@/lib/regras";
@@ -28,14 +40,34 @@ const RISCO: Record<Dossie["risco"], { nome: string; tom: Tom }> = {
 };
 const PAPEIS = ["Vendedor", "Cônjuge do vendedor", "Vendedor (empresa)", "Sócio da empresa", "Comprador", "Proprietário", "Inquilino", "Fiador", "Imóvel"];
 
-const partePara = (papel: string): Parte => ({ id: novoId(), papel, tipo: papel === "Imóvel" ? "IMOVEL" : papel === "Vendedor (empresa)" ? "PJ" : "PF", nome: "", doc: "", nascimento: "", mae: "", matricula: "", inscricao: "" });
+const partePara = (papel: string): Parte => ({
+  id: novoId(),
+  papel,
+  tipo: papel === "Imóvel" ? "IMOVEL" : papel === "Vendedor (empresa)" ? "PJ" : "PF",
+  nome: "",
+  doc: "",
+  nascimento: "",
+  mae: "",
+  matricula: "",
+  inscricao: "",
+});
 
 const gParte: GrupoDef[] = [
   {
     grupo: "",
     campos: [
       { k: "papel", nome: "Papel", tipo: "opcoes", opcoes: PAPEIS, col: 3 },
-      { k: "tipo", nome: "Tipo", tipo: "opcoes", col: 3, opcoes: [{ id: "PF", nome: "Pessoa física" }, { id: "PJ", nome: "Empresa" }, { id: "IMOVEL", nome: "Imóvel" }] },
+      {
+        k: "tipo",
+        nome: "Tipo",
+        tipo: "opcoes",
+        col: 3,
+        opcoes: [
+          { id: "PF", nome: "Pessoa física" },
+          { id: "PJ", nome: "Empresa" },
+          { id: "IMOVEL", nome: "Imóvel" },
+        ],
+      },
       { k: "nome", nome: "Nome ou descrição", col: 6, obrigatorio: true },
       { k: "doc", nome: "CPF ou CNPJ", tipo: "doc", col: 3, se: (v) => v.tipo !== "IMOVEL" },
       { k: "nascimento", nome: "Nascimento", tipo: "data", col: 3, se: (v) => v.tipo === "PF", dica: "Pedido pela Receita e pelo TJGO" },
@@ -48,7 +80,19 @@ const gParte: GrupoDef[] = [
 
 const ROTULO_PEDE: Record<string, string> = { doc: "CPF/CNPJ", nome: "Nome", nascimento: "Nascimento", mae: "Nome da mãe", matricula: "Matrícula", inscricao: "Inscrição" };
 const valorPede = (p: Parte, k: string) =>
-  k === "doc" ? soDigitos(p.doc) : k === "nascimento" ? (p.nascimento ? br(p.nascimento) : "") : k === "nome" ? p.nome : k === "mae" ? p.mae : k === "matricula" ? p.matricula : p.inscricao;
+  k === "doc"
+    ? soDigitos(p.doc)
+    : k === "nascimento"
+      ? p.nascimento
+        ? br(p.nascimento)
+        : ""
+      : k === "nome"
+        ? p.nome
+        : k === "mae"
+          ? p.mae
+          : k === "matricula"
+            ? p.matricula
+            : p.inscricao;
 
 /** SEFAZ-GO: formulário público sem captcha, enviado pelo próprio usuário em nova aba */
 function SefazDireto({ p }: { p: Parte }) {
@@ -171,7 +215,13 @@ function FichaCert({ ds, c, onFecha }: { ds: Dossie; c: Certidao; onFecha: () =>
           <div className="mt-3 flex flex-wrap items-center gap-2">
             {t?.direto && <SefazDireto p={p} />}
             {t?.url && (
-              <a className={estiloBotao(t.direto ? "linha" : "cheio", true)} href={t.url} target="_blank" rel="noreferrer" onClick={() => f.status === "pendente" && setF({ ...f, status: "solicitada" })}>
+              <a
+                className={estiloBotao(t.direto ? "linha" : "cheio", true)}
+                href={t.url}
+                target="_blank"
+                rel="noreferrer"
+                onClick={() => f.status === "pendente" && setF({ ...f, status: "solicitada" })}
+              >
                 <ExternalLink size={14} /> Abrir {t.orgao}
               </a>
             )}
@@ -217,7 +267,13 @@ function FichaCert({ ds, c, onFecha }: { ds: Dossie; c: Certidao; onFecha: () =>
               {
                 grupo: "",
                 campos: [
-                  { k: "resultado", nome: "Resultado", tipo: "opcoes", col: 6, opcoes: [{ id: "", nome: "Escolha" }, ...Object.entries(NOME_RESULTADO).map(([id, nome]) => ({ id, nome }))] },
+                  {
+                    k: "resultado",
+                    nome: "Resultado",
+                    tipo: "opcoes",
+                    col: 6,
+                    opcoes: [{ id: "", nome: "Escolha" }, ...Object.entries(NOME_RESULTADO).map(([id, nome]) => ({ id, nome }))],
+                  },
                   { k: "emitidaEm", nome: "Emitida em", tipo: "data", col: 2 },
                   { k: "validade", nome: "Válida até", tipo: "data", col: 2 },
                   { k: "numero", nome: "Número ou código", col: 2 },
@@ -320,7 +376,11 @@ function VerDossie({ ds, onFecha }: { ds: Dossie; onFecha: () => void }) {
                 <h3>
                   <span className="text-[12px] uppercase text-cinza">{p.papel}</span>
                   <span className="block text-[16px] font-semibold">{p.nome || "Sem nome"}</span>
-                  <span className="text-[13px] text-cinza">{p.tipo === "IMOVEL" ? [p.matricula && `matrícula ${p.matricula}`, p.inscricao && `inscrição ${p.inscricao}`].filter(Boolean).join(", ") : mascaraDoc(p.doc) || "sem documento"}</span>
+                  <span className="text-[13px] text-cinza">
+                    {p.tipo === "IMOVEL"
+                      ? [p.matricula && `matrícula ${p.matricula}`, p.inscricao && `inscrição ${p.inscricao}`].filter(Boolean).join(", ")
+                      : mascaraDoc(p.doc) || "sem documento"}
+                  </span>
                 </h3>
                 <span className="flex gap-2">
                   <Botao pequeno onClick={() => setPt(p)}>
@@ -344,12 +404,18 @@ function VerDossie({ ds, onFecha }: { ds: Dossie; onFecha: () => void }) {
                     const t = tipoCert(x.tipo);
                     return (
                       <li key={x.id}>
-                        <button type="button" onClick={() => setCe(x.id)} className={cx("flex w-full flex-wrap items-center gap-x-4 gap-y-1 py-2.5 text-left hover:bg-linho", s === "dispensada" && "opacity-50")}>
+                        <button
+                          type="button"
+                          onClick={() => setCe(x.id)}
+                          className={cx("flex w-full flex-wrap items-center gap-x-4 gap-y-1 py-2.5 text-left hover:bg-linho", s === "dispensada" && "opacity-50")}
+                        >
                           <span className="min-w-52 flex-1">
                             <span className="block font-medium">{t?.nome}</span>
                             <span className="block text-[13px] text-cinza">{t?.orgao}</span>
                           </span>
-                          {x.resultado && <Selo tom={x.resultado === "positiva" ? "erro" : x.resultado === "positiva_efeito_negativa" ? "alerta" : "ok"}>{NOME_RESULTADO[x.resultado]}</Selo>}
+                          {x.resultado && (
+                            <Selo tom={x.resultado === "positiva" ? "erro" : x.resultado === "positiva_efeito_negativa" ? "alerta" : "ok"}>{NOME_RESULTADO[x.resultado]}</Selo>
+                          )}
                           {x.status === "emitida" && !x.conferida && <Selo tom="alerta">Sem conferência</Selo>}
                           <span className="flex w-full items-center gap-2 sm:block sm:w-32 sm:text-right">
                             <Selo tom={SIT[s].tom}>{SIT[s].nome}</Selo>
@@ -373,14 +439,23 @@ function VerDossie({ ds, onFecha }: { ds: Dossie; onFecha: () => void }) {
           <section className="escuro bg-carvao p-5 text-papel">
             <h3 className="text-[13px] font-semibold uppercase tracking-wide">Parecer da Gabi</h3>
             <p className="mt-1 text-[13px] text-nevoa">O painel organiza e aponta. Quem decide é a Gabi.</p>
-            <textarea className="campo mt-3 text-carvao" rows={4} value={parecer} onChange={(e) => setParecer(e.target.value)} placeholder="O que foi analisado, riscos e condições" disabled={!pode(perfil, "parecer")} />
+            <textarea
+              className="campo mt-3 text-carvao"
+              rows={4}
+              value={parecer}
+              onChange={(e) => setParecer(e.target.value)}
+              placeholder="O que foi analisado, riscos e condições"
+              disabled={!pode(perfil, "parecer")}
+            />
             <div className="mt-3 flex flex-wrap items-center gap-2">
               {(["liberado", "com_ressalva", "travado"] as const).map((x) => (
                 <button
                   key={x}
                   type="button"
                   disabled={!pode(perfil, "parecer") || (x === "liberado" && (!pronto || r.positivas > 0)) || (x !== "liberado" && !parecer.trim())}
-                  title={!pode(perfil, "parecer") ? `Quem decide: ${quemPode("parecer")}` : x === "liberado" && !pronto ? "Há certidão pendente, vencida ou sem conferência" : undefined}
+                  title={
+                    !pode(perfil, "parecer") ? `Quem decide: ${quemPode("parecer")}` : x === "liberado" && !pronto ? "Há certidão pendente, vencida ou sem conferência" : undefined
+                  }
                   className={cx("min-h-9 border px-3 disabled:opacity-40", ds.risco === x ? "border-papel bg-papel text-carvao" : "border-nevoa hover:bg-tecido")}
                   onClick={() => decidir(x)}
                 >
@@ -439,14 +514,27 @@ export default function Certidoes() {
   const novo = () => {
     const id = novoId();
     const v = partePara("Vendedor");
-    salvar("dossies", { id, titulo: "Novo dossiê", origem: "avulso", partes: [v], certidoes: certidoesPadrao("PF").map((tipo) => ({ id: novoId(), parteId: v.id, tipo, status: "pendente" })), parecer: "", risco: "a_analisar", criadoEm: hoje() });
+    salvar("dossies", {
+      id,
+      titulo: "Novo dossiê",
+      origem: "avulso",
+      partes: [v],
+      certidoes: certidoesPadrao("PF").map((tipo) => ({ id: novoId(), parteId: v.id, tipo, status: "pendente" })),
+      parecer: "",
+      risco: "a_analisar",
+      criadoEm: hoje(),
+    });
     registrar("Certidões", "abriu dossiê avulso");
     setAb(id);
   };
 
   return (
     <>
-      <Cabecalho area="JURÍDICO CERTIDÕES" titulo="Certidões" texto="Um dossiê por negócio: abre o portal certo com os dados prontos, lê o PDF, controla validade e leva tudo para o parecer.">
+      <Cabecalho
+        area="JURÍDICO CERTIDÕES"
+        titulo="Certidões"
+        texto="Um dossiê por negócio: abre o portal certo com os dados prontos, lê o PDF, controla validade e leva tudo para o parecer."
+      >
         <Botao tom="cheio" onClick={novo}>
           <Plus size={16} /> Novo dossiê
         </Botao>
@@ -460,7 +548,9 @@ export default function Certidoes() {
 
       <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
         <section className="min-w-0 space-y-3">
-          {dados.dossies.length === 0 && <Vazio acao={<Botao onClick={novo}>Abrir dossiê</Botao>}>Nenhum dossiê. Eles também nascem na captação, no pós-venda e na pré-análise de locação.</Vazio>}
+          {dados.dossies.length === 0 && (
+            <Vazio acao={<Botao onClick={novo}>Abrir dossiê</Botao>}>Nenhum dossiê. Eles também nascem na captação, no pós-venda e na pré-análise de locação.</Vazio>
+          )}
           {dados.dossies.map((d) => {
             const r = resumoDossie(d.certidoes);
             return (
@@ -469,15 +559,24 @@ export default function Certidoes() {
                   <span>
                     <span className="block text-[16px] font-semibold">{d.titulo}</span>
                     <span className="text-[13px] text-cinza">
-                      {{ venda: "Venda", captacao: "Captação", locacao: "Locação", avulso: "Avulso" }[d.origem]}, {d.partes.length} {d.partes.length === 1 ? "parte" : "partes"}, aberto {prazo(d.criadoEm)}
+                      {{ venda: "Venda", captacao: "Captação", locacao: "Locação", avulso: "Avulso" }[d.origem]}, {d.partes.length} {d.partes.length === 1 ? "parte" : "partes"},
+                      aberto {prazo(d.criadoEm)}
                     </span>
                   </span>
                   <Selo tom={RISCO[d.risco].tom}>{RISCO[d.risco].nome}</Selo>
                 </span>
                 <Fita parte={r.prontas} total={r.total} rotulo="Em dia" />
                 <span className="mt-2 flex flex-wrap gap-1">
-                  {r.positivas > 0 && <Selo tom="erro">{r.positivas} positiva{r.positivas > 1 && "s"}</Selo>}
-                  {r.vencidas > 0 && <Selo tom="erro">{r.vencidas} vencida{r.vencidas > 1 && "s"}</Selo>}
+                  {r.positivas > 0 && (
+                    <Selo tom="erro">
+                      {r.positivas} positiva{r.positivas > 1 && "s"}
+                    </Selo>
+                  )}
+                  {r.vencidas > 0 && (
+                    <Selo tom="erro">
+                      {r.vencidas} vencida{r.vencidas > 1 && "s"}
+                    </Selo>
+                  )}
                   {r.semConferencia > 0 && <Selo tom="alerta">{r.semConferencia} sem conferência</Selo>}
                 </span>
               </button>
@@ -501,7 +600,9 @@ export default function Certidoes() {
             </Cartao>
           )}
           <Cartao titulo="O que sai de graça hoje" escuro>
-            <p className="mb-3 text-[13px] text-papel/85">O painel não quebra captcha. Onde o portal exige verificação humana, ele abre a página e deixa os dados prontos para colar.</p>
+            <p className="mb-3 text-[13px] text-papel/85">
+              O painel não quebra captcha. Onde o portal exige verificação humana, ele abre a página e deixa os dados prontos para colar.
+            </p>
             <ul className="space-y-1.5 text-[13px]">
               {TIPOS_CERT.filter((t) => !t.id.endsWith("_pj")).map((t) => (
                 <li key={t.id} className="flex justify-between gap-3">

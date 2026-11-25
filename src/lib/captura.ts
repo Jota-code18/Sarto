@@ -117,7 +117,21 @@ function tipoDe(t: string) {
   return "";
 }
 
-const vazio = (portal: string, url: string): Bruto => ({ portal, url, titulo: "", tipo: "", bairro: "", cidade: "", preco: 0, precoAnterior: 0, area: 0, quartos: 0, anunciante: "", codAnunciante: "", particular: false });
+const vazio = (portal: string, url: string): Bruto => ({
+  portal,
+  url,
+  titulo: "",
+  tipo: "",
+  bairro: "",
+  cidade: "",
+  preco: 0,
+  precoAnterior: 0,
+  area: 0,
+  quartos: 0,
+  anunciante: "",
+  codAnunciante: "",
+  particular: false,
+});
 
 function cartaoGrupoZap(portal: string, u: string, t: string): Bruto | null {
   const L = linhasDe(t);
@@ -156,7 +170,9 @@ function cartaoOlx(portal: string, u: string, t: string, ref: Dia): Bruto | null
   const im = L.findIndex((l) => /^\d[\d.]*\s*m²$/.test(l));
   a.area = im >= 0 ? lerValor(L[im]) : 0;
   a.quartos = im >= 0 && /^\d{1,2}$/.test(L[im + 1] ?? "") ? Number(L[im + 1]) : 0;
-  const lugar = L.map((l) => /^([^,\d]+),\s*([^,\d]+)$/.exec(l)).filter(Boolean).pop();
+  const lugar = L.map((l) => /^([^,\d]+),\s*([^,\d]+)$/.exec(l))
+    .filter(Boolean)
+    .pop();
   a.cidade = lugar?.[1].trim() ?? "";
   a.bairro = lugar?.[2].trim() ?? "";
   a.tipo = tipoDe(a.titulo);
@@ -205,6 +221,18 @@ export function notasDaCaptura(c: Captura, em: Dia): NotaPortal[] {
   const portal = /canalpro/i.test(c.titulo) ? "Canal Pro (Jetimob)" : `Jetimob ${c.titulo.split(">").pop()?.trim() ?? ""}`.trim();
   return c.itens.map((i) => {
     const cod = i.u.split("/").pop() ?? "";
-    return { id: idNota(cod, portal), cod, portal, nota: null, motivo: i.t.replace(/\s+/g, " ").replace(/^Alerta\s*/i, "").replace(/^Informações incompletas:\s*/i, "").trim() || "Informações incompletas", em };
+    return {
+      id: idNota(cod, portal),
+      cod,
+      portal,
+      nota: null,
+      motivo:
+        i.t
+          .replace(/\s+/g, " ")
+          .replace(/^Alerta\s*/i, "")
+          .replace(/^Informações incompletas:\s*/i, "")
+          .trim() || "Informações incompletas",
+      em,
+    };
   });
 }

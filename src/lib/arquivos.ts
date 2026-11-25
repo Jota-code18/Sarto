@@ -78,17 +78,15 @@ export async function docxDeTexto(texto: string, aviso?: string) {
   const { default: PizZip } = await import("pizzip");
   const z = new PizZip();
   const esc = (t: string) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  const par = (t: string, o = "") => `<w:p><w:pPr><w:spacing w:after="120" w:line="300" w:lineRule="auto"/>${o}</w:pPr>`;
+  const par = (o: string) => `<w:p><w:pPr><w:spacing w:after="120" w:line="300" w:lineRule="auto"/>${o}</w:pPr>`;
   const corpo = texto
     .split("\n")
     .map((l, i) => {
       const titulo = i === 0 || /^(CLÁUSULA|PARTES|CONDIÇÕES|LOCADOR|LOCATÁRIO|PROMITENTE|INTERMEDIADORA|PROPRIETÁRIO|ADMINISTRADORA|CONTRATANTE|CORRETOR)/.test(l);
-      return `${par(l, i === 0 ? '<w:jc w:val="center"/>' : '<w:jc w:val="both"/>')}<w:r><w:rPr>${titulo ? "<w:b/>" : ""}<w:sz w:val="22"/></w:rPr><w:t xml:space="preserve">${esc(l)}</w:t></w:r></w:p>`;
+      return `${par(i === 0 ? '<w:jc w:val="center"/>' : '<w:jc w:val="both"/>')}<w:r><w:rPr>${titulo ? "<w:b/>" : ""}<w:sz w:val="22"/></w:rPr><w:t xml:space="preserve">${esc(l)}</w:t></w:r></w:p>`;
     })
     .join("");
-  const topo = aviso
-    ? `${par("", '<w:jc w:val="center"/>')}<w:r><w:rPr><w:b/><w:color w:val="A5332B"/><w:sz w:val="24"/></w:rPr><w:t>${esc(aviso)}</w:t></w:r></w:p>`
-    : "";
+  const topo = aviso ? `${par('<w:jc w:val="center"/>')}<w:r><w:rPr><w:b/><w:color w:val="A5332B"/><w:sz w:val="24"/></w:rPr><w:t>${esc(aviso)}</w:t></w:r></w:p>` : "";
   z.file(
     "[Content_Types].xml",
     '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>',

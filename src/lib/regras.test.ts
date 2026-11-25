@@ -14,14 +14,46 @@ import { REGRAS } from "./regras";
 import type { Certidao, Cobranca, Contrato, Evento, Parte, Venda } from "./tipos";
 
 const contrato = (p: Partial<Contrato> = {}): Contrato => ({
-  id: "k", codigo: "L1", imovel: "Ap 1", endereco: "", bairro: "", proprietario: { nome: "D", doc: "", tel: "", email: "", pix: "" },
-  inquilino: { nome: "I", doc: "", tel: "", email: "" }, aluguel: 3000, condominio: 500, iptuMensal: 100, encargosNoBoleto: false, diaVencimento: 10,
-  diaRepasse: 15, inicio: "2026-01-20", fim: "2028-07-20", indice: "IPCA", ultimoReajuste: "2026-01-20", garantia: "", garantiaVence: "", seguroVence: "2027-01-20",
-  imoveisDoDono: 1, multaPct: 10, jurosMes: 1, status: "ativo", saida: {}, obs: "",
-  checklist: Object.fromEntries(["documentos", "vistoria", "garantia", "seguro", "energia", "agua", "chaves"].map((x) => [x, { em: "", por: "" }])), ...p,
+  id: "k",
+  codigo: "L1",
+  imovel: "Ap 1",
+  endereco: "",
+  bairro: "",
+  proprietario: { nome: "D", doc: "", tel: "", email: "", pix: "" },
+  inquilino: { nome: "I", doc: "", tel: "", email: "" },
+  aluguel: 3000,
+  condominio: 500,
+  iptuMensal: 100,
+  encargosNoBoleto: false,
+  diaVencimento: 10,
+  diaRepasse: 15,
+  inicio: "2026-01-20",
+  fim: "2028-07-20",
+  indice: "IPCA",
+  ultimoReajuste: "2026-01-20",
+  garantia: "",
+  garantiaVence: "",
+  seguroVence: "2027-01-20",
+  imoveisDoDono: 1,
+  multaPct: 10,
+  jurosMes: 1,
+  status: "ativo",
+  saida: {},
+  obs: "",
+  checklist: Object.fromEntries(["documentos", "vistoria", "garantia", "seguro", "energia", "agua", "chaves"].map((x) => [x, { em: "", por: "" }])),
+  ...p,
 });
 const cobranca = (p: Partial<Cobranca> = {}): Cobranca => ({
-  id: "c", contratoId: "k", comp: "2026-05", vencimento: "2026-05-10", aluguel: 3000, encargos: 0, extra: 0, extraMotivo: "", avisos: [], ...p,
+  id: "c",
+  contratoId: "k",
+  comp: "2026-05",
+  vencimento: "2026-05-10",
+  aluguel: 3000,
+  encargos: 0,
+  extra: 0,
+  extraMotivo: "",
+  avisos: [],
+  ...p,
 });
 
 describe("dinheiro e datas", () => {
@@ -187,9 +219,28 @@ describe("certidões", () => {
 });
 
 const venda = (p: Partial<Venda> = {}): Venda => ({
-  id: "v", imovel: "Casa", imovelCod: "", vendedor: { nome: "", doc: "", tel: "", email: "" }, comprador: { nome: "", doc: "", tel: "", email: "" }, valor: 1000000,
-  comissaoPct: 5, forma: "avista", financiado: 0, banco: "", sinal: 0, condicoes: "", corretorId: "", etapa: 1, desde: "", checklist: {}, participantes: [],
-  comissaoStatus: "calcular", avisos: [], obs: "", criadaEm: "2026-11-01", ...p,
+  id: "v",
+  imovel: "Casa",
+  imovelCod: "",
+  vendedor: { nome: "", doc: "", tel: "", email: "" },
+  comprador: { nome: "", doc: "", tel: "", email: "" },
+  valor: 1000000,
+  comissaoPct: 5,
+  forma: "avista",
+  financiado: 0,
+  banco: "",
+  sinal: 0,
+  condicoes: "",
+  corretorId: "",
+  etapa: 1,
+  desde: "",
+  checklist: {},
+  participantes: [],
+  comissaoStatus: "calcular",
+  avisos: [],
+  obs: "",
+  criadaEm: "2026-11-01",
+  ...p,
 });
 const ok = { em: "", por: "" };
 
@@ -249,7 +300,18 @@ describe("comercial", () => {
 });
 
 describe("agenda", () => {
-  const ev = (p: Partial<Evento>): Evento => ({ id: "e", agenda: "videomaker", titulo: "G", data: "2026-11-24", inicio: "09:00", fim: "10:00", local: "", quem: "", obs: "", ...p });
+  const ev = (p: Partial<Evento>): Evento => ({
+    id: "e",
+    agenda: "videomaker",
+    titulo: "G",
+    data: "2026-11-24",
+    inicio: "09:00",
+    fim: "10:00",
+    local: "",
+    quem: "",
+    obs: "",
+    ...p,
+  });
   it("videomaker: choque, deslocamento, limite e horário", () => {
     const evs = [ev({})];
     expect(conflitosVideo(ev({ id: "n", inicio: "10:15", fim: "11:00" }), evs, REGRAS)[0]).toContain("deslocamento");
@@ -277,7 +339,7 @@ describe("extrato e planilha", () => {
   });
   it("lê CSV do banco com valor ou crédito e débito", () => {
     expect(lerExtratoCsv("Data;Histórico;Valor\n10/11/2026;PIX;1.500,00")[0]).toEqual({ data: "2026-11-10", descricao: "PIX", valor: 1500 });
-    expect(lerExtratoCsv("Data,Descrição,Crédito,Débito\n10/11/2026,TARIFA,,\"12,90\"")[0].valor).toBe(-12.9);
+    expect(lerExtratoCsv('Data,Descrição,Crédito,Débito\n10/11/2026,TARIFA,,"12,90"')[0].valor).toBe(-12.9);
   });
   it("normaliza cabeçalho", () => {
     expect(lerCsv("Área (m²);Preço\n120;10")[0]).toEqual({ area_m: "120", preco: "10" });

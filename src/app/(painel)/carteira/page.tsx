@@ -84,9 +84,32 @@ export default function Carteira() {
 
   const resumo = [
     `Anúncios para corrigir (${br(hoje())})`,
-    ...(atencao.length ? ["", "Requer atenção no Jetimob:", ...atencao.slice(0, 20).map((i) => `- ${i.cod}${i.im?.bairro ? `, ${i.im.bairro}` : ""}: ${i.r?.atencao.map((a) => a.motivo).join("; ")}`)] : []),
-    ...(comNota.length ? ["", "Menores notas:", ...base.nota.slice(0, 15).map((i) => `- ${i.cod}${i.im?.bairro ? `, ${i.im.bairro}` : ""}: nota ${mostrarNota(i.r?.nota ?? 0)}${i.r?.atencao.length ? ` (${i.r.atencao.map((a) => a.motivo).join("; ")})` : ""}`)] : []),
-    ...(preco.length ? ["", `Preço do texto diferente do cadastro: ${preco.length}`, ...preco.slice(0, 10).map((i) => `- ${i.cod}: cadastro ${brl(i.im?.venda ?? i.im?.aluguel, false)}, texto ${brl(i.im?.precoNoTexto, false)}`)] : []),
+    ...(atencao.length
+      ? [
+          "",
+          "Requer atenção no Jetimob:",
+          ...atencao.slice(0, 20).map((i) => `- ${i.cod}${i.im?.bairro ? `, ${i.im.bairro}` : ""}: ${i.r?.atencao.map((a) => a.motivo).join("; ")}`),
+        ]
+      : []),
+    ...(comNota.length
+      ? [
+          "",
+          "Menores notas:",
+          ...base.nota
+            .slice(0, 15)
+            .map(
+              (i) =>
+                `- ${i.cod}${i.im?.bairro ? `, ${i.im.bairro}` : ""}: nota ${mostrarNota(i.r?.nota ?? 0)}${i.r?.atencao.length ? ` (${i.r.atencao.map((a) => a.motivo).join("; ")})` : ""}`,
+            ),
+        ]
+      : []),
+    ...(preco.length
+      ? [
+          "",
+          `Preço do texto diferente do cadastro: ${preco.length}`,
+          ...preco.slice(0, 10).map((i) => `- ${i.cod}: cadastro ${brl(i.im?.venda ?? i.im?.aluguel, false)}, texto ${brl(i.im?.precoNoTexto, false)}`),
+        ]
+      : []),
   ].join("\n");
 
   const exportar = () =>
@@ -94,7 +117,19 @@ export default function Carteira() {
       `carteira-${hoje()}.csv`,
       csv([
         ["Código", "Nota", "Portal", "Atenção", "Título", "Tipo", "Bairro", "Venda", "Aluguel", "Preço no texto", "Link"],
-        ...lista.map((i) => [i.cod, i.r?.nota ?? "", i.r?.todas.map((n) => n.portal).join(", "), i.r?.atencao.map((a) => a.motivo).join("; "), i.im?.titulo, i.im?.tipo, i.im?.bairro, i.im?.venda, i.im?.aluguel, i.im?.precoNoTexto, i.im?.url]),
+        ...lista.map((i) => [
+          i.cod,
+          i.r?.nota ?? "",
+          i.r?.todas.map((n) => n.portal).join(", "),
+          i.r?.atencao.map((a) => a.motivo).join("; "),
+          i.im?.titulo,
+          i.im?.tipo,
+          i.im?.bairro,
+          i.im?.venda,
+          i.im?.aluguel,
+          i.im?.precoNoTexto,
+          i.im?.url,
+        ]),
       ]),
       "text/csv;charset=utf-8",
     );
@@ -149,8 +184,13 @@ export default function Carteira() {
               </div>
               <div className="text-[13px] leading-relaxed">
                 <h3 className="mb-1 font-semibold">Canal Pro: nota de qualidade</h3>
-                <p>A nota que o ZAP, o Viva Real e a OLX usam fica no Canal Pro. Exporte o relatório de anúncios de lá e use Importar nota: o arquivo precisa ter uma coluna de código e uma de nota ou qualidade (.xlsx ou .csv).</p>
-                <p className="mt-2">A cada importação o painel guarda a nota anterior e mostra quem subiu e quem caiu. Também dá para digitar a nota de um imóvel, abrindo-o na lista.</p>
+                <p>
+                  A nota que o ZAP, o Viva Real e a OLX usam fica no Canal Pro. Exporte o relatório de anúncios de lá e use Importar nota: o arquivo precisa ter uma coluna de
+                  código e uma de nota ou qualidade (.xlsx ou .csv).
+                </p>
+                <p className="mt-2">
+                  A cada importação o painel guarda a nota anterior e mostra quem subiu e quem caiu. Também dá para digitar a nota de um imóvel, abrindo-o na lista.
+                </p>
               </div>
             </div>
           </details>
@@ -171,13 +211,26 @@ export default function Carteira() {
           <div className="mb-4 flex flex-wrap gap-3">
             <Busca valor={q} onMuda={setQ} placeholder="Código, bairro ou condomínio" />
             <Escolha rotulo="Tipo" valor={tipo} onMuda={setTipo} opcoes={[{ id: "", nome: "Todos os tipos" }, ...tipos.map((x) => ({ id: x, nome: x }))]} />
-            <Escolha rotulo="Operação" valor={op} onMuda={setOp} opcoes={[{ id: "", nome: "Venda e locação" }, { id: "venda", nome: "Venda" }, { id: "aluguel", nome: "Locação" }]} />
+            <Escolha
+              rotulo="Operação"
+              valor={op}
+              onMuda={setOp}
+              opcoes={[
+                { id: "", nome: "Venda e locação" },
+                { id: "venda", nome: "Venda" },
+                { id: "aluguel", nome: "Locação" },
+              ]}
+            />
             <Botao onClick={exportar}>Exportar</Botao>
           </div>
 
           {lista.length === 0 ? (
             <Vazio>
-              {aba === "atencao" ? "Nenhum alerta do Jetimob colado ainda." : aba === "nota" ? "Nenhuma nota recebida. Importe o relatório do Canal Pro." : "Nenhum imóvel com esse filtro."}
+              {aba === "atencao"
+                ? "Nenhum alerta do Jetimob colado ainda."
+                : aba === "nota"
+                  ? "Nenhuma nota recebida. Importe o relatório do Canal Pro."
+                  : "Nenhum imóvel com esse filtro."}
             </Vazio>
           ) : (
             <ul className="divide-y divide-linha border-y border-linha">
@@ -185,12 +238,14 @@ export default function Carteira() {
                 <li key={i.cod}>
                   <button type="button" onClick={() => setAb(i)} className="flex w-full items-center gap-4 py-2.5 text-left hover:bg-linho">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    {i.im?.capa ? <img src={i.im.capa} alt="" loading="lazy" referrerPolicy="no-referrer" className="h-16 w-20 shrink-0 bg-linho object-cover" /> : <span className="h-16 w-20 shrink-0 bg-linho" />}
+                    {i.im?.capa ? (
+                      <img src={i.im.capa} alt="" loading="lazy" referrerPolicy="no-referrer" className="h-16 w-20 shrink-0 bg-linho object-cover" />
+                    ) : (
+                      <span className="h-16 w-20 shrink-0 bg-linho" />
+                    )}
                     <span className="min-w-0 flex-1">
                       <span className="block truncate font-medium">{i.im?.titulo ?? `Imóvel ${i.cod}`}</span>
-                      <span className="block truncate text-[13px] text-cinza">
-                        {i.im ? `Cód. ${i.cod}, ${i.im.tipo}, ${i.im.bairro ?? "sem bairro"}` : "Fora do site"}
-                      </span>
+                      <span className="block truncate text-[13px] text-cinza">{i.im ? `Cód. ${i.cod}, ${i.im.tipo}, ${i.im.bairro ?? "sem bairro"}` : "Fora do site"}</span>
                       {i.r?.atencao.map((a) => (
                         <span key={a.id} className="mt-0.5 block truncate text-[13px] text-erro">
                           {a.motivo}
@@ -300,7 +355,14 @@ export default function Carteira() {
                 pequeno
                 disabled={!novo.nota && !novo.motivo.trim()}
                 onClick={() => {
-                  const n: NotaPortal = { id: idNota(atual.cod, novo.portal), cod: atual.cod, portal: novo.portal, nota: novo.nota || null, motivo: novo.motivo.trim(), em: hoje() };
+                  const n: NotaPortal = {
+                    id: idNota(atual.cod, novo.portal),
+                    cod: atual.cod,
+                    portal: novo.portal,
+                    nota: novo.nota || null,
+                    motivo: novo.motivo.trim(),
+                    em: hoje(),
+                  };
                   guardar([n], "digitação");
                   setNovo({ ...novo, nota: 0, motivo: "" });
                 }}

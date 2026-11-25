@@ -28,14 +28,38 @@ export default function Inicio() {
 
       {gestor && (
         <Numeros>
-          {perfil !== "locacao" && <Numero valor={brlCurto(i.vgv)} nome="VGV do mês" nota={regras.metaVgv ? `${num((i.vgv / regras.metaVgv) * 100)}% da meta` : `${i.vendas} ${i.vendas === 1 ? "venda" : "vendas"}`} href="/pos-venda" />}
+          {perfil !== "locacao" && (
+            <Numero
+              valor={brlCurto(i.vgv)}
+              nome="VGV do mês"
+              nota={regras.metaVgv ? `${num((i.vgv / regras.metaVgv) * 100)}% da meta` : `${i.vendas} ${i.vendas === 1 ? "venda" : "vendas"}`}
+              href="/pos-venda"
+            />
+          )}
           {perfil !== "locacao" && <Numero valor={i.leads} nome="Leads no mês" nota={meta(i.leads, regras.metaLeads)} href="/leads" />}
-          {perfil !== "locacao" && <Numero valor={i.captacoes} nome="Captações no mês" nota={i.captacoesVarredura ? `${i.captacoesVarredura} da varredura` : meta(i.captacoes, regras.metaCaptacoes)} href="/captacao" />}
-          {perfil !== "comercial" && <Numero valor={brlCurto(i.recebidoLocacao)} nome="Aluguéis recebidos" nota={`de ${brl(i.faturamentoLocacao, false)} no mês`} href="/locacao/cobrancas" />}
+          {perfil !== "locacao" && (
+            <Numero
+              valor={i.captacoes}
+              nome="Captações no mês"
+              nota={i.captacoesVarredura ? `${i.captacoesVarredura} da varredura` : meta(i.captacoes, regras.metaCaptacoes)}
+              href="/captacao"
+            />
+          )}
+          {perfil !== "comercial" && (
+            <Numero valor={brlCurto(i.recebidoLocacao)} nome="Aluguéis recebidos" nota={`de ${brl(i.faturamentoLocacao, false)} no mês`} href="/locacao/cobrancas" />
+          )}
           {perfil === "comercial" && <Numero valor={i.visitas} nome="Visitas no mês" nota={meta(i.visitas, regras.metaVisitas)} href="/agenda" />}
           {perfil === "locacao" && (
             <>
-              <Numero valor={i.atrasados.length} nome="Aluguéis em atraso" nota={brl(i.atrasados.reduce((a, c) => a + c.aluguel + c.encargos, 0), false)} href="/locacao/cobrancas" />
+              <Numero
+                valor={i.atrasados.length}
+                nome="Aluguéis em atraso"
+                nota={brl(
+                  i.atrasados.reduce((a, c) => a + c.aluguel + c.encargos, 0),
+                  false,
+                )}
+                href="/locacao/cobrancas"
+              />
               <Numero valor={brlCurto(i.repassesAbertos)} nome="Repasses em aberto" href="/aprovacoes" />
               <Numero valor={brlCurto(i.aPagar)} nome="Contas a pagar" href="/financeiro" />
             </>
@@ -71,7 +95,14 @@ export default function Inicio() {
         </section>
 
         <div className="min-w-0 space-y-5">
-          <Cartao titulo="Hoje na agenda" acao={<Link href="/agenda" className="text-[13px] underline underline-offset-4">Abrir</Link>}>
+          <Cartao
+            titulo="Hoje na agenda"
+            acao={
+              <Link href="/agenda" className="text-[13px] underline underline-offset-4">
+                Abrir
+              </Link>
+            }
+          >
             {agenda.length === 0 ? (
               <p className="text-[13px] text-cinza">Nenhum compromisso hoje.</p>
             ) : (
@@ -100,7 +131,14 @@ export default function Inicio() {
             </Cartao>
           )}
           {perfil === "socios" && (
-            <Cartao titulo="Financeiro do mês" acao={<Link href="/financeiro" className="text-[13px] underline underline-offset-4">Abrir</Link>}>
+            <Cartao
+              titulo="Financeiro do mês"
+              acao={
+                <Link href="/financeiro" className="text-[13px] underline underline-offset-4">
+                  Abrir
+                </Link>
+              }
+            >
               <dl className="grid grid-cols-3 gap-3 text-[13px]">
                 {[
                   ["Entradas", i.entradas],

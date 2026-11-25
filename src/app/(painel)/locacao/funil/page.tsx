@@ -24,7 +24,19 @@ const GRUPOS: GrupoDef[] = [
   { grupo: "", campos: [{ k: "obs", nome: "Observações", tipo: "area", col: 6, linhas: 3 }] },
 ];
 const vazia = { nome: "", doc: "", tel: "", email: "" };
-const novo = (): FunilLocacao => ({ id: novoId(), imovel: "", bairro: "", proprietario: vazia, interessado: vazia, aluguel: 0, etapa: "qualificacao", checklist: {}, desde: hoje(), obs: "", criadoEm: hoje() });
+const novo = (): FunilLocacao => ({
+  id: novoId(),
+  imovel: "",
+  bairro: "",
+  proprietario: vazia,
+  interessado: vazia,
+  aluguel: 0,
+  etapa: "qualificacao",
+  checklist: {},
+  desde: hoje(),
+  obs: "",
+  criadoEm: hoje(),
+});
 
 export default function Funil() {
   const { dados, regras } = useSarto();
@@ -50,10 +62,33 @@ export default function Funil() {
     }
     const feito = acao().feito();
     salvar("contratos", {
-      id: novoId(), codigo: `L${String(dados.contratos.length + 1).padStart(3, "0")}`, imovel: ed.imovel, endereco: ed.imovel, bairro: ed.bairro, proprietario: { ...ed.proprietario, pix: "" }, inquilino: ed.interessado,
-      aluguel: ed.aluguel, condominio: 0, iptuMensal: 0, encargosNoBoleto: false, diaVencimento: 10, diaRepasse: 15, inicio: hoje(), fim: maisMeses(hoje(), 30), indice: "IPCA", ultimoReajuste: hoje(), garantia: "",
-      garantiaVence: "", seguroVence: maisMeses(hoje(), 12), imoveisDoDono: 1 + dados.contratos.filter((c) => c.proprietario.nome === ed.proprietario.nome).length, multaPct: regras.multaPadrao, jurosMes: regras.jurosPadrao,
-      status: "ativo", checklist: { documentos: feito, vistoria: feito, seguro: feito }, saida: {}, obs: ed.obs,
+      id: novoId(),
+      codigo: `L${String(dados.contratos.length + 1).padStart(3, "0")}`,
+      imovel: ed.imovel,
+      endereco: ed.imovel,
+      bairro: ed.bairro,
+      proprietario: { ...ed.proprietario, pix: "" },
+      inquilino: ed.interessado,
+      aluguel: ed.aluguel,
+      condominio: 0,
+      iptuMensal: 0,
+      encargosNoBoleto: false,
+      diaVencimento: 10,
+      diaRepasse: 15,
+      inicio: hoje(),
+      fim: maisMeses(hoje(), 30),
+      indice: "IPCA",
+      ultimoReajuste: hoje(),
+      garantia: "",
+      garantiaVence: "",
+      seguroVence: maisMeses(hoje(), 12),
+      imoveisDoDono: 1 + dados.contratos.filter((c) => c.proprietario.nome === ed.proprietario.nome).length,
+      multaPct: regras.multaPadrao,
+      jurosMes: regras.jurosPadrao,
+      status: "ativo",
+      checklist: { documentos: feito, vistoria: feito, seguro: feito },
+      saida: {},
+      obs: ed.obs,
     });
     remover("funil", ed.id);
     registrar("Locação", `ativou o contrato de ${ed.imovel}`);
@@ -65,16 +100,40 @@ export default function Funil() {
     if (!ed) return;
     const ja = dados.dossies.find((d) => d.origem === "locacao" && d.origemId === ed.id);
     if (ja) return window.location.assign(`/certidoes?d=${ja.id}`);
-    const p: Parte = { id: novoId(), papel: "Inquilino", tipo: ed.interessado.doc.length > 11 ? "PJ" : "PF", nome: ed.interessado.nome, doc: ed.interessado.doc, nascimento: "", mae: "", matricula: "", inscricao: "" };
+    const p: Parte = {
+      id: novoId(),
+      papel: "Inquilino",
+      tipo: ed.interessado.doc.length > 11 ? "PJ" : "PF",
+      nome: ed.interessado.nome,
+      doc: ed.interessado.doc,
+      nascimento: "",
+      mae: "",
+      matricula: "",
+      inscricao: "",
+    };
     const id = novoId();
     salvar("funil", ed);
-    salvar("dossies", { id, titulo: `Pré-análise: ${ed.interessado.nome}`, origem: "locacao", origemId: ed.id, partes: [p], parecer: "", risco: "a_analisar", criadoEm: hoje(), certidoes: certidoesPadrao(p.tipo).map((tipo) => ({ id: novoId(), parteId: p.id, tipo, status: "pendente" })) });
+    salvar("dossies", {
+      id,
+      titulo: `Pré-análise: ${ed.interessado.nome}`,
+      origem: "locacao",
+      origemId: ed.id,
+      partes: [p],
+      parecer: "",
+      risco: "a_analisar",
+      criadoEm: hoje(),
+      certidoes: certidoesPadrao(p.tipo).map((tipo) => ({ id: novoId(), parteId: p.id, tipo, status: "pendente" })),
+    });
     window.location.assign(`/certidoes?d=${id}`);
   };
 
   return (
     <>
-      <Cabecalho area="LOCAÇÃO FUNIL" titulo="Funil de locação" texto={`Da qualificação ao contrato ativo. Aluguel mínimo de ${brl(regras.locacaoMinimo, false)}; análise e contrato em ${regras.prazoAnaliseHoras}h cada.`}>
+      <Cabecalho
+        area="LOCAÇÃO FUNIL"
+        titulo="Funil de locação"
+        texto={`Da qualificação ao contrato ativo. Aluguel mínimo de ${brl(regras.locacaoMinimo, false)}; análise e contrato em ${regras.prazoAnaliseHoras}h cada.`}
+      >
         <Botao tom="cheio" onClick={() => setEd(novo())}>
           <Plus size={16} /> Novo imóvel
         </Botao>
@@ -130,7 +189,12 @@ export default function Funil() {
               >
                 Salvar
               </Botao>
-              <Botao tom="cheio" disabled={!ed.imovel || abertos.length > 0} title={abertos.length ? `Falta: ${abertos.map((x) => x.nome).join(", ")}` : undefined} onClick={avancar}>
+              <Botao
+                tom="cheio"
+                disabled={!ed.imovel || abertos.length > 0}
+                title={abertos.length ? `Falta: ${abertos.map((x) => x.nome).join(", ")}` : undefined}
+                onClick={avancar}
+              >
                 {ETAPAS_FUNIL[i + 1] ? `Passar para ${ETAPAS_FUNIL[i + 1].nome}` : "Ativar contrato"}
               </Botao>
             </>
@@ -146,7 +210,11 @@ export default function Funil() {
                 <h3 className="text-[13px] font-semibold uppercase tracking-wide">{etapa.nome}</h3>
                 {ed.etapa === "analise" && (
                   <span className="flex gap-2">
-                    <Copiar texto={`Olá, ${ed.interessado.nome.split(" ")[0]}. Para a pré-análise do imóvel ${ed.imovel}, preciso de: RG ou CNH, CPF, comprovante de endereço, comprovante de renda dos últimos 3 meses e certidão de estado civil.`}>Copiar pedido</Copiar>
+                    <Copiar
+                      texto={`Olá, ${ed.interessado.nome.split(" ")[0]}. Para a pré-análise do imóvel ${ed.imovel}, preciso de: RG ou CNH, CPF, comprovante de endereço, comprovante de renda dos últimos 3 meses e certidão de estado civil.`}
+                    >
+                      Copiar pedido
+                    </Copiar>
                     <Botao pequeno disabled={!ed.interessado.nome} onClick={dossie}>
                       Consultas e certidões
                     </Botao>

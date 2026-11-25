@@ -37,7 +37,16 @@ export default function Pendencias() {
       </div>
       <div className="mb-5 flex flex-wrap gap-3">
         <Escolha rotulo="Quem" valor={quem} onMuda={setQuem} opcoes={[{ id: "", nome: "Todos" }, ...pessoas.map((p) => ({ id: p, nome: p }))]} />
-        <Escolha rotulo="Situação" valor={st} onMuda={setSt} opcoes={[{ id: "abertos", nome: "Em aberto" }, { id: "recebido", nome: "Recebidos" }, { id: "", nome: "Tudo" }]} />
+        <Escolha
+          rotulo="Situação"
+          valor={st}
+          onMuda={setSt}
+          opcoes={[
+            { id: "abertos", nome: "Em aberto" },
+            { id: "recebido", nome: "Recebidos" },
+            { id: "", nome: "Tudo" },
+          ]}
+        />
       </div>
       {grupos.length === 0 && <Vazio>Nada aqui.</Vazio>}
       <div className="space-y-8">
@@ -61,7 +70,12 @@ export default function Pendencias() {
                         {p.nota && `. ${p.nota}`}
                       </span>
                     </button>
-                    <select className="campo min-h-9 w-32 py-1" aria-label="Situação" value={p.status} onChange={(e) => mudar("pendencias", p.id, { status: e.target.value as Pendencia["status"] })}>
+                    <select
+                      className="campo min-h-9 w-32 py-1"
+                      aria-label="Situação"
+                      value={p.status}
+                      onChange={(e) => mudar("pendencias", p.id, { status: e.target.value as Pendencia["status"] })}
+                    >
                       {Object.entries(ST).map(([id, nome]) => (
                         <option key={id} value={id}>
                           {nome}

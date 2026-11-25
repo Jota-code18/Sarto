@@ -21,7 +21,10 @@ export async function GET(req: Request) {
     }
     // últimos 35 dias, da mais antiga para a mais nova: o painel traz as que ainda não leu
     const prontas = rs.filter((r) => r.status === "SUCCEEDED" && Date.now() - Date.parse(r.inicio) < 35 * 864e5).reverse();
-    const falhou = [...new Set(rs.map((r) => r.ator))].some((c) => { const r = rs.find((x) => x.ator === c)!; return !rodando(r) && r.status !== "SUCCEEDED"; });
+    const falhou = [...new Set(rs.map((r) => r.ator))].some((c) => {
+      const r = rs.find((x) => x.ator === c);
+      return !!r && !rodando(r) && r.status !== "SUCCEEDED";
+    });
     return Response.json({ ligada: true, rodando: rs.some(rodando), prontas: prontas.map((r) => ({ id: r.id, inicio: r.inicio })), falhou, gasto: await gastoDoMes() });
   } catch (e) {
     return erro(e);

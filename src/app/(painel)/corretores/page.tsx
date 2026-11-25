@@ -18,7 +18,17 @@ const GRUPOS: GrupoDef[] = [
       { k: "email", nome: "E-mail", tipo: "email", col: 3 },
       { k: "creci", nome: "CRECI", col: 2 },
       { k: "entrada", nome: "Entrada", tipo: "data", col: 2 },
-      { k: "status", nome: "Situação", tipo: "opcoes", col: 2, opcoes: [{ id: "entrando", nome: "Entrando" }, { id: "ativo", nome: "Ativo" }, { id: "inativo", nome: "Inativo" }] },
+      {
+        k: "status",
+        nome: "Situação",
+        tipo: "opcoes",
+        col: 2,
+        opcoes: [
+          { id: "entrando", nome: "Entrando" },
+          { id: "ativo", nome: "Ativo" },
+          { id: "inativo", nome: "Inativo" },
+        ],
+      },
       { k: "obs", nome: "Observações", tipo: "area", col: 6, linhas: 3, dica: "Documentos e dados bancários ficam fora daqui até o banco com login. Marque só se já recebeu." },
     ],
   },

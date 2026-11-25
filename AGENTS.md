@@ -39,12 +39,12 @@ Toda tela precisa funcionar em 360 px de largura, sem rolagem lateral, com alvo 
 
 ## Arquitetura
 
-| Pasta | O que é | Pode importar |
-| --- | --- | --- |
-| `src/lib` | regras de negócio, sem React e sem tela | só `src/lib` |
-| `src/componentes` | peças de tela | `src/lib`, `src/componentes` |
-| `src/app/(painel)` | uma pasta por tela | tudo, menos outra tela |
-| `src/app/api` | rotas de servidor | `src/lib` |
+| Pasta              | O que é                                 | Pode importar                |
+| ------------------ | --------------------------------------- | ---------------------------- |
+| `src/lib`          | regras de negócio, sem React e sem tela | só `src/lib`                 |
+| `src/componentes`  | peças de tela                           | `src/lib`, `src/componentes` |
+| `src/app/(painel)` | uma pasta por tela                      | tudo, menos outra tela       |
+| `src/app/api`      | rotas de servidor                       | `src/lib`                    |
 
 - `src/lib/apify.ts` e tudo que lê segredo rodam só no servidor: tela nunca importa.
 - `src/lib/store.ts` é o único ponto de gravação. A troca para o Supabase acontece ali.

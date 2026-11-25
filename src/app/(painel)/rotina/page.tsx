@@ -38,7 +38,9 @@ export default function Rotina() {
   const doTurno = (t: RotinaDia["turno"]): RotinaDia => dados.rotinas.find((r) => r.data === h && r.turno === t) ?? { id: novoId(), data: h, turno: t, itens: {} };
   const anivers = [...dados.aniversarios].map((a) => ({ ...a, falta: faltaAniversario(a.dia, h) })).sort((a, b) => a.falta - b.falta);
   const repor = dados.estoque.filter((e) => e.qtd < e.minimo);
-  const historico = [1, 2, 3, 4, 5, 6, 7].map((n) => maisDias(h, -n)).map((d) => ({ d, n: dados.rotinas.filter((r) => r.data === d).reduce((a, r) => a + Object.keys(r.itens).length, 0) }));
+  const historico = [1, 2, 3, 4, 5, 6, 7]
+    .map((n) => maisDias(h, -n))
+    .map((d) => ({ d, n: dados.rotinas.filter((r) => r.data === d).reduce((a, r) => a + Object.keys(r.itens).length, 0) }));
   const total = ABERTURA.length + FECHAMENTO.length;
 
   const pedido = (a: Aniversario) =>
@@ -91,7 +93,9 @@ export default function Rotina() {
       {aba === "estoque" && (
         <>
           <div className="mb-4 flex flex-wrap justify-end gap-2">
-            {repor.length > 0 && <Copiar texto={`Repor no escritório:\n${repor.map((e) => `- ${e.item}: tem ${e.qtd}, mínimo ${e.minimo} ${e.unidade}`).join("\n")}`}>Copiar lista de compra</Copiar>}
+            {repor.length > 0 && (
+              <Copiar texto={`Repor no escritório:\n${repor.map((e) => `- ${e.item}: tem ${e.qtd}, mínimo ${e.minimo} ${e.unidade}`).join("\n")}`}>Copiar lista de compra</Copiar>
+            )}
             <Botao pequeno tom="cheio" onClick={() => setEs({ id: novoId(), item: "", qtd: 0, minimo: 1, unidade: "un" })}>
               <Plus size={14} /> Item
             </Botao>
@@ -152,7 +156,14 @@ export default function Rotina() {
                         <>
                           <Copiar texto={pedido(a)}>Pedido para o Claude</Copiar>
                           {a.tel && (
-                            <a className={estiloBotao("linha", true)} href={linkWhats(a.tel, "")} target="_blank" rel="noreferrer" aria-label={`WhatsApp de ${a.nome}`} onClick={() => mudar("aniversarios", a.id, { enviadoAno: Number(h.slice(0, 4)) })}>
+                            <a
+                              className={estiloBotao("linha", true)}
+                              href={linkWhats(a.tel, "")}
+                              target="_blank"
+                              rel="noreferrer"
+                              aria-label={`WhatsApp de ${a.nome}`}
+                              onClick={() => mudar("aniversarios", a.id, { enviadoAno: Number(h.slice(0, 4)) })}
+                            >
                               <MessageCircle size={15} />
                             </a>
                           )}
@@ -255,7 +266,16 @@ export default function Rotina() {
                 campos: [
                   { k: "nome", nome: "Nome", col: 6 },
                   { k: "data", nome: "Data (o ano não conta)", tipo: "data", col: 2 },
-                  { k: "tipo", nome: "Tipo", tipo: "opcoes", col: 2, opcoes: [{ id: "cliente", nome: "Cliente" }, { id: "equipe", nome: "Equipe" }] },
+                  {
+                    k: "tipo",
+                    nome: "Tipo",
+                    tipo: "opcoes",
+                    col: 2,
+                    opcoes: [
+                      { id: "cliente", nome: "Cliente" },
+                      { id: "equipe", nome: "Equipe" },
+                    ],
+                  },
                   { k: "tel", nome: "WhatsApp", tipo: "tel", col: 2 },
                   { k: "contexto", nome: "O que sabemos da pessoa", tipo: "area", col: 6, dica: "Só o necessário para a mensagem. É o que deixa cada uma única." },
                 ],

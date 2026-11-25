@@ -54,7 +54,11 @@ export function Coleta() {
             }
             const st = useSarto.getState();
             const antes = st.modo === "demo" && !lidas.length ? [] : st.dados.anuncios;
-            const r = mesclar(antes, todos.map(normalizar).filter((x): x is Bruto => !!x), st.regras.padraoCidade);
+            const r = mesclar(
+              antes,
+              todos.map(normalizar).filter((x): x is Bruto => !!x),
+              st.regras.padraoCidade,
+            );
             useSarto.setState({ dados: { ...st.dados, anuncios: r.lista } });
             novos += r.novos;
             baixaram += r.baixaram;
@@ -73,6 +77,7 @@ export function Coleta() {
     }
   }, []);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: trocar de modo esquece o que foi lido
   useEffect(() => {
     atualizar();
   }, [atualizar, modo]);
@@ -113,7 +118,9 @@ export function Coleta() {
         ) : (
           <>
             <b className="font-semibold">{ultima ? `Última varredura: ${brHora(ultima.inicio)}` : "Nenhuma varredura ainda"}</b>
-            <span className="block text-cinza">Roda sozinha toda segunda às 5h. ZAP, Viva Real e OLX, em Anápolis, a partir de R$ 1 milhão. Uso do mês: US$ {num(s.gasto ?? 0, 2)} de 5 gratuitos.</span>
+            <span className="block text-cinza">
+              Roda sozinha toda segunda às 5h. ZAP, Viva Real e OLX, em Anápolis, a partir de R$ 1 milhão. Uso do mês: US$ {num(s.gasto ?? 0, 2)} de 5 gratuitos.
+            </span>
             {s.falhou && <span className="block text-erro">A tentativa mais recente falhou.</span>}
           </>
         )}
