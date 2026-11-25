@@ -3,7 +3,27 @@ import { FileText, Plus, Upload } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { CAMPOS_PESSOA, Formulario, type GrupoDef, obrigatoriosVazios } from "@/componentes/formulario";
-import { Abas, Botao, Busca, Cabecalho, Confirmar, Copiar, cx, Escolha, estiloBotao, Fita, Gaveta, Itens, ListaInfo, Nota, Numero, Numeros, Selo, Vazio } from "@/componentes/ui";
+import {
+  Abas,
+  Botao,
+  Busca,
+  Cabecalho,
+  Confirmar,
+  Copiar,
+  cx,
+  Escolha,
+  estiloBotao,
+  Fita,
+  Gaveta,
+  Itens,
+  ListaInfo,
+  Nota,
+  Numero,
+  Numeros,
+  Selo,
+  Vazio,
+  Tabela,
+} from "@/componentes/ui";
 import { useParam } from "@/componentes/uso";
 import { br, brComp, hoje, lerData, maisMeses, prazo } from "@/lib/datas";
 import { lerCsv } from "@/lib/extrato";
@@ -149,48 +169,46 @@ function Contas({ k }: { k: Contrato }) {
   const itens = CONTAS.filter((c) => c.id !== "condominio" || (k.condominio > 0 && !k.encargosNoBoleto)).filter((c) => c.id !== "iptu" || !k.encargosNoBoleto);
   return (
     <div>
-      <div className="overflow-x-auto">
-        <table className="tabela">
-          <thead>
-            <tr>
-              <th>Mês</th>
-              {itens.map((i) => (
-                <th key={i.id}>{i.nome}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {meses.map((m) => {
-              const ci = de(m);
-              return (
-                <tr key={m}>
-                  <td>{brComp(m)}</td>
-                  {itens.map((i) => (
-                    <td key={i.id}>
-                      <select
-                        className="campo min-h-9 py-1"
-                        aria-label={`${i.nome} de ${brComp(m)}`}
-                        value={ci.itens[i.id] ?? ""}
-                        onChange={(e) => {
-                          const itensNovos = { ...ci.itens };
-                          if (e.target.value) itensNovos[i.id] = e.target.value as "ok";
-                          else delete itensNovos[i.id];
-                          salvar("contasInquilino", { ...ci, itens: itensNovos });
-                        }}
-                      >
-                        <option value="">Não pedido</option>
-                        <option value="pendente">Pedido</option>
-                        <option value="ok">Pago</option>
-                        <option value="atrasada">Em atraso</option>
-                      </select>
-                    </td>
-                  ))}
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+      <Tabela>
+        <thead>
+          <tr>
+            <th>Mês</th>
+            {itens.map((i) => (
+              <th key={i.id}>{i.nome}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {meses.map((m) => {
+            const ci = de(m);
+            return (
+              <tr key={m}>
+                <td>{brComp(m)}</td>
+                {itens.map((i) => (
+                  <td key={i.id}>
+                    <select
+                      className="campo min-h-9 py-1"
+                      aria-label={`${i.nome} de ${brComp(m)}`}
+                      value={ci.itens[i.id] ?? ""}
+                      onChange={(e) => {
+                        const itensNovos = { ...ci.itens };
+                        if (e.target.value) itensNovos[i.id] = e.target.value as "ok";
+                        else delete itensNovos[i.id];
+                        salvar("contasInquilino", { ...ci, itens: itensNovos });
+                      }}
+                    >
+                      <option value="">Não pedido</option>
+                      <option value="pendente">Pedido</option>
+                      <option value="ok">Pago</option>
+                      <option value="atrasada">Em atraso</option>
+                    </select>
+                  </td>
+                ))}
+              </tr>
+            );
+          })}
+        </tbody>
+      </Tabela>
       <div className="mt-3 flex flex-wrap gap-2">
         <Copiar
           texto={`Olá, ${k.inquilino.nome.split(" ")[0]}. Aqui é da locação da Sarto. Para manter o controle do imóvel ${k.imovel} em dia, pode me enviar os comprovantes deste mês: ${itens.map((i) => i.nome.toLowerCase()).join(", ")}? Pode ser foto ou PDF.`}
@@ -421,61 +439,59 @@ export default function Locacao() {
           Nenhum contrato aqui. Se a planilha da Verônica estiver em Excel, salve como CSV e importe.
         </Vazio>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="tabela min-w-[900px]">
-            <thead>
-              <tr>
-                <th>Imóvel</th>
-                <th>Inquilino</th>
-                <th className="n">Aluguel</th>
-                <th>Checklist</th>
-                <th>O que está fora do lugar</th>
-                <th>Situação</th>
-              </tr>
-            </thead>
-            <tbody>
-              {lista.map(({ k, al, cor }) => (
-                <tr key={k.id} className="clica">
-                  <td>
-                    <button type="button" className="text-left font-medium hover:underline" onClick={() => abrir(k)}>
-                      {k.imovel}
-                    </button>
-                    <span className="block text-[13px] text-cinza">
-                      {k.codigo}, {k.proprietario.nome}
-                    </span>
-                  </td>
-                  <td>{k.inquilino.nome}</td>
-                  <td className="n">
-                    {brl(k.aluguel)}
-                    <span className="block text-[12px] text-cinza">dia {k.diaVencimento}</span>
-                  </td>
-                  <td>
-                    <span className="flex gap-1" title={CHECK_CONTRATO.map((c) => `${c.curto}: ${k.checklist[c.id] ? "ok" : "falta"}`).join("\n")}>
-                      {CHECK_CONTRATO.map((c) => (
-                        <span key={c.id} className={cx("h-4 w-2.5 border border-carvao", k.checklist[c.id] && "bg-carvao")} />
-                      ))}
-                    </span>
-                    <span className="mt-1 block text-[12px] text-cinza">
-                      {CHECK_CONTRATO.filter((c) => k.checklist[c.id]).length} de {CHECK_CONTRATO.length}
-                    </span>
-                  </td>
-                  <td className="max-w-[300px]">
-                    {al.slice(0, 2).map((a) => (
-                      <span key={a.texto} className="block text-[13px]">
-                        {a.texto}
-                      </span>
+        <Tabela className="md:min-w-[900px]">
+          <thead>
+            <tr>
+              <th>Imóvel</th>
+              <th>Inquilino</th>
+              <th className="n">Aluguel</th>
+              <th>Checklist</th>
+              <th>O que está fora do lugar</th>
+              <th>Situação</th>
+            </tr>
+          </thead>
+          <tbody>
+            {lista.map(({ k, al, cor }) => (
+              <tr key={k.id} className="clica">
+                <td>
+                  <button type="button" className="text-left font-medium hover:underline" onClick={() => abrir(k)}>
+                    {k.imovel}
+                  </button>
+                  <span className="block text-[13px] text-cinza">
+                    {k.codigo}, {k.proprietario.nome}
+                  </span>
+                </td>
+                <td>{k.inquilino.nome}</td>
+                <td className="n">
+                  {brl(k.aluguel)}
+                  <span className="block text-[12px] text-cinza">dia {k.diaVencimento}</span>
+                </td>
+                <td>
+                  <span className="flex gap-1" title={CHECK_CONTRATO.map((c) => `${c.curto}: ${k.checklist[c.id] ? "ok" : "falta"}`).join("\n")}>
+                    {CHECK_CONTRATO.map((c) => (
+                      <span key={c.id} className={cx("h-4 w-2.5 border border-carvao", k.checklist[c.id] && "bg-carvao")} />
                     ))}
-                    {al.length > 2 && <span className="text-[12px] text-cinza">e mais {al.length - 2}</span>}
-                  </td>
-                  <td>
-                    <Selo tom={COR[cor]}>{NOME_COR[cor]}</Selo>
-                    {k.status !== "ativo" && <span className="mt-1 block text-[12px] text-cinza">{k.status === "encerrando" ? "em saída" : "encerrado"}</span>}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                  </span>
+                  <span className="mt-1 block text-[12px] text-cinza">
+                    {CHECK_CONTRATO.filter((c) => k.checklist[c.id]).length} de {CHECK_CONTRATO.length}
+                  </span>
+                </td>
+                <td className="max-w-[300px]">
+                  {al.slice(0, 2).map((a) => (
+                    <span key={a.texto} className="block text-[13px]">
+                      {a.texto}
+                    </span>
+                  ))}
+                  {al.length > 2 && <span className="text-[12px] text-cinza">e mais {al.length - 2}</span>}
+                </td>
+                <td>
+                  <Selo tom={COR[cor]}>{NOME_COR[cor]}</Selo>
+                  {k.status !== "ativo" && <span className="mt-1 block text-[12px] text-cinza">{k.status === "encerrando" ? "em saída" : "encerrado"}</span>}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </Tabela>
       )}
 
       <Gaveta

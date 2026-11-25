@@ -3,7 +3,7 @@ import { MessageCircle, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { CAMPOS_PESSOA, Formulario, type GrupoDef } from "@/componentes/formulario";
-import { Abas, Botao, Cabecalho, Confirmar, Copiar, cx, estiloBotao, Fita, Gaveta, Itens, Nota, Numero, Numeros, Selo, Vazio } from "@/componentes/ui";
+import { Abas, Botao, Cabecalho, Confirmar, Copiar, cx, estiloBotao, Fita, Gaveta, Itens, Nota, Numero, Numeros, Selo, Vazio, Tabela, Quadro } from "@/componentes/ui";
 import { useParam } from "@/componentes/uso";
 import { certidoesPadrao, resumoDossie } from "@/lib/certidoes";
 import { agora, brHora, competencia, hoje } from "@/lib/datas";
@@ -177,8 +177,8 @@ export default function PosVenda() {
       </Numeros>
 
       {dados.vendas.length === 0 && <Vazio>Nenhuma venda registrada.</Vazio>}
-      <div className="-mx-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0">
-        <div className="grid min-w-[1000px] grid-cols-7 gap-3">
+      <Quadro nome="Etapas da venda">
+        <div className="grid grid-cols-1 md:min-w-[1000px] md:grid-cols-7 gap-3">
           {ETAPAS_VENDA.map((e) => (
             <section key={e.n}>
               <h2 className="mb-2 border-b border-carvao pb-1.5 leading-tight">
@@ -218,7 +218,7 @@ export default function PosVenda() {
             </section>
           ))}
         </div>
-      </div>
+      </Quadro>
 
       <Gaveta
         larga
@@ -372,7 +372,7 @@ export default function PosVenda() {
             {aba === "comissao" && div && (
               <div className="space-y-5">
                 <p className="text-[28px] font-light tabular-nums">{brl(div.total)}</p>
-                <table className="tabela">
+                <Tabela>
                   <thead>
                     <tr>
                       <th>Quem</th>
@@ -402,7 +402,7 @@ export default function PosVenda() {
                       );
                     })}
                   </tbody>
-                </table>
+                </Tabela>
                 {!div.valido && <Nota tom="erro">A soma passa de 100%. Reveja os participantes.</Nota>}
                 <NovoParticipante onIncluir={(p) => gravar({ ...ed, participantes: [...ed.participantes, p] })} />
                 <div className="flex flex-wrap items-center gap-2 border-t border-linha pt-4">

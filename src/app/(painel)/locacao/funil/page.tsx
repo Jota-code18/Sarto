@@ -2,7 +2,7 @@
 import { Plus } from "lucide-react";
 import { useState } from "react";
 import { CAMPOS_PESSOA, Formulario, type GrupoDef } from "@/componentes/formulario";
-import { Botao, Cabecalho, Confirmar, Copiar, cx, Fita, Gaveta, Itens, Nota, Selo, Vazio } from "@/componentes/ui";
+import { Botao, Cabecalho, Confirmar, Copiar, cx, Fita, Gaveta, Itens, Nota, Selo, Vazio, Quadro } from "@/componentes/ui";
 import { certidoesPadrao } from "@/lib/certidoes";
 import { diasEntre, hoje, maisMeses } from "@/lib/datas";
 import { brl, novoId } from "@/lib/formato";
@@ -139,8 +139,8 @@ export default function Funil() {
         </Botao>
       </Cabecalho>
       {dados.funil.length === 0 && <Vazio>Nenhum imóvel no funil.</Vazio>}
-      <div className="-mx-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0">
-        <div className="grid min-w-[1040px] grid-cols-8 gap-3">
+      <Quadro nome="Etapas da locação">
+        <div className="grid grid-cols-1 md:min-w-[1040px] md:grid-cols-8 gap-3">
           {ETAPAS_FUNIL.map((e) => (
             <section key={e.id}>
               <h2 className="mb-2 border-b border-carvao pb-1.5 text-[13px] font-semibold">
@@ -164,7 +164,7 @@ export default function Funil() {
             </section>
           ))}
         </div>
-      </div>
+      </Quadro>
 
       <Gaveta
         aberta={!!ed}

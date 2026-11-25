@@ -2,7 +2,7 @@
 import { MessageCircle, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Formulario, type GrupoDef, obrigatoriosVazios } from "@/componentes/formulario";
-import { Abas, Botao, Busca, Cabecalho, Confirmar, Escolha, estiloBotao, Gaveta, Nota, Numero, Numeros, Selo, type Tom, Vazio } from "@/componentes/ui";
+import { Abas, Botao, Busca, Cabecalho, Confirmar, Escolha, estiloBotao, Gaveta, Nota, Numero, Numeros, Selo, type Tom, Vazio, Tabela } from "@/componentes/ui";
 import { leadRepetido } from "@/lib/comercial";
 import { br, competencia, hoje, prazo } from "@/lib/datas";
 import { baixarArquivo, csv, linkWhats, mascaraTel, novoId, semAcento } from "@/lib/formato";
@@ -176,61 +176,59 @@ export default function Leads() {
       {lista.length === 0 ? (
         <Vazio acao={<Botao onClick={() => setEd(novo())}>Cadastrar lead</Botao>}>Nenhum lead aqui.</Vazio>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="tabela min-w-[760px]">
-            <thead>
-              <tr>
-                <th>Nome</th>
-                <th>Procura</th>
-                <th>Canal</th>
-                <th>Corretor</th>
-                <th>Entrou</th>
-                <th>Situação</th>
-                <th />
+        <Tabela className="md:min-w-[760px]">
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>Procura</th>
+              <th>Canal</th>
+              <th>Corretor</th>
+              <th>Entrou</th>
+              <th>Situação</th>
+              <th />
+            </tr>
+          </thead>
+          <tbody>
+            {lista.map((l) => (
+              <tr key={l.id} className="clica">
+                <td>
+                  <button type="button" className="text-left font-medium hover:underline" onClick={() => setEd(l)}>
+                    {l.nome}
+                  </button>
+                  <span className="block text-[13px] text-cinza">{mascaraTel(l.tel)}</span>
+                </td>
+                <td>
+                  {[l.interesse, l.tipoImovel.toLowerCase()].filter(Boolean).join(" ")}
+                  <span className="block text-[13px] text-cinza">{l.bairros}</span>
+                </td>
+                <td>{l.canal}</td>
+                <td>{nomeCor(l.corretorId) || <Selo tom="erro">Sem corretor</Selo>}</td>
+                <td>{prazo(l.criadoEm)}</td>
+                <td>
+                  <Selo tom={STATUS.find((s) => s.id === l.status)?.tom}>{STATUS.find((s) => s.id === l.status)?.nome}</Selo>
+                  {!l.noJetimob && <span className="mt-1 block text-[12px] text-cinza">fora do JetImob</span>}
+                </td>
+                <td className="whitespace-nowrap text-right">
+                  {aba === "jetimob" ? (
+                    <Botao pequeno onClick={() => mudar("leads", l.id, { noJetimob: true })}>
+                      Lançado
+                    </Botao>
+                  ) : (
+                    <a
+                      className={estiloBotao("linha", true)}
+                      href={linkWhats(l.tel, `Olá, ${l.nome.split(" ")[0]}. Aqui é da Sarto Imóveis.`)}
+                      target="_blank"
+                      rel="noreferrer"
+                      aria-label={`WhatsApp de ${l.nome}`}
+                    >
+                      <MessageCircle size={15} />
+                    </a>
+                  )}
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {lista.map((l) => (
-                <tr key={l.id} className="clica">
-                  <td>
-                    <button type="button" className="text-left font-medium hover:underline" onClick={() => setEd(l)}>
-                      {l.nome}
-                    </button>
-                    <span className="block text-[13px] text-cinza">{mascaraTel(l.tel)}</span>
-                  </td>
-                  <td>
-                    {[l.interesse, l.tipoImovel.toLowerCase()].filter(Boolean).join(" ")}
-                    <span className="block text-[13px] text-cinza">{l.bairros}</span>
-                  </td>
-                  <td>{l.canal}</td>
-                  <td>{nomeCor(l.corretorId) || <Selo tom="erro">Sem corretor</Selo>}</td>
-                  <td>{prazo(l.criadoEm)}</td>
-                  <td>
-                    <Selo tom={STATUS.find((s) => s.id === l.status)?.tom}>{STATUS.find((s) => s.id === l.status)?.nome}</Selo>
-                    {!l.noJetimob && <span className="mt-1 block text-[12px] text-cinza">fora do JetImob</span>}
-                  </td>
-                  <td className="whitespace-nowrap text-right">
-                    {aba === "jetimob" ? (
-                      <Botao pequeno onClick={() => mudar("leads", l.id, { noJetimob: true })}>
-                        Lançado
-                      </Botao>
-                    ) : (
-                      <a
-                        className={estiloBotao("linha", true)}
-                        href={linkWhats(l.tel, `Olá, ${l.nome.split(" ")[0]}. Aqui é da Sarto Imóveis.`)}
-                        target="_blank"
-                        rel="noreferrer"
-                        aria-label={`WhatsApp de ${l.nome}`}
-                      >
-                        <MessageCircle size={15} />
-                      </a>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </Tabela>
       )}
 
       <Gaveta

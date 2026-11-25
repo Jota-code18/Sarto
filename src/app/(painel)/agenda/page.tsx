@@ -2,7 +2,7 @@
 import { CalendarPlus, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { useState } from "react";
 import { Formulario, type GrupoDef } from "@/componentes/formulario";
-import { Botao, Cabecalho, Cartao, Confirmar, cx, Escolha, estiloBotao, Gaveta, Nota, Selo } from "@/componentes/ui";
+import { Botao, Cabecalho, Cartao, Confirmar, cx, Escolha, estiloBotao, Gaveta, Nota, Selo, Quadro } from "@/componentes/ui";
 import { AGENDAS, conflitosVideo, doDia, hora, horariosLivres, ics, linkGoogle, min, prazoEntrega } from "@/lib/agenda";
 import { br, brCurto, DIAS, diaSemana, hoje, maisDias, paraData, prazo, segundaDe } from "@/lib/datas";
 import { baixarArquivo, linkWhats, novoId } from "@/lib/formato";
@@ -83,10 +83,10 @@ export default function Agenda() {
         )}
       </div>
 
-      <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
-        <div className="grid min-w-[880px] grid-cols-6 gap-px border border-linha bg-linha">
+      <Quadro nome="Semana">
+        <div className="grid grid-cols-1 md:min-w-[880px] md:grid-cols-6 gap-px border border-linha bg-linha">
           {semana.map((d) => (
-            <section key={d} className={cx("min-h-56 p-2.5", d === hoje() ? "bg-giz" : "bg-papel")}>
+            <section key={d} className={cx("p-2.5 md:min-h-56", d === hoje() ? "bg-giz" : "bg-papel")}>
               <h2 className="mb-2 flex items-baseline justify-between">
                 <span className={cx("text-[13px]", d === hoje() && "font-semibold")}>{DIAS[paraData(d).getDay()]}</span>
                 <button type="button" className="text-[20px] font-light hover:underline" aria-label={`Incluir em ${br(d)}`} onClick={() => setEd(novo(d))}>
@@ -115,7 +115,7 @@ export default function Agenda() {
             </section>
           ))}
         </div>
-      </div>
+      </Quadro>
 
       <div className="mt-6 grid gap-5 lg:grid-cols-2">
         <Cartao titulo="Videomaker: horários livres">

@@ -2,7 +2,7 @@
 import { ChevronLeft, ChevronRight, Plus, Upload } from "lucide-react";
 import { useState } from "react";
 import { Formulario } from "@/componentes/formulario";
-import { Abas, Barras, Botao, Cabecalho, Cartao, Colunas, Confirmar, estiloBotao, Gaveta, Numero, Numeros, Selo, Vazio } from "@/componentes/ui";
+import { Abas, Barras, Botao, Cabecalho, Cartao, Colunas, Confirmar, estiloBotao, Gaveta, Numero, Numeros, Selo, Vazio, Tabela } from "@/componentes/ui";
 import { br, brComp, brCompLongo, competencia, diaNoMes, hoje, maisComp, prazo } from "@/lib/datas";
 import { CATEGORIAS, categorizar, lerExtratoCsv, lerOfx } from "@/lib/extrato";
 import { baixarArquivo, brl, brlCurto, csv, novoId } from "@/lib/formato";
@@ -123,41 +123,39 @@ export default function Financeiro() {
           {abertas.length === 0 ? (
             <Vazio>Nenhuma conta em aberto.</Vazio>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="tabela min-w-[640px]">
-                <thead>
-                  <tr>
-                    <th>Fornecedor</th>
-                    <th>Categoria</th>
-                    <th>Vencimento</th>
-                    <th className="n">Valor</th>
-                    <th />
+            <Tabela className="md:min-w-[640px]">
+              <thead>
+                <tr>
+                  <th>Fornecedor</th>
+                  <th>Categoria</th>
+                  <th>Vencimento</th>
+                  <th className="n">Valor</th>
+                  <th />
+                </tr>
+              </thead>
+              <tbody>
+                {abertas.map((c) => (
+                  <tr key={c.id} className="clica">
+                    <td>
+                      <button type="button" className="font-medium hover:underline" onClick={() => setCp(c)}>
+                        {c.fornecedor}
+                      </button>
+                      {c.recorrente && <span className="block text-[12px] text-cinza">todo mês</span>}
+                    </td>
+                    <td>{c.categoria}</td>
+                    <td>
+                      {br(c.vencimento)} <Selo tom={c.vencimento < hoje() ? "erro" : "neutro"}>{prazo(c.vencimento)}</Selo>
+                    </td>
+                    <td className="n">{brl(c.valor)}</td>
+                    <td className="text-right">
+                      <Botao pequeno tom="cheio" onClick={() => pagar(c)}>
+                        Marcar paga
+                      </Botao>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {abertas.map((c) => (
-                    <tr key={c.id} className="clica">
-                      <td>
-                        <button type="button" className="font-medium hover:underline" onClick={() => setCp(c)}>
-                          {c.fornecedor}
-                        </button>
-                        {c.recorrente && <span className="block text-[12px] text-cinza">todo mês</span>}
-                      </td>
-                      <td>{c.categoria}</td>
-                      <td>
-                        {br(c.vencimento)} <Selo tom={c.vencimento < hoje() ? "erro" : "neutro"}>{prazo(c.vencimento)}</Selo>
-                      </td>
-                      <td className="n">{brl(c.valor)}</td>
-                      <td className="text-right">
-                        <Botao pequeno tom="cheio" onClick={() => pagar(c)}>
-                          Marcar paga
-                        </Botao>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                ))}
+              </tbody>
+            </Tabela>
           )}
           {pagas.length > 0 && (
             <p className="mt-3 text-[13px] text-cinza">
@@ -185,43 +183,41 @@ export default function Financeiro() {
                 Exportar planilha
               </Botao>
             </div>
-            <div className="overflow-x-auto">
-              <table className="tabela min-w-[640px]">
-                <thead>
-                  <tr>
-                    <th>Data</th>
-                    <th>Descrição</th>
-                    <th>Categoria</th>
-                    <th className="n">Valor</th>
+            <Tabela className="md:min-w-[640px]">
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Descrição</th>
+                  <th>Categoria</th>
+                  <th className="n">Valor</th>
+                </tr>
+              </thead>
+              <tbody>
+                {lan.map((l) => (
+                  <tr key={l.id} className="clica">
+                    <td>{br(l.data)}</td>
+                    <td>
+                      <button type="button" className="text-left hover:underline" onClick={() => setLa({ ...l, valor: Math.abs(l.valor), sai: l.valor < 0 })}>
+                        {l.descricao}
+                      </button>
+                    </td>
+                    <td>
+                      <select
+                        className="campo min-h-9 w-auto py-1"
+                        aria-label="Categoria"
+                        value={l.categoria}
+                        onChange={(e) => mudar("lancamentos", l.id, { categoria: e.target.value })}
+                      >
+                        {[...new Set([...CATEGORIAS, l.categoria])].map((c) => (
+                          <option key={c}>{c}</option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className="n font-medium">{brl(l.valor)}</td>
                   </tr>
-                </thead>
-                <tbody>
-                  {lan.map((l) => (
-                    <tr key={l.id} className="clica">
-                      <td>{br(l.data)}</td>
-                      <td>
-                        <button type="button" className="text-left hover:underline" onClick={() => setLa({ ...l, valor: Math.abs(l.valor), sai: l.valor < 0 })}>
-                          {l.descricao}
-                        </button>
-                      </td>
-                      <td>
-                        <select
-                          className="campo min-h-9 w-auto py-1"
-                          aria-label="Categoria"
-                          value={l.categoria}
-                          onChange={(e) => mudar("lancamentos", l.id, { categoria: e.target.value })}
-                        >
-                          {[...new Set([...CATEGORIAS, l.categoria])].map((c) => (
-                            <option key={c}>{c}</option>
-                          ))}
-                        </select>
-                      </td>
-                      <td className="n font-medium">{brl(l.valor)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                ))}
+              </tbody>
+            </Tabela>
           </>
         ))}
 

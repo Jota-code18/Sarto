@@ -2,7 +2,7 @@
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { useState } from "react";
 import { Formulario, type GrupoDef } from "@/componentes/formulario";
-import { Abas, Botao, Cabecalho, Cartao, Colunas, Confirmar, Copiar, cx, Gaveta, Nota, Numero, Numeros, Selo, type Tom, Vazio } from "@/componentes/ui";
+import { Abas, Botao, Cabecalho, Cartao, Colunas, Confirmar, Copiar, cx, Gaveta, Nota, Numero, Numeros, Selo, type Tom, Vazio, Tabela, Quadro } from "@/componentes/ui";
 import { br, brComp, brCurto, competencia, DIAS, hoje, maisComp, maisDias, paraData, segundaDe } from "@/lib/datas";
 import { brl, num, novoId } from "@/lib/formato";
 import { pode, quemPode } from "@/lib/regras";
@@ -144,10 +144,10 @@ export default function Marketing() {
               <ChevronRight size={16} />
             </Botao>
           </div>
-          <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
-            <div className="grid min-w-[920px] grid-cols-7 gap-px border border-linha bg-linha">
+          <Quadro nome="Semana de posts">
+            <div className="grid grid-cols-1 md:min-w-[920px] md:grid-cols-7 gap-px border border-linha bg-linha">
               {dias.map((d) => (
-                <section key={d} className={cx("min-h-44 p-2.5", d === hoje() ? "bg-giz" : "bg-papel")}>
+                <section key={d} className={cx("p-2.5 md:min-h-44", d === hoje() ? "bg-giz" : "bg-papel")}>
                   <h2 className="mb-2 flex items-baseline justify-between">
                     <span className="text-[13px]">{DIAS[paraData(d).getDay()]}</span>
                     <span className="text-[20px] font-light">{d.slice(8)}</span>
@@ -166,7 +166,7 @@ export default function Marketing() {
                 </section>
               ))}
             </div>
-          </div>
+          </Quadro>
         </>
       )}
       {aba === "resultado" && (
@@ -192,38 +192,36 @@ export default function Marketing() {
                   <Colunas dados={met.slice(-6).map((m) => ({ nome: brComp(m.comp), valor: m.leadsPagos }))} formato={num} />
                 </Cartao>
               </div>
-              <div className="overflow-x-auto">
-                <table className="tabela min-w-[640px]">
-                  <thead>
-                    <tr>
-                      <th>Mês</th>
-                      <th className="n">Seguidores</th>
-                      <th className="n">Alcance</th>
-                      <th className="n">Interações</th>
-                      <th className="n">Investido</th>
-                      <th className="n">Leads</th>
-                      <th className="n">Custo por lead</th>
+              <Tabela className="md:min-w-[640px]">
+                <thead>
+                  <tr>
+                    <th>Mês</th>
+                    <th className="n">Seguidores</th>
+                    <th className="n">Alcance</th>
+                    <th className="n">Interações</th>
+                    <th className="n">Investido</th>
+                    <th className="n">Leads</th>
+                    <th className="n">Custo por lead</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[...met].reverse().map((m) => (
+                    <tr key={m.id} className="clica">
+                      <td>
+                        <button type="button" className="font-medium hover:underline" onClick={() => setMe(m)}>
+                          {brComp(m.comp)}
+                        </button>
+                      </td>
+                      <td className="n">{num(m.seguidores)}</td>
+                      <td className="n">{num(m.alcance)}</td>
+                      <td className="n">{num(m.interacoes)}</td>
+                      <td className="n">{brl(m.investido)}</td>
+                      <td className="n">{num(m.leadsPagos)}</td>
+                      <td className="n">{m.leadsPagos ? brl(m.investido / m.leadsPagos) : "—"}</td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {[...met].reverse().map((m) => (
-                      <tr key={m.id} className="clica">
-                        <td>
-                          <button type="button" className="font-medium hover:underline" onClick={() => setMe(m)}>
-                            {brComp(m.comp)}
-                          </button>
-                        </td>
-                        <td className="n">{num(m.seguidores)}</td>
-                        <td className="n">{num(m.alcance)}</td>
-                        <td className="n">{num(m.interacoes)}</td>
-                        <td className="n">{brl(m.investido)}</td>
-                        <td className="n">{num(m.leadsPagos)}</td>
-                        <td className="n">{m.leadsPagos ? brl(m.investido / m.leadsPagos) : "—"}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                  ))}
+                </tbody>
+              </Tabela>
             </>
           )}
         </div>

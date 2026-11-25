@@ -120,7 +120,7 @@ export default function Config() {
               ))}
             </div>
           </details>
-          <div className="sticky bottom-0 mt-7 flex items-center gap-3 border-t border-linha bg-papel py-3">
+          <div className="sticky bottom-[calc(56px+env(safe-area-inset-bottom))] mt-7 lg:bottom-0 flex items-center gap-3 border-t border-linha bg-papel py-3">
             <Botao
               tom="cheio"
               disabled={!mudou || !pode(perfil, "regras")}
