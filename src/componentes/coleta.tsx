@@ -30,7 +30,6 @@ export function Coleta() {
   const [ocupado, setOcupado] = useState(false);
   const [lendo, setLendo] = useState(false);
   const trava = useRef(false);
-  const modo = useSarto((x) => x.modo);
 
   const atualizar = useCallback(async () => {
     try {
@@ -53,9 +52,8 @@ export function Coleta() {
               if (itens.length < 400) break;
             }
             const st = useSarto.getState();
-            const antes = st.modo === "demo" && !lidas.length ? [] : st.dados.anuncios;
             const r = mesclar(
-              antes,
+              st.dados.anuncios,
               todos.map(normalizar).filter((x): x is Bruto => !!x),
               st.regras.padraoCidade,
             );
@@ -77,10 +75,9 @@ export function Coleta() {
     }
   }, []);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: trocar de modo esquece o que foi lido
   useEffect(() => {
     atualizar();
-  }, [atualizar, modo]);
+  }, [atualizar]);
   useEffect(() => {
     if (!s?.rodando) return;
     const t = setInterval(atualizar, 10000);

@@ -1,55 +1,10 @@
+import { dadosVazios } from "./base";
 import { certidoesPadrao } from "./certidoes";
 import { TOTAL_CHECK_CORRETOR, CHECK_CORRETOR } from "./comercial";
 import { competencia, diaNoMes, hoje, maisComp, maisDias, maisMeses, segundaDe } from "./datas";
 import { calcularRepasse, CHECK_CONTRATO } from "./locacao";
-import { MODELOS_PROVISORIOS } from "./modelos";
-import { PENDENCIAS } from "./pendencias";
 import { REGRAS } from "./regras";
 import type { Captacao, Certidao, Checklist, Cobranca, Contrato, Corretor, Dados, Lead, Parte, Pessoa, Venda } from "./tipos";
-
-/** Base vazia: o que existe antes de qualquer cadastro */
-export function dadosVazios(): Dados {
-  return {
-    corretores: [],
-    leads: [],
-    captacoes: [],
-    anuncios: [],
-    notas: [],
-    contratos: [],
-    cobrancas: [],
-    contasInquilino: [],
-    repasses: [],
-    funil: [],
-    chamados: [],
-    multas: [],
-    vendas: [],
-    dossies: [],
-    modelos: structuredClone(MODELOS_PROVISORIOS),
-    minutas: [],
-    contasPagar: [],
-    lancamentos: [],
-    posts: [],
-    metricas: [],
-    eventos: reunioesFixas(),
-    rotinas: [],
-    estoque: [],
-    aniversarios: [],
-    registros: [],
-    custos: [],
-    pendencias: structuredClone(PENDENCIAS),
-    logs: [],
-  };
-}
-
-function reunioesFixas() {
-  const seg = segundaDe(hoje());
-  const base = { agenda: "reunioes", local: "Escritório", semanal: true, obs: "" };
-  return [
-    { id: "ev_seg", titulo: "Reunião da equipe geral", data: seg, inicio: "09:00", fim: "10:00", quem: "Todos", ...base },
-    { id: "ev_qui_m", titulo: "Treinamento de corretores", data: maisDias(seg, 3), inicio: "09:00", fim: "10:30", quem: "Corretores", ...base },
-    { id: "ev_qui_t", titulo: "Diretores e gestores", data: maisDias(seg, 3), inicio: "17:00", fim: "18:00", quem: "Diretores e gestores", ...base },
-  ];
-}
 
 const pessoa = (nome: string, n: number, doc = ""): Pessoa => ({
   nome,
@@ -59,7 +14,7 @@ const pessoa = (nome: string, n: number, doc = ""): Pessoa => ({
 });
 const feito = (dias: number, por: string) => ({ em: `${maisDias(hoje(), -dias)}T12:00:00.000Z`, por });
 
-/** Tudo aqui é inventado: nomes, telefones e valores. */
+/** Só para teste. Tudo aqui é inventado: nomes, telefones e valores. */
 export function dadosDemo(): Dados {
   const d = dadosVazios();
   const h = hoje();

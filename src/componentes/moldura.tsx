@@ -146,30 +146,13 @@ function Aviso() {
   );
 }
 
-function FaixaDemo() {
-  const modo = useSarto((s) => s.modo);
-  if (modo !== "demo") return null;
-  return (
-    <div className="nao-imprime mb-6 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 bg-alertaf px-4 py-2.5 text-[13px] text-alerta">
-      <span>
-        <strong className="font-semibold">Dados de demonstração.</strong> Pessoas, contratos e valores são inventados. Só a carteira de imóveis é real, lida do site.
-      </span>
-      <Link href="/config" className="font-medium underline underline-offset-4">
-        Começar com os dados da Sarto
-      </Link>
-    </div>
-  );
-}
-
 export function Moldura({ children }: { children: React.ReactNode }) {
   const [pronto, setPronto] = useState(false);
   const [menu, setMenu] = useState(false);
   const path = usePathname();
 
   useEffect(() => {
-    const tem = localStorage.getItem("sarto-painel");
     Promise.resolve(useSarto.persist.rehydrate()).then(() => {
-      if (!tem) acao().usarDemo();
       setPronto(true);
     });
     // outra aba mudou os dados: recarrega para não sobrescrever
@@ -204,14 +187,7 @@ export function Moldura({ children }: { children: React.ReactNode }) {
       )}
 
       <main key={path} className="mx-auto max-w-[1240px] px-4 py-6 sm:px-8 sm:py-9">
-        {pronto ? (
-          <>
-            <FaixaDemo />
-            {children}
-          </>
-        ) : (
-          <p className="py-20 text-center text-cinza">Abrindo o painel…</p>
-        )}
+        {pronto ? children : <p className="py-20 text-center text-cinza">Abrindo o painel…</p>}
       </main>
       <Aviso />
     </div>

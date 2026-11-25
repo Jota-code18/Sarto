@@ -3,7 +3,8 @@ import { conflitosVideo, horariosLivres, ics, prazoEntrega } from "./agenda";
 import { conferirLeitura, lerCertidao, resumoDossie, situacaoCert } from "./certidoes";
 import { faltando, leadRepetido } from "./comercial";
 import { diaNoMes, maisMeses, segundaDe } from "./datas";
-import { dadosDemo, dadosVazios } from "./demo";
+import { dadosVazios, semExemplos } from "./base";
+import { dadosDemo } from "./exemplo.fixture";
 import { lerCsv, lerExtratoCsv, lerOfx } from "./extrato";
 import { cnpjValido, cpfValido, csv, lerValor, linkWhats, valorExtenso } from "./formato";
 import { camposDe, camposVazios, dividirComissao, impedimentos, preencher, prazoPix } from "./juridico";
@@ -358,5 +359,22 @@ describe("dados", () => {
     const d = dadosDemo();
     expect(d.contratos).toHaveLength(15);
     for (const l of Object.values(d) as { id: string }[][]) expect(new Set(l.map((x) => x.id)).size).toBe(l.length);
+  });
+});
+
+describe("saída da demonstração", () => {
+  it("não sobra nada inventado", () => {
+    const { eventos, ...d } = semExemplos(dadosDemo());
+    const { eventos: ev, ...v } = dadosVazios();
+    expect(d).toEqual(v);
+    expect(eventos.map((e) => e.id)).toEqual(ev.map((e) => e.id));
+  });
+  it("mantém o que a pessoa cadastrou e o que veio da varredura", () => {
+    const d = dadosDemo();
+    const meu = { ...d.leads[0], id: "abc123wxyz" };
+    const anuncio = { ...d.anuncios[0], id: "q1w2e3r4t5" };
+    const s = semExemplos({ ...d, leads: [meu, ...d.leads], anuncios: [anuncio, ...d.anuncios] });
+    expect(s.leads).toEqual([meu]);
+    expect(s.anuncios).toEqual([anuncio]);
   });
 });

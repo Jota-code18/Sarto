@@ -2,7 +2,7 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { agora } from "./datas";
-import { dadosDemo, dadosVazios } from "./demo";
+import { dadosVazios, semExemplos } from "./base";
 import { novoId } from "./formato";
 import { PERFIS, REGRAS } from "./regras";
 import type { Anuncio, Colecao, Dados, Feito, Perfil, Regras } from "./tipos";
@@ -15,7 +15,6 @@ interface Estado {
   dados: Dados;
   regras: Regras;
   perfil: Perfil;
-  modo: "demo" | "real";
   aviso: { texto: string; tom: "ok" | "erro"; n: number } | null;
   salvar: <C extends Colecao>(c: C, item: Dados[C][number]) => void;
   mudar: <C extends Colecao>(c: C, id: string, p: Partial<Dados[C][number]>) => void;
@@ -26,14 +25,13 @@ interface Estado {
   avisar: (texto: string, tom?: "ok" | "erro") => void;
   registrar: (area: string, texto: string) => void;
   feito: () => Feito;
-  comecarDoZero: () => void;
-  usarDemo: () => void;
+  apagarTudo: () => void;
   importar: (j: unknown) => boolean;
 }
 
 type ComId = { id: string };
 const MAX_LOGS = 400;
-const VERSAO = 2;
+const VERSAO = 3;
 /** Varreduras já trazidas; esquecer faz o painel trazer de novo */
 export const CHAVE_COLETAS = "sarto-coletas-lidas";
 const relerColetas = () => localStorage.removeItem(CHAVE_COLETAS);
@@ -65,7 +63,6 @@ export const useSarto = create<Estado>()(
       dados: dadosVazios(),
       regras: REGRAS,
       perfil: "socios",
-      modo: "demo",
       aviso: null,
       salvar: (c, item) =>
         set((s) => {
@@ -91,23 +88,19 @@ export const useSarto = create<Estado>()(
           },
         })),
       feito: () => ({ em: agora(), por: PERFIS[get().perfil].nome }),
-      comecarDoZero: () => {
+      apagarTudo: () => {
         relerColetas();
-        set({ dados: dadosVazios(), modo: "real" });
-      },
-      usarDemo: () => {
-        relerColetas();
-        set({ dados: dadosDemo(), modo: "demo" });
+        set({ dados: dadosVazios() });
       },
       importar: (j) => {
-        const b = j as { app?: string; dados?: Partial<Dados>; regras?: Partial<Regras>; modo?: "demo" | "real" };
+        const b = j as { app?: string; dados?: Partial<Dados>; regras?: Partial<Regras>; modo?: string };
         if (b?.app !== "sarto-painel" || !b.dados || typeof b.dados !== "object") return false;
         const base = dadosVazios();
         // só aceita coleções conhecidas e que sejam lista
         for (const k of Object.keys(base) as Colecao[]) if (Array.isArray(b.dados[k])) (base as unknown as Record<string, unknown>)[k] = b.dados[k];
         Object.assign(base, completar(base));
         relerColetas();
-        set({ dados: base, regras: { ...REGRAS, ...b.regras }, modo: b.modo === "demo" ? "demo" : "real" });
+        set({ dados: b.modo === "demo" ? semExemplos(base) : base, regras: { ...REGRAS, ...b.regras } });
         return true;
       },
     }),
@@ -115,9 +108,12 @@ export const useSarto = create<Estado>()(
       name: "sarto-painel",
       version: VERSAO,
       storage: createJSONStorage(() => guarda),
-      migrate: (salvo) => salvo as Estado,
+      migrate: (salvo) => {
+        const { modo, ...g } = (salvo ?? {}) as Partial<Estado> & { modo?: string };
+        return (modo === "demo" ? { ...g, dados: semExemplos(g.dados ?? {}) } : g) as Estado;
+      },
       skipHydration: true,
-      partialize: (s) => ({ dados: s.dados, regras: s.regras, perfil: s.perfil, modo: s.modo }),
+      partialize: (s) => ({ dados: s.dados, regras: s.regras, perfil: s.perfil }),
       merge: (salvo, atual) => {
         const g = (salvo ?? {}) as Partial<Estado>;
         return {
@@ -132,8 +128,8 @@ export const useSarto = create<Estado>()(
 );
 
 export function exportarTudo() {
-  const { dados, regras, modo } = useSarto.getState();
-  return JSON.stringify({ app: "sarto-painel", versao: VERSAO, em: agora(), modo, dados, regras }, null, 1);
+  const { dados, regras } = useSarto.getState();
+  return JSON.stringify({ app: "sarto-painel", versao: VERSAO, em: agora(), dados, regras }, null, 1);
 }
 
 export const acao = () => useSarto.getState();

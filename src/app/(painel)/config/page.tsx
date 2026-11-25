@@ -2,7 +2,7 @@
 import { Download, Upload } from "lucide-react";
 import { useState } from "react";
 import { type CampoDef, Formulario, type GrupoDef } from "@/componentes/formulario";
-import { Botao, Cabecalho, Cartao, Confirmar, estiloBotao, Nota, Selo } from "@/componentes/ui";
+import { Botao, Cabecalho, Cartao, Confirmar, estiloBotao } from "@/componentes/ui";
 import { TIPOS_CERT } from "@/lib/certidoes";
 import { brHora, hoje } from "@/lib/datas";
 import { baixarArquivo } from "@/lib/formato";
@@ -86,10 +86,10 @@ const GRUPOS: GrupoDef[] = [
 ];
 
 export default function Config() {
-  const { regras, modo, perfil, dados } = useSarto();
-  const { setRegras, avisar, registrar, comecarDoZero, usarDemo, importar } = acao();
+  const { regras, perfil, dados } = useSarto();
+  const { setRegras, avisar, registrar, apagarTudo, importar } = acao();
   const [f, setF] = useState(regras);
-  const [conf, setConf] = useState<"" | "zero" | "demo" | "importar">("");
+  const [conf, setConf] = useState<"" | "zero" | "importar">("");
   const [arq, setArq] = useState<unknown>(null);
   const mudou = JSON.stringify(f) !== JSON.stringify(regras);
   const backup = () => baixarArquivo(`backup-sarto-${hoje()}.json`, exportarTudo(), "application/json");
@@ -142,12 +142,9 @@ export default function Config() {
 
         <div className="space-y-5">
           <Cartao titulo="Dados deste navegador">
-            <p className="mb-3">
-              <Selo tom={modo === "demo" ? "alerta" : "ok"}>{modo === "demo" ? "Demonstração" : "Dados da Sarto"}</Selo>
-            </p>
             <p className="text-[13px] text-cinza">
-              Tudo fica salvo só neste navegador: outra pessoa não vê o que você cadastrou aqui. Serve para testar o processo. O banco compartilhado com login entra quando a conta
-              do Supabase estiver em nome da Sarto.
+              Tudo fica salvo só neste navegador: outra pessoa não vê o que você cadastrou aqui. O banco compartilhado com login entra quando a conta do Supabase estiver em nome da
+              Sarto.
             </p>
             <div className="mt-4 flex flex-col gap-2">
               <Botao onClick={backup}>
@@ -172,10 +169,9 @@ export default function Config() {
                   }}
                 />
               </label>
-              <Botao tom={modo === "demo" ? "cheio" : "erro"} onClick={() => setConf("zero")}>
-                {modo === "demo" ? "Começar com os dados da Sarto" : "Apagar tudo e começar do zero"}
+              <Botao tom="erro" onClick={() => setConf("zero")}>
+                Apagar tudo deste navegador
               </Botao>
-              {modo === "real" && <Botao onClick={() => setConf("demo")}>Voltar para a demonstração</Botao>}
             </div>
             <p className="mt-3 text-[12px] text-cinza">PDFs e fotos não entram no backup.</p>
           </Cartao>
@@ -201,24 +197,16 @@ export default function Config() {
               </ul>
             )}
           </Cartao>
-          {modo === "demo" && <Nota>As regras acima já são as reais, tiradas do mapeamento. As marcadas como “a confirmar” são ponto de partida.</Nota>}
         </div>
       </div>
       <Confirmar
         aberta={!!conf}
-        titulo={
-          conf === "zero" ? (modo === "demo" ? "Começar com os dados da Sarto?" : "Apagar tudo?") : conf === "demo" ? "Voltar para a demonstração?" : "Restaurar este backup?"
-        }
-        texto={
-          conf === "zero" && modo === "demo"
-            ? "A demonstração sai e o painel abre vazio, com os modelos, as reuniões fixas e a lista do que falta."
-            : "O que está neste navegador será substituído. Baixe um backup antes, se precisar."
-        }
-        sim={conf === "zero" ? (modo === "demo" ? "Começar" : "Apagar tudo") : conf === "demo" ? "Voltar" : "Restaurar"}
+        titulo={conf === "zero" ? "Apagar tudo?" : "Restaurar este backup?"}
+        texto="O que está neste navegador será substituído. Baixe um backup antes, se precisar."
+        sim={conf === "zero" ? "Apagar tudo" : "Restaurar"}
         onNao={() => setConf("")}
         onSim={() => {
-          if (conf === "zero") comecarDoZero();
-          if (conf === "demo") usarDemo();
+          if (conf === "zero") apagarTudo();
           if (conf === "importar" && !importar(arq)) avisar("Este arquivo não é um backup do painel", "erro");
           else avisar("Pronto");
           setF(useSarto.getState().regras);
