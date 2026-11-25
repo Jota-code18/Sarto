@@ -1,0 +1,34 @@
+{
+  "name": "sarto-painel",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Painel de gestão da Sarto Imóveis: comercial, locação, jurídico, financeiro, marketing e ADM",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "docxtemplater": "3.71.1",
+    "idb-keyval": "6.3.0",
+    "lucide-react": "1.73.0",
+    "next": "16.4.6",
+    "pdfjs-dist": "6.5.438",
+    "pizzip": "3.3.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "zustand": "5.1.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "4.3.5",
+    "@types/node": "24.19.2",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "tailwindcss": "4.3.5",
+    "typescript": "5.9.3",
+    "vitest": "5.1.0"
+  },
+  "engines": { "node": ">=20" }
+}

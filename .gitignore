@@ -1,0 +1,22 @@
+node_modules/
+.next/
+out/
+.vercel/
+*.tsbuildinfo
+next-env.d.ts
+.env*
+!.env.example
+.DS_Store
+Thumbs.db
+# nunca versionar material interno ou dados de cliente
+*.pdf
+*.docx
+*.xlsx
+*.csv
+*.ofx
+/privado/
+backup-sarto-*.json
+.playwright-mcp/
+.claude/settings.local.json
+*.zip
+__pycache__/
