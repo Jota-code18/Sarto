@@ -38,7 +38,7 @@ type ComId = { id: string };
 const MAX_LOGS = 400;
 const VERSAO = 3;
 /** Varreduras já trazidas; esquecer faz o painel trazer de novo */
-export const CHAVE_COLETAS = "sarto-coletas-lidas";
+export const CHAVE_COLETAS = "sarto-coletas-lidas-2";
 const relerColetas = () => localStorage.removeItem(CHAVE_COLETAS);
 
 /** Completa dados salvos por versões anteriores do painel */

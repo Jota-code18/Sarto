@@ -125,6 +125,14 @@
   }
 }
 
+/* alvo de toque: 44 px no dedo, compacto no mouse */
+@utility toque {
+  min-height: 44px;
+  @media (pointer: fine) {
+    min-height: 32px;
+  }
+}
+
 @utility tabela {
   width: 100%;
   border-collapse: collapse;

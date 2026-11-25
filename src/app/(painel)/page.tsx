@@ -1,5 +1,9 @@
 "use client";
 import Link from "next/link";
+import { Contato, FotoAnuncio, LinkPortal } from "@/componentes/anuncio";
+import { useCarteira } from "@/componentes/uso";
+import { melhorContato, montarGrupos, precoM2 } from "@/lib/varredura";
+import { useMemo } from "react";
 import { Barras, Cabecalho, Cartao, Colunas, Costura, Numero, Numeros, Selo, Vazio } from "@/componentes/ui";
 import { doDia } from "@/lib/agenda";
 import { brComp, brHora, competencia, diaSemana, hoje, maisComp, porExtenso } from "@/lib/datas";
@@ -10,6 +14,15 @@ import { nomeAtual, useSarto } from "@/lib/store";
 
 export default function Inicio() {
   const { dados, regras, perfil } = useSarto();
+  const { carteira } = useCarteira();
+  const veVarredura = perfil === "socios" || perfil === "comercial";
+  const captar = useMemo(
+    () =>
+      veVarredura
+        ? montarGrupos(dados.anuncios, carteira, regras).filter((g) => g.particular && g.noPadrao && !g.sarto && [g.principal, ...g.outros].every((a) => a.status === "abordar"))
+        : [],
+    [veVarredura, dados.anuncios, carteira, regras],
+  );
   const h = hoje();
   const comp = competencia(h);
   const pend = pendenciasDe(perfil, dados, regras);
@@ -65,6 +78,40 @@ export default function Inicio() {
             </>
           )}
         </Numeros>
+      )}
+
+      {captar.length > 0 && (
+        <section className="mb-8">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-[13px] font-semibold uppercase tracking-wide">
+              Donos para abordar <span className="font-normal text-cinza">{captar.length}</span>
+            </h2>
+            <Link href="/varredura" className="toque inline-flex items-center text-[13px] underline underline-offset-4">
+              Abrir varredura
+            </Link>
+          </div>
+          <Costura className="my-3" />
+          <ul className="divide-y divide-linha">
+            {captar.slice(0, 5).map((g) => {
+              const a = melhorContato(g);
+              return (
+                <li key={g.id} className="flex flex-wrap items-center gap-x-4 gap-y-2 py-3">
+                  <FotoAnuncio foto={[a, g.principal, ...g.outros].find((x) => x.foto)?.foto} className="h-16 w-20" />
+                  <div className="min-w-0 flex-1 basis-52">
+                    <p className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                      <span className="font-medium">{a.titulo}</span>
+                      <LinkPortal a={a} />
+                    </p>
+                    <p className="text-[13px] text-cinza">
+                      {[a.bairro, brl(a.preco, false), a.area ? `${num(a.area)} m²` : "", precoM2(a) ? `${brl(precoM2(a), false)}/m²` : ""].filter(Boolean).join(", ")}
+                    </p>
+                  </div>
+                  <Contato a={a} />
+                </li>
+              );
+            })}
+          </ul>
+        </section>
       )}
 
       <div className="grid gap-6 lg:grid-cols-[1.45fr_1fr]">

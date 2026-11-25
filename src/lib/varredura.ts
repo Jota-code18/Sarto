@@ -6,7 +6,22 @@ import type { Anuncio, ImovelSite, Regras } from "./tipos";
 /** Anúncio recém-lido, antes de entrar no acompanhamento */
 export type Bruto = Pick<
   Anuncio,
-  "portal" | "url" | "titulo" | "tipo" | "bairro" | "cidade" | "preco" | "precoAnterior" | "area" | "quartos" | "anunciante" | "codAnunciante" | "particular" | "publicadoEm"
+  | "portal"
+  | "url"
+  | "titulo"
+  | "tipo"
+  | "bairro"
+  | "cidade"
+  | "preco"
+  | "precoAnterior"
+  | "area"
+  | "quartos"
+  | "anunciante"
+  | "codAnunciante"
+  | "particular"
+  | "telefone"
+  | "foto"
+  | "publicadoEm"
 >;
 
 // biome-ignore lint: formato muda conforme o coletor
@@ -35,6 +50,22 @@ const UNIDADES: Record<string, string> = {
   farm: "Rural",
   country_house: "Rural",
 };
+/** A OLX separa o tipo em texto livre */
+const tipoOlx = (t: string) => {
+  const s = semAcento(t);
+  if (/condom/.test(s)) return "Casa em condomínio";
+  if (/cobertura/.test(s)) return "Cobertura";
+  if (/apartamento|kitnet|flat|loft/.test(s)) return "Apartamento";
+  if (/casa|sobrado/.test(s)) return "Casa";
+  if (/sitio|chacara|fazenda/.test(s)) return "Rural";
+  if (/terreno|lote/.test(s)) return "Lote";
+  return /comerc|galp|loja|sala|predio/.test(s) ? "Comercial" : "";
+};
+/** "24000m²" e afins. Abaixo de 10 m² é campo preenchido por obrigação. */
+const areaOlx = (t: string) => {
+  const n = lerValor(t.replace(/m²|m2/gi, ""));
+  return n >= 10 ? n : 0;
+};
 const unidade = (t: unknown) => UNIDADES[txt(Array.isArray(t) ? t[0] : t).toLowerCase()] ?? "";
 
 /** Reconhece as saídas dos coletores da Apify (Zap e Viva Real, OLX) e planilha comum */
@@ -51,7 +82,7 @@ export function normalizar(x: unknown): Bruto | null {
       portal: portalDaUrl(url),
       url,
       titulo: txt(o.content?.title),
-      tipo: unidade(r.unit_types),
+      tipo: unidade(r.unit_types) || unidade(r.property_type),
       bairro: txt(o.location?.neighborhood),
       cidade: txt(o.location?.city),
       preco: nro(o.pricing.offers?.find((f: Obj) => f.business_type === "sale")?.amount ?? o.pricing.amount),
@@ -61,6 +92,8 @@ export function normalizar(x: unknown): Bruto | null {
       anunciante: txt(v.name),
       codAnunciante: txt(o.identity.external_id),
       particular: !v.license_number && (DONO.test(txt(v.name)) || /owner/i.test(txt(r.publisher_type))),
+      telefone: txt(o.telefone) || undefined,
+      foto: txt(o.foto) || undefined,
       publicadoEm: lerData(txt(o.timestamps?.created_at)) ?? undefined,
     };
   } else if (o.listingId && (o.seller || o.priceDisplay)) {
@@ -71,16 +104,18 @@ export function normalizar(x: unknown): Bruto | null {
       portal: "OLX",
       url: txt(o.url),
       titulo: txt(o.title),
-      tipo: txt(o.categoryName),
+      tipo: tipoOlx(p(/real_estate_type|re_types/)) || tipoOlx(txt(o.categoryName)),
       bairro: txt(o.neighborhood),
       cidade: txt(o.city),
       preco: nro(o.price),
       precoAnterior: nro(o.oldPrice),
-      area: nro(p(/area|tamanho/)),
-      quartos: nro(p(/quarto/)),
+      area: areaOlx(p(/^size$|area|tamanho/)),
+      quartos: nro(p(/^rooms$|quarto/)),
       anunciante: txt(o.seller?.name) || (dono ? "Proprietário" : ""),
       codAnunciante: "",
       particular: dono,
+      telefone: txt(o.telefone) || undefined,
+      foto: txt(o.foto) || undefined,
       publicadoEm: lerData(txt(o.postedAt)) ?? undefined,
     };
   } else if (o.advertiserName !== undefined || o.usableArea !== undefined) {
@@ -173,6 +208,8 @@ export function mesclar(atuais: Anuncio[], brutos: Bruto[], cidade: string, ref:
       area: b.area || a.area,
       quartos: b.quartos || a.quartos,
       bairro: b.bairro || a.bairro,
+      telefone: b.telefone ?? a.telefone,
+      foto: b.foto ?? a.foto,
       publicadoEm: a.publicadoEm ?? b.publicadoEm,
       precoAnterior: baixou ? a.preco : b.preco === a.preco ? Math.max(a.precoAnterior, b.precoAnterior) : b.precoAnterior,
       id: a.id,
@@ -237,6 +274,14 @@ export interface Grupo {
   peso: number;
   motivos: string[];
 }
+
+/** Quem dá para chamar: o dono com telefone, depois qualquer telefone, depois o anúncio do dono */
+export function melhorContato(g: Pick<Grupo, "principal" | "outros">): Anuncio {
+  const l = [g.principal, ...g.outros];
+  return l.find((a) => a.particular && a.telefone) ?? l.find((a) => a.particular) ?? l.find((a) => a.telefone) ?? g.principal;
+}
+
+export const precoM2 = (a: Pick<Anuncio, "preco" | "area">) => (a.area >= 10 ? a.preco / a.area : 0);
 
 /** Uma linha por imóvel: junta repetidos, marca o que já é da Sarto e ordena por chance de captar */
 export function montarGrupos(anuncios: Anuncio[], carteira: ImovelSite[], r: Regras, ref: Dia = hoje()): Grupo[] {
