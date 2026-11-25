@@ -1,7 +1,9 @@
+import { withSentryConfig } from "@sentry/nextjs/config";
 import type { NextConfig } from "next";
 
 const config: NextConfig = {
   reactStrictMode: true,
+  env: { NEXT_PUBLIC_VERCEL_ENV: process.env.VERCEL_ENV },
   poweredByHeader: false,
   // a pasta do usuário também tem package-lock.json; fixa a raiz aqui
   turbopack: { root: __dirname },
@@ -23,4 +25,7 @@ const config: NextConfig = {
   },
 };
 
-export default config;
+// o envio passa por /monitor, no próprio domínio: a política de conteúdo não precisa abrir para fora
+export default process.env.NEXT_PUBLIC_SENTRY_DSN
+  ? withSentryConfig(config, { tunnelRoute: "/monitor", silent: true, telemetry: false, sourcemaps: { disable: !process.env.SENTRY_AUTH_TOKEN } })
+  : config;

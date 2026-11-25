@@ -17,6 +17,7 @@
     "verificar": "npm run lint && npm run typecheck && npm run arquitetura && npm run morto && npm test && npm run build"
   },
   "dependencies": {
+    "@sentry/nextjs": "^11.17.0",
     "docxtemplater": "3.71.1",
     "idb-keyval": "6.3.0",
     "lucide-react": "1.73.0",
