@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { brHora } from "@/lib/datas";
 import { num } from "@/lib/formato";
-import { acao, useSarto } from "@/lib/store";
+import { acao, CHAVE_COLETAS, useSarto } from "@/lib/store";
 import { type Bruto, mesclar, normalizar } from "@/lib/varredura";
 import { Botao } from "./ui";
 
@@ -15,7 +15,6 @@ interface Estado {
   gasto?: number;
   erro?: string;
 }
-const CHAVE = "sarto-coletas-lidas";
 
 async function ler(u: string, init?: RequestInit) {
   const r = await fetch(u, { cache: "no-store", ...init });
@@ -31,13 +30,14 @@ export function Coleta() {
   const [ocupado, setOcupado] = useState(false);
   const [lendo, setLendo] = useState(false);
   const trava = useRef(false);
+  const modo = useSarto((x) => x.modo);
 
   const atualizar = useCallback(async () => {
     try {
       const e: Estado = await ler("/api/coleta");
       setS(e);
       if (trava.current) return;
-      const lidas: string[] = JSON.parse(localStorage.getItem(CHAVE) ?? "[]");
+      const lidas: string[] = JSON.parse(localStorage.getItem(CHAVE_COLETAS) ?? "[]");
       const novas = (e.prontas ?? []).filter((r) => !lidas.includes(r.id));
       if (novas.length) {
         trava.current = true;
@@ -53,13 +53,13 @@ export function Coleta() {
               if (itens.length < 400) break;
             }
             const st = useSarto.getState();
-            const antes = st.modo === "demo" ? [] : st.dados.anuncios;
+            const antes = st.modo === "demo" && !lidas.length ? [] : st.dados.anuncios;
             const r = mesclar(antes, todos.map(normalizar).filter((x): x is Bruto => !!x), st.regras.padraoCidade);
             useSarto.setState({ dados: { ...st.dados, anuncios: r.lista } });
             novos += r.novos;
             baixaram += r.baixaram;
             lidas.push(id);
-            localStorage.setItem(CHAVE, JSON.stringify(lidas.slice(-60)));
+            localStorage.setItem(CHAVE_COLETAS, JSON.stringify(lidas.slice(-60)));
           }
           acao().registrar("Varredura", `${novos} novos, ${baixaram} baixaram de preço`);
           acao().avisar(`Varredura: ${novos} novos, ${baixaram} baixaram de preço`);
@@ -75,7 +75,7 @@ export function Coleta() {
 
   useEffect(() => {
     atualizar();
-  }, [atualizar]);
+  }, [atualizar, modo]);
   useEffect(() => {
     if (!s?.rodando) return;
     const t = setInterval(atualizar, 10000);
