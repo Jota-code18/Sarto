@@ -221,8 +221,7 @@ export function buscas(r: Regras): { portal: string; url: string }[] {
   return [
     { portal: "ZAP Imóveis", url: `https://www.zapimoveis.com.br/venda/imoveis/go+anapolis/${p}${ord}` },
     { portal: "Viva Real", url: `https://www.vivareal.com.br/venda/goias/anapolis/${p}${ord}` },
-    // a OLX ignora a cidade no endereço: a pessoa escolhe Anápolis lá, e o painel descarta o resto
-    { portal: "OLX", url: `https://www.olx.com.br/imoveis/venda/casas/estado-go?sf=1${r.padraoPrecoMin ? `&ps=${r.padraoPrecoMin}` : ""}` },
+    { portal: "OLX", url: `https://www.olx.com.br/imoveis/estado-go/anapolis?sf=1${r.padraoPrecoMin ? `&ps=${r.padraoPrecoMin}` : ""}` },
     { portal: "62imóveis", url: "https://www.62imoveis.com.br/venda/go/anapolis/todos" },
   ];
 }

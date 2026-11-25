@@ -24,7 +24,7 @@ const INTEG: { nome: string; faz: string; st: "pronta" | "manual" | "espera"; fa
   { nome: "API da Anthropic", faz: "IA do sistema", st: "espera", falta: "Conta com cartão da Sarto" },
   { nome: "Asaas", faz: "Boleto, Pix e baixa automática", st: "espera", falta: "Conta empresarial" },
   { nome: "ClickSign", faz: "Assinatura", st: "espera", falta: "Plano com API" },
-  { nome: "Portais (varredura)", faz: "ZAP e Viva Real toda segunda, pela Apify, dentro do crédito gratuito", st: "manual", falta: "OLX e 62imóveis ainda sem coletor por cidade" },
+  { nome: "Portais (varredura)", faz: "ZAP, Viva Real e OLX toda segunda, pela Apify, dentro do crédito gratuito", st: "manual", falta: "62imóveis ainda sem coletor" },
   { nome: "Instagram e Meta Ads", faz: "Resultado orgânico e pago", st: "espera", falta: "Acesso profissional" },
   { nome: "Canal Pro", faz: "Importa o relatório com a nota de qualidade", st: "manual", falta: "Usuário da Sarto no Canal Pro" },
 ];

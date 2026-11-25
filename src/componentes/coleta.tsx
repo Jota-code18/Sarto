@@ -10,12 +10,12 @@ interface Estado {
   ligada?: boolean;
   falta?: string[];
   rodando?: boolean;
-  ultima?: { id: string; inicio: string };
+  prontas?: { id: string; inicio: string }[];
   falhou?: boolean;
   gasto?: number;
   erro?: string;
 }
-const CHAVE = "sarto-ultima-coleta";
+const CHAVE = "sarto-coletas-lidas";
 
 async function ler(u: string, init?: RequestInit) {
   const r = await fetch(u, { cache: "no-store", ...init });
@@ -36,23 +36,33 @@ export function Coleta() {
     try {
       const e: Estado = await ler("/api/coleta");
       setS(e);
-      if (e.ultima && localStorage.getItem(CHAVE) !== e.ultima.id && !trava.current) {
+      if (trava.current) return;
+      const lidas: string[] = JSON.parse(localStorage.getItem(CHAVE) ?? "[]");
+      const novas = (e.prontas ?? []).filter((r) => !lidas.includes(r.id));
+      if (novas.length) {
         trava.current = true;
         setLendo(true);
+        let novos = 0;
+        let baixaram = 0;
         try {
-          const todos: unknown[] = [];
-          for (let o = 0; o < 4000; o += 400) {
-            const { itens } = await ler(`/api/coleta?rodada=${e.ultima.id}&offset=${o}`);
-            todos.push(...itens);
-            if (itens.length < 400) break;
+          for (const { id } of novas) {
+            const todos: unknown[] = [];
+            for (let o = 0; o < 4000; o += 400) {
+              const { itens } = await ler(`/api/coleta?rodada=${id}&offset=${o}`);
+              todos.push(...itens);
+              if (itens.length < 400) break;
+            }
+            const st = useSarto.getState();
+            const antes = st.modo === "demo" ? [] : st.dados.anuncios;
+            const r = mesclar(antes, todos.map(normalizar).filter((x): x is Bruto => !!x), st.regras.padraoCidade);
+            useSarto.setState({ dados: { ...st.dados, anuncios: r.lista } });
+            novos += r.novos;
+            baixaram += r.baixaram;
+            lidas.push(id);
+            localStorage.setItem(CHAVE, JSON.stringify(lidas.slice(-60)));
           }
-          const st = useSarto.getState();
-          const antes = st.modo === "demo" ? [] : st.dados.anuncios;
-          const r = mesclar(antes, todos.map(normalizar).filter((x): x is Bruto => !!x), st.regras.padraoCidade);
-          useSarto.setState({ dados: { ...st.dados, anuncios: r.lista } });
-          localStorage.setItem(CHAVE, e.ultima.id);
-          acao().registrar("Varredura", `${r.novos} novos, ${r.baixaram} baixaram de preço`);
-          acao().avisar(`Varredura: ${r.novos} novos, ${r.baixaram} baixaram de preço`);
+          acao().registrar("Varredura", `${novos} novos, ${baixaram} baixaram de preço`);
+          acao().avisar(`Varredura: ${novos} novos, ${baixaram} baixaram de preço`);
         } finally {
           trava.current = false;
           setLendo(false);
@@ -84,6 +94,7 @@ export function Coleta() {
     setOcupado(false);
   };
 
+  const ultima = s?.prontas?.at(-1);
   return (
     <section className="mb-7 flex flex-wrap items-center justify-between gap-4 bg-linho px-5 py-4" aria-live="polite">
       <div className="text-[13px]">
@@ -98,11 +109,11 @@ export function Coleta() {
         ) : lendo ? (
           "Trazendo os anúncios…"
         ) : s.rodando ? (
-          "Varrendo ZAP e Viva Real. Pode sair desta tela: o resultado entra sozinho quando você voltar."
+          "Varrendo ZAP, Viva Real e OLX. Pode sair desta tela: o resultado entra sozinho quando você voltar."
         ) : (
           <>
-            <b className="font-semibold">{s.ultima ? `Última varredura: ${brHora(s.ultima.inicio)}` : "Nenhuma varredura ainda"}</b>
-            <span className="block text-cinza">Roda sozinha toda segunda às 5h. ZAP e Viva Real, a partir de R$ 1 milhão. Uso do mês: US$ {num(s.gasto ?? 0, 2)} de 5 gratuitos.</span>
+            <b className="font-semibold">{ultima ? `Última varredura: ${brHora(ultima.inicio)}` : "Nenhuma varredura ainda"}</b>
+            <span className="block text-cinza">Roda sozinha toda segunda às 5h. ZAP, Viva Real e OLX, em Anápolis, a partir de R$ 1 milhão. Uso do mês: US$ {num(s.gasto ?? 0, 2)} de 5 gratuitos.</span>
             {s.falhou && <span className="block text-erro">A tentativa mais recente falhou.</span>}
           </>
         )}

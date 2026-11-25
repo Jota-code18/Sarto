@@ -17,10 +17,12 @@ export async function GET(req: Request) {
     if (pedida) {
       const r = rs.find((x) => x.id === pedida);
       if (!r) return Response.json({ erro: "Varredura não encontrada" }, { status: 404 });
-      return Response.json({ itens: await itens(r.dataset, Math.max(0, Number(q.get("offset")) || 0)) });
+      return Response.json({ itens: await itens(r, Math.max(0, Number(q.get("offset")) || 0)) });
     }
-    const ok = rs.find((r) => r.status === "SUCCEEDED");
-    return Response.json({ ligada: true, rodando: rs.some(rodando), ultima: ok && { id: ok.id, inicio: ok.inicio }, falhou: rs[0] && !rodando(rs[0]) && rs[0].status !== "SUCCEEDED", gasto: await gastoDoMes() });
+    // últimos 35 dias, da mais antiga para a mais nova: o painel traz as que ainda não leu
+    const prontas = rs.filter((r) => r.status === "SUCCEEDED" && Date.now() - Date.parse(r.inicio) < 35 * 864e5).reverse();
+    const falhou = [...new Set(rs.map((r) => r.ator))].some((c) => { const r = rs.find((x) => x.ator === c)!; return !rodando(r) && r.status !== "SUCCEEDED"; });
+    return Response.json({ ligada: true, rodando: rs.some(rodando), prontas: prontas.map((r) => ({ id: r.id, inicio: r.inicio })), falhou, gasto: await gastoDoMes() });
   } catch (e) {
     return erro(e);
   }
