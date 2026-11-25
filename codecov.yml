@@ -1,0 +1,6 @@
+# Regra nova chega testada; o total não pode cair
+coverage:
+  status:
+    project: { default: { target: auto, threshold: 1% } }
+    patch: { default: { target: 70% } }
+comment: { layout: "diff, files" }

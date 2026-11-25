@@ -36,6 +36,9 @@ jobs:
           TOPO: ${{ github.event.pull_request.head.sha }}
   qualidade:
     name: Qualidade
+    permissions:
+      contents: read
+      id-token: write
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -49,5 +52,32 @@ jobs:
       - run: npm run typecheck
       - run: npm run arquitetura
       - run: npm run morto
-      - run: npm test
+      - run: npm run test:cobertura
+      - uses: codecov/codecov-action@v5
+        if: always()
+        with:
+          use_oidc: true
+          files: coverage/lcov.info
+          fail_ci_if_error: false
       - run: npm run build
+  e2e:
+    name: Ponta a ponta
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - run: npm run e2e
+      - uses: actions/upload-artifact@v5
+        if: failure()
+        with:
+          name: playwright
+          path: |
+            playwright-report
+            test-results
