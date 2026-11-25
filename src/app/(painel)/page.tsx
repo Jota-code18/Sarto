@@ -6,7 +6,7 @@ import { brComp, brHora, competencia, diaSemana, hoje, maisComp, porExtenso } fr
 import { brl, brlCurto, num } from "@/lib/formato";
 import { indicadores, pendenciasDe } from "@/lib/hoje";
 import { PERFIS } from "@/lib/regras";
-import { useSarto } from "@/lib/store";
+import { nomeAtual, useSarto } from "@/lib/store";
 
 export default function Inicio() {
   const { dados, regras, perfil } = useSarto();
@@ -24,7 +24,7 @@ export default function Inicio() {
 
   return (
     <>
-      <Cabecalho area={`PAINEL ${PERFIS[perfil].area.split(" ")[0].toUpperCase()}`} titulo={PERFIS[perfil].nome} texto={`${diaSemana(h)}, ${porExtenso(h)}`} />
+      <Cabecalho area={`PAINEL ${PERFIS[perfil].area.split(" ")[0].toUpperCase()}`} titulo={useSarto(nomeAtual)} texto={`${diaSemana(h)}, ${porExtenso(h)}`} />
 
       {gestor && (
         <Numeros>

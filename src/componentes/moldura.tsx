@@ -5,64 +5,11 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { pendenciasDe } from "@/lib/hoje";
 import { PERFIS } from "@/lib/regras";
-import { acao, useSarto } from "@/lib/store";
+import { acao, nomeAtual, useSarto } from "@/lib/store";
+import { MENU, podeVer } from "@/lib/telas";
 import type { Perfil } from "@/lib/tipos";
 import { Logo } from "./logo";
 import { Botao, cx } from "./ui";
-
-type Item = { href: string; nome: string; perfis?: Perfil[] };
-const TODOS_GESTORES: Perfil[] = ["socios", "comercial", "locacao", "marketing", "juridico"];
-const MENU: { grupo: string; itens: Item[] }[] = [
-  {
-    grupo: "",
-    itens: [
-      { href: "/", nome: "Início" },
-      { href: "/aprovacoes", nome: "Aprovações", perfis: TODOS_GESTORES },
-      { href: "/agenda", nome: "Agenda" },
-    ],
-  },
-  {
-    grupo: "Comercial",
-    itens: [
-      { href: "/leads", nome: "Leads", perfis: ["socios", "comercial", "corretor", "marketing"] },
-      { href: "/captacao", nome: "Captação", perfis: ["socios", "comercial", "corretor", "locacao"] },
-      { href: "/carteira", nome: "Carteira e nota dos anúncios", perfis: ["socios", "comercial", "corretor", "marketing"] },
-      { href: "/varredura", nome: "Varredura dos portais", perfis: ["socios", "comercial"] },
-      { href: "/corretores", nome: "Corretores", perfis: ["socios", "comercial", "marketing"] },
-    ],
-  },
-  {
-    grupo: "Locação",
-    itens: [
-      { href: "/locacao", nome: "Contratos", perfis: ["socios", "locacao"] },
-      { href: "/locacao/cobrancas", nome: "Cobranças e repasses", perfis: ["socios", "locacao"] },
-      { href: "/locacao/funil", nome: "Funil de locação", perfis: ["socios", "locacao", "comercial"] },
-      { href: "/locacao/atendimento", nome: "Chamados e multas", perfis: ["socios", "locacao"] },
-      { href: "/locacao/obrigacoes", nome: "Informe e DIMOB", perfis: ["socios", "locacao"] },
-    ],
-  },
-  {
-    grupo: "Jurídico",
-    itens: [
-      { href: "/pos-venda", nome: "Pós-venda", perfis: ["socios", "comercial", "juridico", "locacao", "corretor"] },
-      { href: "/certidoes", nome: "Certidões", perfis: ["socios", "comercial", "juridico", "locacao"] },
-      { href: "/minutas", nome: "Minutas e modelos", perfis: ["socios", "comercial", "juridico", "locacao"] },
-      { href: "/consulta", nome: "Consulta de publicações", perfis: ["socios", "juridico", "locacao", "comercial"] },
-    ],
-  },
-  {
-    grupo: "Gestão",
-    itens: [
-      { href: "/financeiro", nome: "Financeiro", perfis: ["socios", "locacao"] },
-      { href: "/marketing", nome: "Marketing", perfis: ["socios", "marketing", "comercial"] },
-      { href: "/rotina", nome: "Rotina do escritório" },
-      { href: "/registro", nome: "Registro de atividades" },
-      { href: "/custos", nome: "Custos e integrações", perfis: ["socios"] },
-      { href: "/pendencias", nome: "O que falta da Sarto", perfis: TODOS_GESTORES },
-      { href: "/config", nome: "Configurações", perfis: TODOS_GESTORES },
-    ],
-  },
-];
 
 function Navegacao({ onIr }: { onIr?: () => void }) {
   const path = usePathname();
@@ -107,21 +54,49 @@ function Navegacao({ onIr }: { onIr?: () => void }) {
 
 function QuemSou() {
   const perfil = useSarto((s) => s.perfil);
+  const usuarioId = useSarto((s) => s.usuarioId);
+  const usuarios = useSarto((s) => s.dados.usuarios);
+  const ativos = usuarios.filter((u) => u.ativo);
+  const valor = ativos.some((u) => u.id === usuarioId) ? `u:${usuarioId}` : `p:${perfil}`;
   return (
     <label className="block border-t border-tecido px-5 py-4 text-[12px] text-nevoa">
       Usando como
       <select
-        className="mt-1 block min-h-9 w-full border border-tecido bg-carvao px-2 text-[14px] text-papel"
-        value={perfil}
-        onChange={(e) => acao().setPerfil(e.target.value as Perfil)}
+        className="mt-1 block min-h-11 w-full border border-tecido bg-carvao px-2 text-[14px] text-papel lg:min-h-9"
+        value={valor}
+        onChange={(e) => {
+          const [t, id] = e.target.value.split(":");
+          if (t === "u") acao().setUsuario(id);
+          else acao().setPerfil(id as Perfil);
+        }}
       >
-        {(Object.keys(PERFIS) as Perfil[]).map((p) => (
-          <option key={p} value={p}>
-            {PERFIS[p].nome} ({PERFIS[p].area})
+        {ativos.map((u) => (
+          <option key={u.id} value={`u:${u.id}`}>
+            {u.nome} ({PERFIS[u.perfil].area})
           </option>
         ))}
+        {(Object.keys(PERFIS) as Perfil[])
+          .filter((p) => !ativos.some((u) => u.perfil === p) || valor === `p:${p}`)
+          .map((p) => (
+            <option key={p} value={`p:${p}`}>
+              {PERFIS[p].nome} ({PERFIS[p].area})
+            </option>
+          ))}
       </select>
     </label>
+  );
+}
+
+function SemPermissao() {
+  const nome = useSarto(nomeAtual);
+  return (
+    <div className="py-16 text-center">
+      <p className="text-[18px] font-semibold">Esta seção não faz parte do perfil de {nome}.</p>
+      <p className="mx-auto mt-2 max-w-md text-cinza">Um dos sócios pode mudar o perfil em Usuários.</p>
+      <Link href="/" className="mt-4 inline-flex min-h-11 items-center underline underline-offset-4">
+        Voltar ao início
+      </Link>
+    </div>
   );
 }
 
@@ -150,6 +125,7 @@ export function Moldura({ children }: { children: React.ReactNode }) {
   const [pronto, setPronto] = useState(false);
   const [menu, setMenu] = useState(false);
   const path = usePathname();
+  const perfil = useSarto((s) => s.perfil);
 
   useEffect(() => {
     Promise.resolve(useSarto.persist.rehydrate()).then(() => {
@@ -187,7 +163,7 @@ export function Moldura({ children }: { children: React.ReactNode }) {
       )}
 
       <main key={path} className="mx-auto max-w-[1240px] px-4 py-6 sm:px-8 sm:py-9">
-        {pronto ? children : <p className="py-20 text-center text-cinza">Abrindo o painel…</p>}
+        {!pronto ? <p className="py-20 text-center text-cinza">Abrindo o painel…</p> : podeVer(perfil, path) ? children : <SemPermissao />}
       </main>
       <Aviso />
     </div>

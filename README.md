@@ -49,7 +49,7 @@ Defina `PAINEL_SENHA` nas variáveis de ambiente da Vercel e publique de novo. S
 - Venda não muda de etapa com item aberto.
 - Repasse, multa, comissão e post precisam do sim de quem responde por eles.
 
-Trocar de perfil no menu não é segurança: identifica quem fez. Segurança de verdade vem com o login do Supabase.
+Trocar de perfil no menu não é segurança: identifica quem fez. Segurança de verdade vem com o login do Supabase, já preparado em `supabase/migrations` com políticas por perfil testadas.
 
 ## Skill do Claude
 
