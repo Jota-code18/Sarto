@@ -1,17 +1,15 @@
 "use client";
-import { ExternalLink, MessageCircle, Plus, Upload } from "lucide-react";
+import { ExternalLink, MessageCircle, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
-import { BotaoFavorito, ColarCaptura } from "@/componentes/captura";
+import { Coleta } from "@/componentes/coleta";
 import { Formulario, type GrupoDef } from "@/componentes/formulario";
 import { Abas, Barras, Botao, Busca, Cabecalho, Cartao, Confirmar, Copiar, cx, Escolha, estiloBotao, Gaveta, ListaInfo, Nota, Numero, Numeros, Selo, Vazio } from "@/componentes/ui";
 import { useCarteira } from "@/componentes/uso";
-import { anunciosDaCaptura, type Captura } from "@/lib/captura";
 import { br, diasEntre, hoje, prazo, segundaDe } from "@/lib/datas";
 import { baixarArquivo, brl, csv, linkWhats, novoId, num, semAcento } from "@/lib/formato";
-import { lerArquivo } from "@/lib/planilha";
 import { acao, useSarto } from "@/lib/store";
 import type { Anuncio } from "@/lib/tipos";
-import { APIFY, type Bruto, buscas, custoApify, type Grupo, mesclar, montarGrupos, normalizar } from "@/lib/varredura";
+import { type Grupo, montarGrupos } from "@/lib/varredura";
 
 const PORTAIS = ["ZAP Imóveis", "Viva Real", "OLX", "62imóveis"];
 const STATUS: Record<Anuncio["status"], string> = { abordar: "Abordar", contatado: "Contatado", captado: "Captado", descartado: "Descartado" };
@@ -40,41 +38,6 @@ const GRUPOS: GrupoDef[] = [
     ],
   },
 ];
-
-function Custo() {
-  const [z, setZ] = useState(1521);
-  const [o, setO] = useState(0);
-  const [n, setN] = useState(4);
-  const c = custoApify(z, o, n);
-  return (
-    <div className="bg-giz p-4">
-      <div className="grid grid-cols-3 gap-3">
-        {(
-          [
-            ["ZAP e Viva Real, por coleta", z, setZ],
-            ["OLX, por coleta", o, setO],
-            ["Coletas por mês", n, setN],
-          ] as const
-        ).map(([nome, v, f]) => (
-          <label key={nome} className="text-[12px] font-medium">
-            {nome}
-            <input type="number" min={0} className="campo mt-1" value={v} onChange={(e) => f(Math.max(0, Number(e.target.value) || 0))} />
-          </label>
-        ))}
-      </div>
-      <p className="mt-3 text-[13px]">
-        Uso: <b className="font-medium">US$ {num(c.uso, 2)}</b> por mês.{" "}
-        {c.pago === 0 ? (
-          <>Cabe no plano gratuito (US$ {APIFY.gratis} por mês, sem cartão).</>
-        ) : (
-          <>
-            Plano pago: <b className="font-medium">US$ {num(c.pago, 2)}</b>, perto de {brl(c.reais, false)} mais IOF.
-          </>
-        )}
-      </p>
-    </div>
-  );
-}
 
 export default function Varredura() {
   const { dados, regras } = useSarto();
@@ -107,26 +70,6 @@ export default function Varredura() {
   const ultima = dados.anuncios.map((a) => a.vistoEm).sort().at(-1);
   const g = grupos.find((x) => x.id === ver);
 
-  const receber = (brutos: Bruto[], de: string) => {
-    if (!brutos.length) return avisar("Não reconheci nenhum anúncio com preço", "erro");
-    const s = useSarto.getState();
-    const r = mesclar(s.dados.anuncios, brutos, s.regras.padraoCidade);
-    useSarto.setState({ dados: { ...s.dados, anuncios: r.lista } });
-    registrar("Varredura", `${de}: ${r.novos} novos, ${r.baixaram} baixaram de preço`);
-    avisar(`${r.novos} novos, ${r.baixaram} baixaram, ${r.iguais} sem mudança${r.foraDaCidade ? `, ${r.foraDaCidade} de outra cidade` : ""}`);
-  };
-  const importar = async (f?: File) => {
-    if (!f) return;
-    try {
-      receber((await lerArquivo(f)).map(normalizar).filter((x): x is Bruto => !!x), f.name);
-    } catch {
-      avisar("Não consegui abrir o arquivo. Use .json, .csv ou .xlsx.", "erro");
-    }
-  };
-  const colar = (c: Captura) => {
-    if (/jetimob/.test(c.host)) return avisar("Esta captura é do Jetimob. Cole em Carteira.", "erro");
-    receber(anunciosDaCaptura(c, hoje()), `captura de ${c.host.replace(/^www\./, "")}`);
-  };
   const marcar = (gr: Grupo, status: Anuncio["status"]) => {
     for (const a of [gr.principal, ...gr.outros]) mudar("anuncios", a.id, { status });
     registrar("Varredura", `marcou "${gr.principal.titulo}" como ${STATUS[status].toLowerCase()}`);
@@ -152,21 +95,6 @@ export default function Varredura() {
   return (
     <>
       <Cabecalho area="COMERCIAL VARREDURA" titulo="Varredura dos portais" texto="Uma linha por imóvel: junta repetidos, tira o que a Sarto já tem e ordena por chance de captar.">
-        <ColarCaptura onLer={colar} tom="cheio">
-          Colar captura
-        </ColarCaptura>
-        <label className={estiloBotao()}>
-          <Upload size={16} /> Importar coleta
-          <input
-            type="file"
-            accept=".json,.jsonl,.csv,.xlsx"
-            className="sr-only"
-            onChange={(e) => {
-              importar(e.target.files?.[0]);
-              e.target.value = "";
-            }}
-          />
-        </label>
         <Copiar texto={resumo} pequeno={false}>
           Copiar lista do Igor
         </Copiar>
@@ -179,36 +107,7 @@ export default function Varredura() {
         <Numero valor={por.abordar.filter((x) => x.baixou > 0).length} nome="Baixaram de preço" />
       </Numeros>
 
-      <details className="mb-7 bg-linho" open={dados.anuncios.length < 10}>
-        <summary className="px-5 py-4 text-[13px] font-semibold uppercase tracking-wide">Como coletar</summary>
-        <div className="grid gap-6 px-5 pb-5 lg:grid-cols-2">
-          <div className="text-[13px] leading-relaxed">
-            <h3 className="mb-1 font-semibold">Pelo navegador, de graça, hoje</h3>
-            <ol className="list-decimal space-y-1 pl-5">
-              <li>Arraste o botão para a barra de favoritos, uma vez só.</li>
-              <li>Abra a busca já filtrada, role até o fim da página e clique no favorito.</li>
-              <li>Clique em Copiar para o painel, volte aqui e use Colar captura. Repita em 3 a 5 páginas.</li>
-            </ol>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <BotaoFavorito />
-              {buscas(regras).map((b) => (
-                <a key={b.portal} className={estiloBotao("linha", true)} href={b.url} target="_blank" rel="noreferrer">
-                  <ExternalLink size={14} /> {b.portal}
-                </a>
-              ))}
-            </div>
-            <p className="mt-3 text-cinza">As buscas vêm do mais novo para o mais antigo, a partir de {brl(regras.padraoPrecoMin, false)}. Na OLX, escolha Anápolis na localização. O favorito só lê o que está na sua tela: não abre página sozinho nem contorna bloqueio.</p>
-          </div>
-          <div className="text-[13px] leading-relaxed">
-            <h3 className="mb-1 font-semibold">Pela Apify, sem ninguém clicar</h3>
-            <p>ZAP, Viva Real, OLX e 62imóveis bloqueiam robô próprio. A Apify cobra por anúncio lido: US$ {num(APIFY.zapPorMil, 2)} por mil no ZAP e Viva Real (a base é a mesma) e US$ {num(APIFY.olxPorMil, 2)} por mil na OLX. Não há coletor do 62imóveis.</p>
-            <p className="mb-2 mt-2">Em 25/11/2026 havia 1.521 imóveis acima de R$ 1 milhão em Anápolis no ZAP. Simule:</p>
-            <Custo />
-            <p className="mt-2">Para caber no gratuito: uma coleta completa por mês e, nas outras semanas, só os 300 mais recentes (US$ 4,82). A OLX repete os anúncios profissionais do ZAP; dela interessam os donos, que a captura pega.</p>
-            <p className="mt-2 text-cinza">Na conta gratuita, rode o coletor no site da Apify, exporte em JSON e use Importar coleta. Os portais proíbem coleta automática nos termos de uso: o risco é de bloqueio.</p>
-          </div>
-        </div>
-      </details>
+      <Coleta />
 
       <Abas
         atual={aba}
@@ -262,7 +161,7 @@ export default function Varredura() {
       <div className={cx("grid gap-6", aba === "abordar" && bairros.length > 2 && "lg:grid-cols-[1fr_250px]")}>
         <div className="min-w-0">
           {lista.length === 0 ? (
-            <Vazio>{dados.anuncios.length ? "Nada com esse filtro." : "Nenhuma coleta ainda. Use o favorito numa busca do ZAP e cole aqui."}</Vazio>
+            <Vazio>{dados.anuncios.length ? "Nada com esse filtro." : "Nenhuma varredura ainda."}</Vazio>
           ) : (
             <div className="overflow-x-auto">
               <table className="tabela min-w-[740px]">

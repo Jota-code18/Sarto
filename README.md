@@ -30,7 +30,7 @@ Defina `PAINEL_SENHA` nas variáveis de ambiente da Vercel e publique de novo. S
 | Leads | cadastro no celular, lead repetido, lista para lançar no JetImob |
 | Captação | manual de captação, CEP, fotos pelo mínimo do tipo, PDF padrão Sarto |
 | Carteira | lê o site toda segunda (GitHub Actions), recebe a nota do Canal Pro e o alerta do Jetimob, aponta preço divergente |
-| Varredura | captura pelo navegador (ZAP, Viva Real, OLX, 62imóveis) ou arquivo da Apify; junta repetidos, tira o que é da Sarto, percebe queda de preço |
+| Varredura | ZAP e Viva Real pela Apify, toda segunda ou no botão, com `APIFY_TOKEN` e `PAINEL_SENHA`; junta repetidos, tira o que é da Sarto, percebe queda de preço |
 | Corretores | checklist de entrada com responsável |
 | Locação | semáforo por contrato, cobrança com multa e juros, WhatsApp pronto, repasse com aprovação, reajuste pelo Banco Central, saída, informe e base da DIMOB |
 | Pós-venda | 7 etapas com trava, resumo para o jurídico, comissão, avisos |

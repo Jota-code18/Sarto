@@ -13,4 +13,4 @@ export async function proxy(req: NextRequest) {
 }
 
 // tudo passa pela senha, menos a própria tela de entrada, a marca e os arquivos do Next
-export const config = { matcher: ["/((?!entrar|_next/static|_next/image|icon.svg|marca/).*)"] };
+export const config = { matcher: ["/((?!entrar|api/agendada|_next/static|_next/image|icon.svg|marca/).*)"] };
