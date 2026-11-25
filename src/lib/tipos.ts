@@ -398,7 +398,7 @@ export interface Aniversario {
   contexto: string;
   enviadoAno?: number;
 }
-export interface Registro {
+interface Registro {
   id: string;
   data: Dia;
   pessoa: string;
@@ -422,7 +422,7 @@ export interface Pendencia {
   status: "pedir" | "pedido" | "recebido";
   nota: string;
 }
-export interface Log {
+interface Log {
   id: string;
   em: string;
   quem: string;

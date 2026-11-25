@@ -226,9 +226,7 @@ const ASSINATURAS: [string, RegExp][] = [
 function acharValidade(t: string, emitida: Dia | null): Dia | null {
   const direta = /(?:valida ate|validade\s*:?|valida[de]* ate o dia)\s*:?\s*(\d{2}\/\d{2}\/\d{4})/.exec(t);
   if (direta) return lerData(direta[1]);
-  const dias =
-    /(?:valid[ao]|validade)(?: \w+){0,4}? (?:de |por |e de )?(\d{2,3})\s*(?:\([^)]*\)\s*)?dias/.exec(t) ??
-    /prazo de (\d{2,3})\s*(?:\([^)]*\)\s*)?dias/.exec(t);
+  const dias = /(?:valid[ao]|validade)(?: \w+){0,4}? (?:de |por |e de )?(\d{2,3})\s*(?:\([^)]*\)\s*)?dias/.exec(t) ?? /prazo de (\d{2,3})\s*(?:\([^)]*\)\s*)?dias/.exec(t);
   return dias && emitida ? maisDias(emitida, Number(dias[1])) : null;
 }
 
@@ -250,7 +248,10 @@ function acharResultado(t: string): ResultadoCert | null {
   if (/positiva com efeitos? de negativa|positiva,? com efeito/.test(t)) return "positiva_efeito_negativa";
   // negação antes da afirmação: "não consta" contém "consta"
   const negativa = /certidao (?:\w+ ){0,4}negativa|\bnegativa\b|nada consta|nao consta|nao constam|nao foram encontrad|nao existem? (?:debitos|protestos|acoes)|inexist/.test(t);
-  const positiva = /certidao (?:\w+ ){0,4}positiva|\bpositiva\b|(?<!nao )(?<!nada )\bconstam? (?:contra|os? seguintes?|debitos?|acoes|processos?|pendencias)|foram encontrad[oa]s(?! nenhum)/.test(t);
+  const positiva =
+    /certidao (?:\w+ ){0,4}positiva|\bpositiva\b|(?<!nao )(?<!nada )\bconstam? (?:contra|os? seguintes?|debitos?|acoes|processos?|pendencias)|foram encontrad[oa]s(?! nenhum)/.test(
+      t,
+    );
   if (positiva && !/\bnegativa\b|nada consta|nao consta|nao constam/.test(t)) return "positiva";
   if (positiva && negativa) return null;
   if (negativa) return "negativa";
@@ -271,16 +272,18 @@ export function lerCertidao(texto: string): Leitura {
   const avisos: string[] = [];
   if (t.length < 60) {
     return {
-      tipo: null, resultado: null, docs: [], emitidaEm: null, validade: null, numero: null, confianca: "baixa",
+      tipo: null,
+      resultado: null,
+      docs: [],
+      emitidaEm: null,
+      validade: null,
+      numero: null,
+      confianca: "baixa",
       avisos: ["O PDF não tem texto selecionável (parece escaneado). Preencha os dados na mão."],
     };
   }
   const tipo = ASSINATURAS.find(([, re]) => re.test(t))?.[0] ?? null;
-  const docs = [
-    ...new Set(
-      [...bruto.matchAll(/\d{3}\.\d{3}\.\d{3}-\d{2}|\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}/g)].map((m) => soDigitos(m[0])),
-    ),
-  ];
+  const docs = [...new Set([...bruto.matchAll(/\d{3}\.\d{3}\.\d{3}-\d{2}|\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}/g)].map((m) => soDigitos(m[0])))];
   const emitidaEm = acharEmissao(t);
   const validade = acharValidade(t, emitidaEm);
   const resultado = tipo === "matricula" ? "informativa" : acharResultado(t);
@@ -304,13 +307,11 @@ export function lerCertidao(texto: string): Leitura {
 export function conferirLeitura(l: Leitura, c: Certidao, p: Parte, ref: Dia = hoje()): string[] {
   const a = [...l.avisos];
   const base = (x: string) => x.replace(/_pj$/, "");
-  if (l.tipo && base(l.tipo) !== base(c.tipo))
-    a.push(`O PDF parece ser de "${tipoCert(l.tipo)?.nome ?? l.tipo}", não de "${tipoCert(c.tipo)?.nome}".`);
+  if (l.tipo && base(l.tipo) !== base(c.tipo)) a.push(`O PDF parece ser de "${tipoCert(l.tipo)?.nome ?? l.tipo}", não de "${tipoCert(c.tipo)?.nome}".`);
   const doc = soDigitos(p.doc);
   if (p.tipo !== "IMOVEL" && doc && l.docs.length) {
     const raiz = p.tipo === "PJ" ? doc.slice(0, 8) : doc;
-    if (!l.docs.some((d) => d.startsWith(raiz)))
-      a.push(`O documento no PDF (${l.docs.map(mascaraDoc).join(", ")}) não é o de ${p.nome}.`);
+    if (!l.docs.some((d) => d.startsWith(raiz))) a.push(`O documento no PDF (${l.docs.map(mascaraDoc).join(", ")}) não é o de ${p.nome}.`);
   }
   if (l.resultado === "positiva") a.push("Certidão POSITIVA: precisa de análise da Gabi.");
   if (l.resultado === "positiva_efeito_negativa") a.push("Positiva com efeito de negativa: confirmar a origem do débito.");

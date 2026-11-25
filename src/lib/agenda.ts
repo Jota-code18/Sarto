@@ -19,9 +19,7 @@ export const hora = (m: number) => `${String(Math.floor(m / 60)).padStart(2, "0"
 /** Eventos de um dia, incluindo os semanais */
 export function doDia(eventos: Evento[], d: Dia) {
   const ds = paraData(d).getDay();
-  return eventos
-    .filter((e) => (e.semanal ? e.data <= d && paraData(e.data).getDay() === ds : e.data === d))
-    .sort((a, b) => a.inicio.localeCompare(b.inicio));
+  return eventos.filter((e) => (e.semanal ? e.data <= d && paraData(e.data).getDay() === ds : e.data === d)).sort((a, b) => a.inicio.localeCompare(b.inicio));
 }
 
 /** Por que esse horário do videomaker não cabe. Lista vazia = cabe. */
@@ -29,8 +27,7 @@ export function conflitosVideo(novo: Pick<Evento, "id" | "data" | "inicio" | "fi
   const p: string[] = [];
   const dia = doDia(eventos, novo.data).filter((e) => e.agenda === "videomaker" && e.id !== novo.id);
   if (min(novo.fim) <= min(novo.inicio)) p.push("O fim precisa ser depois do início");
-  if (min(novo.inicio) < min(r.videoInicio) || min(novo.fim) > min(r.videoFim))
-    p.push(`Fora do horário do videomaker (${r.videoInicio} às ${r.videoFim})`);
+  if (min(novo.inicio) < min(r.videoInicio) || min(novo.fim) > min(r.videoFim)) p.push(`Fora do horário do videomaker (${r.videoInicio} às ${r.videoFim})`);
   if (dia.length >= r.videoPorDia) p.push(`Limite de ${r.videoPorDia} gravações por dia já atingido`);
   for (const e of dia) {
     const folga = r.videoDeslocamentoMin;
@@ -61,7 +58,11 @@ export function horariosLivres(d: Dia, duracao: number, eventos: Evento[], r: Re
 }
 
 const icsData = (d: Dia, h: string) => `${d.replace(/-/g, "")}T${h.replace(":", "")}00`;
-const icsTexto = (t: string) => t.replace(/\\/g, "\\\\").replace(/([,;])/g, "\\$1").replace(/\n/g, "\\n");
+const icsTexto = (t: string) =>
+  t
+    .replace(/\\/g, "\\\\")
+    .replace(/([,;])/g, "\\$1")
+    .replace(/\n/g, "\\n");
 const DIAS_ICS = ["SU", "MO", "TU", "WE", "TH", "FR", "SA"];
 
 /** Arquivo .ics: importa no Google Agenda, Outlook ou iPhone, sem API */

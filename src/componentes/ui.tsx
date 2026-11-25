@@ -159,7 +159,23 @@ export function Abas<T extends string>({ itens, atual, onMuda }: { itens: { id: 
   );
 }
 
-export function Gaveta({ aberta, titulo, sub, onFecha, children, rodape, larga }: { aberta: boolean; titulo: string; sub?: ReactNode; onFecha: () => void; children: ReactNode; rodape?: ReactNode; larga?: boolean }) {
+export function Gaveta({
+  aberta,
+  titulo,
+  sub,
+  onFecha,
+  children,
+  rodape,
+  larga,
+}: {
+  aberta: boolean;
+  titulo: string;
+  sub?: ReactNode;
+  onFecha: () => void;
+  children: ReactNode;
+  rodape?: ReactNode;
+  larga?: boolean;
+}) {
   const r = useRef<HTMLDialogElement>(null);
   const id = useId();
   useEffect(() => {
@@ -234,7 +250,17 @@ export function Confirmar({ aberta, titulo, texto, sim, onSim, onNao }: { aberta
 }
 
 /** Lista de itens que guarda quem marcou e quando */
-export function Itens({ itens, check, onMuda, travado }: { itens: { id: string; nome: string; quem?: string }[]; check: Checklist; onMuda: (c: Checklist) => void; travado?: boolean }) {
+export function Itens({
+  itens,
+  check,
+  onMuda,
+  travado,
+}: {
+  itens: { id: string; nome: string; quem?: string }[];
+  check: Checklist;
+  onMuda: (c: Checklist) => void;
+  travado?: boolean;
+}) {
   return (
     <ul className="divide-y divide-linha">
       {itens.map((i) => {
@@ -295,10 +321,12 @@ export function Barras({ dados, vazio = "Sem dados ainda." }: { dados: Barra[]; 
 export function Colunas({ dados, formato }: { dados: { nome: string; valor: number }[]; formato: (v: number) => string }) {
   const max = Math.max(...dados.map((d) => d.valor), 1);
   return (
-    <div className="flex items-end gap-2" role="list">
+    <ul className="flex items-end gap-2">
       {dados.map((d, i) => (
-        <div key={d.nome} role="listitem" className="group flex min-w-0 flex-1 flex-col items-center" title={`${d.nome}: ${formato(d.valor)}`}>
-          <span className={cx("mb-1 whitespace-nowrap text-[11px] tabular-nums group-hover:visible", i === dados.length - 1 ? "font-semibold" : "invisible")}>{formato(d.valor)}</span>
+        <li key={d.nome} className="group flex min-w-0 flex-1 flex-col items-center" title={`${d.nome}: ${formato(d.valor)}`}>
+          <span className={cx("mb-1 whitespace-nowrap text-[11px] tabular-nums group-hover:visible", i === dados.length - 1 ? "font-semibold" : "invisible")}>
+            {formato(d.valor)}
+          </span>
           <div className="flex h-28 w-full items-end justify-center border-b border-carvao">
             <div
               className={cx("w-full max-w-9 rounded-t-[4px] group-hover:bg-carvao", i === dados.length - 1 ? "bg-carvao" : "bg-nevoa")}
@@ -306,9 +334,9 @@ export function Colunas({ dados, formato }: { dados: { nome: string; valor: numb
             />
           </div>
           <span className="mt-1 text-[11px] text-cinza">{d.nome}</span>
-        </div>
+        </li>
       ))}
-    </div>
+    </ul>
   );
 }
 
@@ -316,7 +344,19 @@ export function Busca({ valor, onMuda, placeholder = "Buscar" }: { valor: string
   return <input type="search" className="campo max-w-xs" value={valor} onChange={(e) => onMuda(e.target.value)} placeholder={placeholder} aria-label={placeholder} />;
 }
 
-export function Escolha<T extends string>({ valor, onMuda, opcoes, rotulo, className }: { valor: T; onMuda: (v: T) => void; opcoes: { id: T; nome: string }[]; rotulo: string; className?: string }) {
+export function Escolha<T extends string>({
+  valor,
+  onMuda,
+  opcoes,
+  rotulo,
+  className,
+}: {
+  valor: T;
+  onMuda: (v: T) => void;
+  opcoes: { id: T; nome: string }[];
+  rotulo: string;
+  className?: string;
+}) {
   return (
     <select className={cx("campo w-auto max-w-full", className)} value={valor} onChange={(e) => onMuda(e.target.value as T)} aria-label={rotulo}>
       {opcoes.map((o) => (

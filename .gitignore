@@ -20,3 +20,9 @@ backup-sarto-*.json
 .claude/settings.local.json
 *.zip
 __pycache__/
+reports/
+.stryker-tmp/
+stryker.log
+coverage/
+test-results/
+playwright-report/

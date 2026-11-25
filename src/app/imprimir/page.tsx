@@ -53,7 +53,10 @@ function Imovel({ c }: { c: Captacao }) {
       ["IPTU", c.iptu && `${brl(c.iptu, false)} por ano`],
     ] as [string, string | number][]
   ).filter(([, v]) => v);
-  const dif = c.diferenciais.split("\n").map((x) => x.trim()).filter(Boolean);
+  const dif = c.diferenciais
+    .split("\n")
+    .map((x) => x.trim())
+    .filter(Boolean);
   const falta = faltando(c);
   return (
     <>
@@ -61,7 +64,11 @@ function Imovel({ c }: { c: Captacao }) {
       <div className="folha flex flex-col !p-0 print:!min-h-[296mm]">
         <div className="relative h-[128mm] bg-carvao text-papel">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          {fotos[0] ? <img src={fotos[0]} alt="" className="absolute inset-0 size-full object-cover" /> : <Simbolo className="absolute left-1/2 top-1/2 h-40 -translate-x-1/2 -translate-y-1/2 text-tecido" />}
+          {fotos[0] ? (
+            <img src={fotos[0]} alt="" className="absolute inset-0 size-full object-cover" />
+          ) : (
+            <Simbolo className="absolute left-1/2 top-1/2 h-40 -translate-x-1/2 -translate-y-1/2 text-tecido" />
+          )}
           <div className="absolute inset-0 bg-gradient-to-t from-tinta/85 via-tinta/15 to-tinta/45" />
           <Logo className="absolute left-[17mm] top-[14mm] h-9" />
           <div className="absolute inset-x-[17mm] bottom-[12mm]">
@@ -136,7 +143,10 @@ function Conteudo({ p }: { p: URLSearchParams }) {
       const k = r && dados.contratos.find((x) => x.id === r.contratoId);
       const c = r && dados.cobrancas.find((x) => x.contratoId === r.contratoId && x.comp === r.comp);
       if (!r || !k) return nada;
-      const L: [string, number][] = [["Aluguel recebido", r.bruto], [r.taxaPct === 100 ? "Intermediação (1º aluguel)" : `Taxa de administração (${num(r.taxaPct)}%)`, -r.taxa]];
+      const L: [string, number][] = [
+        ["Aluguel recebido", r.bruto],
+        [r.taxaPct === 100 ? "Intermediação (1º aluguel)" : `Taxa de administração (${num(r.taxaPct)}%)`, -r.taxa],
+      ];
       if (r.descontos) L.push([r.descontoMotivo || "Descontos", -r.descontos]);
       return (
         <Folha>
@@ -174,7 +184,8 @@ function Conteudo({ p }: { p: URLSearchParams }) {
             </tbody>
           </table>
           <p className="mt-4 text-[12px] text-cinza">
-            {r.status === "pago" ? `Repassado em ${br(r.pagoEm)}.` : `Previsto para ${br(r.previsto)}.`} {k.encargosNoBoleto && "Condomínio e IPTU cobrados no boleto não compõem este repasse."}
+            {r.status === "pago" ? `Repassado em ${br(r.pagoEm)}.` : `Previsto para ${br(r.previsto)}.`}{" "}
+            {k.encargosNoBoleto && "Condomínio e IPTU cobrados no boleto não compõem este repasse."}
           </p>
           <Pe />
         </Folha>
@@ -190,7 +201,8 @@ function Conteudo({ p }: { p: URLSearchParams }) {
           <Topo tag="LOCAÇÃO" titulo={`Informe de rendimentos ${ano}`} sub={`${dono}${ks[0].proprietario.doc ? `, ${mascaraDoc(ks[0].proprietario.doc)}` : ""}`} />
           {ks.map((k) => {
             const cs = dados.cobrancas.filter((c) => c.contratoId === k.id && c.pagoEm?.startsWith(ano));
-            const taxa = (m: string) => dados.repasses.filter((r) => r.contratoId === k.id && cs.some((c) => c.comp === r.comp && c.pagoEm?.startsWith(m))).reduce((a, r) => a + r.taxa, 0);
+            const taxa = (m: string) =>
+              dados.repasses.filter((r) => r.contratoId === k.id && cs.some((c) => c.comp === r.comp && c.pagoEm?.startsWith(m))).reduce((a, r) => a + r.taxa, 0);
             const ms = MESES.map((n, i) => {
               const m = `${ano}-${String(i + 1).padStart(2, "0")}`;
               return { n, b: arred(cs.filter((c) => c.pagoEm?.startsWith(m)).reduce((a, c) => a + c.aluguel, 0)), t: arred(taxa(m)) };
@@ -244,7 +256,12 @@ function Conteudo({ p }: { p: URLSearchParams }) {
       return (
         <Folha>
           <Topo tag="JURÍDICO" titulo="Resumo da negociação" sub={v.imovel} />
-          <p className="whitespace-pre-line text-[13px] leading-relaxed">{resumoNegociacao(v, dados.corretores.find((c) => c.id === v.corretorId)?.nome ?? "").split("\n").slice(2).join("\n")}</p>
+          <p className="whitespace-pre-line text-[13px] leading-relaxed">
+            {resumoNegociacao(v, dados.corretores.find((c) => c.id === v.corretorId)?.nome ?? "")
+              .split("\n")
+              .slice(2)
+              .join("\n")}
+          </p>
           <Pe />
         </Folha>
       );
@@ -300,7 +317,9 @@ function Conteudo({ p }: { p: URLSearchParams }) {
       const ds = dados.dossies.find((x) => x.id === id);
       if (!ds) return nada;
       const r = resumoDossie(ds.certidoes);
-      const pontos = ds.certidoes.filter((c) => c.resultado === "positiva" || c.resultado === "positiva_efeito_negativa" || situacaoCert(c) === "vencida" || (c.alertas?.length ?? 0) > 0);
+      const pontos = ds.certidoes.filter(
+        (c) => c.resultado === "positiva" || c.resultado === "positiva_efeito_negativa" || situacaoCert(c) === "vencida" || (c.alertas?.length ?? 0) > 0,
+      );
       return (
         <Folha>
           <Topo tag="JURÍDICO" titulo="Dossiê de certidões" sub={ds.titulo} />
@@ -326,7 +345,14 @@ function Conteudo({ p }: { p: URLSearchParams }) {
                     <b className="font-medium">
                       {tipoCert(c.tipo)?.nome}, {ds.partes.find((x) => x.id === c.parteId)?.nome}:
                     </b>{" "}
-                    {[c.resultado && c.resultado !== "negativa" && NOME_RESULTADO[c.resultado], situacaoCert(c) === "vencida" && `vencida em ${br(c.validade)}`, ...(c.alertas ?? []), c.obs].filter(Boolean).join(". ")}
+                    {[
+                      c.resultado && c.resultado !== "negativa" && NOME_RESULTADO[c.resultado],
+                      situacaoCert(c) === "vencida" && `vencida em ${br(c.validade)}`,
+                      ...(c.alertas ?? []),
+                      c.obs,
+                    ]
+                      .filter(Boolean)
+                      .join(". ")}
                   </li>
                 ))}
               </ul>
@@ -335,7 +361,8 @@ function Conteudo({ p }: { p: URLSearchParams }) {
           {ds.partes.map((x) => (
             <section key={x.id} className="mb-5">
               <h2 className="text-[13px]">
-                <span className="uppercase text-cinza">{x.papel}</span> <b className="font-semibold">{x.nome}</b> {x.tipo === "IMOVEL" ? [x.matricula && `matrícula ${x.matricula}`, x.inscricao && `inscrição ${x.inscricao}`].filter(Boolean).join(", ") : mascaraDoc(x.doc)}
+                <span className="uppercase text-cinza">{x.papel}</span> <b className="font-semibold">{x.nome}</b>{" "}
+                {x.tipo === "IMOVEL" ? [x.matricula && `matrícula ${x.matricula}`, x.inscricao && `inscrição ${x.inscricao}`].filter(Boolean).join(", ") : mascaraDoc(x.doc)}
               </h2>
               <table className="tabela text-[11px]">
                 <thead>
@@ -371,7 +398,11 @@ function Conteudo({ p }: { p: URLSearchParams }) {
           <section className="bg-linho p-4">
             <h2 className="text-[12px] font-semibold uppercase">Parecer</h2>
             <p className="whitespace-pre-line text-[12px]">{ds.parecer || "Sem parecer."}</p>
-            <p className="mt-2 text-[11px] text-cinza">{ds.revisao ? `${{ a_analisar: "A analisar", liberado: "Liberado", com_ressalva: "Com ressalva", travado: "Travado" }[ds.risco]} por ${ds.revisao.por} em ${brHora(ds.revisao.em)}` : "Aguardando a Gabi"}</p>
+            <p className="mt-2 text-[11px] text-cinza">
+              {ds.revisao
+                ? `${{ a_analisar: "A analisar", liberado: "Liberado", com_ressalva: "Com ressalva", travado: "Travado" }[ds.risco]} por ${ds.revisao.por} em ${brHora(ds.revisao.em)}`
+                : "Aguardando a Gabi"}
+            </p>
           </section>
           <Pe />
         </Folha>
@@ -387,7 +418,11 @@ function Conteudo({ p }: { p: URLSearchParams }) {
         <Folha>
           <div className="mb-6 flex items-center justify-between">
             <Logo className="h-7" />
-            {lib ? <span className="text-[11px] text-cinza">Revisada por {m.revisao?.por}</span> : <span className="border border-erro px-2 py-1 text-[11px] font-semibold text-erro">{MARCA}</span>}
+            {lib ? (
+              <span className="text-[11px] text-cinza">Revisada por {m.revisao?.por}</span>
+            ) : (
+              <span className="border border-erro px-2 py-1 text-[11px] font-semibold text-erro">{MARCA}</span>
+            )}
           </div>
           <div className="whitespace-pre-wrap text-[12px] leading-[1.75]">{texto}</div>
           <Pe />
@@ -413,9 +448,7 @@ export default function Imprimir() {
         </button>
       </div>
       {p && <Conteudo p={p} />}
-      <p className="nao-imprime pb-8 text-center text-[12px] text-cinza">
-        {porExtenso(hoje())}
-      </p>
+      <p className="nao-imprime pb-8 text-center text-[12px] text-cinza">{porExtenso(hoje())}</p>
     </div>
   );
 }

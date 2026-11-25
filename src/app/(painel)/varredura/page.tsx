@@ -3,7 +3,26 @@ import { ExternalLink, MessageCircle, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Coleta } from "@/componentes/coleta";
 import { Formulario, type GrupoDef } from "@/componentes/formulario";
-import { Abas, Barras, Botao, Busca, Cabecalho, Cartao, Confirmar, Copiar, cx, Escolha, estiloBotao, Gaveta, ListaInfo, Nota, Numero, Numeros, Selo, Vazio } from "@/componentes/ui";
+import {
+  Abas,
+  Barras,
+  Botao,
+  Busca,
+  Cabecalho,
+  Cartao,
+  Confirmar,
+  Copiar,
+  cx,
+  Escolha,
+  estiloBotao,
+  Gaveta,
+  ListaInfo,
+  Nota,
+  Numero,
+  Numeros,
+  Selo,
+  Vazio,
+} from "@/componentes/ui";
 import { useCarteira } from "@/componentes/uso";
 import { br, diasEntre, hoje, prazo, segundaDe } from "@/lib/datas";
 import { baixarArquivo, brl, csv, linkWhats, novoId, num, semAcento } from "@/lib/formato";
@@ -16,7 +35,24 @@ const STATUS: Record<Anuncio["status"], string> = { abordar: "Abordar", contatad
 type Aba = "abordar" | "andamento" | "sarto" | "fora";
 
 const novoAnuncio = (): Anuncio => ({
-  id: novoId(), portal: PORTAIS[0], url: "", titulo: "", tipo: "", bairro: "", cidade: "Anápolis", preco: 0, precoAnterior: 0, area: 0, quartos: 0, anunciante: "", codAnunciante: "", particular: false, primeiraVez: hoje(), vistoEm: hoje(), status: "abordar", obs: "",
+  id: novoId(),
+  portal: PORTAIS[0],
+  url: "",
+  titulo: "",
+  tipo: "",
+  bairro: "",
+  cidade: "Anápolis",
+  preco: 0,
+  precoAnterior: 0,
+  area: 0,
+  quartos: 0,
+  anunciante: "",
+  codAnunciante: "",
+  particular: false,
+  primeiraVez: hoje(),
+  vistoEm: hoje(),
+  status: "abordar",
+  obs: "",
 });
 const GRUPOS: GrupoDef[] = [
   {
@@ -66,8 +102,13 @@ export default function Varredura() {
     .filter((g) => !tipo || g.principal.tipo === tipo)
     .filter((g) => !t || semAcento([g.principal, ...g.outros].map((a) => `${a.titulo} ${a.bairro} ${a.anunciante}`).join(" ")).includes(t));
   const tipos = [...new Set(dados.anuncios.map((a) => a.tipo).filter(Boolean))].sort();
-  const bairros = [...por.abordar.reduce((m, g) => m.set(g.principal.bairro || "Sem bairro", (m.get(g.principal.bairro || "Sem bairro") ?? 0) + 1), new Map<string, number>())].map(([nome, valor]) => ({ nome, valor })).sort((a, b) => b.valor - a.valor);
-  const ultima = dados.anuncios.map((a) => a.vistoEm).sort().at(-1);
+  const bairros = [...por.abordar.reduce((m, g) => m.set(g.principal.bairro || "Sem bairro", (m.get(g.principal.bairro || "Sem bairro") ?? 0) + 1), new Map<string, number>())]
+    .map(([nome, valor]) => ({ nome, valor }))
+    .sort((a, b) => b.valor - a.valor);
+  const ultima = dados.anuncios
+    .map((a) => a.vistoEm)
+    .sort()
+    .at(-1);
   const g = grupos.find((x) => x.id === ver);
 
   const marcar = (gr: Grupo, status: Anuncio["status"]) => {
@@ -78,9 +119,46 @@ export default function Varredura() {
     const a = gr.principal;
     const id = novoId();
     salvar("captacoes", {
-      id, codigo: "", tipo: /condom/i.test(a.tipo) ? "condominio" : /apart|cobert/i.test(a.tipo) ? "apartamento" : /lote/i.test(a.tipo) ? "lote" : /comerc/i.test(a.tipo) ? "comercial" : "casa_rua", finalidade: "venda", titulo: a.titulo,
-      proprietario: { nome: "", doc: "", tel: "", email: "" }, cep: "", endereco: "", numero: "", complemento: "", bairro: a.bairro, cidade: a.cidade || "Anápolis", condominioNome: "", valor: a.preco, valorCondominio: 0, iptu: 0, area: a.area, terreno: 0, quartos: a.quartos,
-      suites: 0, banheiros: 0, vagas: 0, matricula: "", descricao: "", diferenciais: "", exclusividade: "", etapa: "visita", checklist: {}, fotos: [], corretorId: "", origem: "Varredura", criadoEm: hoje(),
+      id,
+      codigo: "",
+      tipo: /condom/i.test(a.tipo)
+        ? "condominio"
+        : /apart|cobert/i.test(a.tipo)
+          ? "apartamento"
+          : /lote/i.test(a.tipo)
+            ? "lote"
+            : /comerc/i.test(a.tipo)
+              ? "comercial"
+              : "casa_rua",
+      finalidade: "venda",
+      titulo: a.titulo,
+      proprietario: { nome: "", doc: "", tel: "", email: "" },
+      cep: "",
+      endereco: "",
+      numero: "",
+      complemento: "",
+      bairro: a.bairro,
+      cidade: a.cidade || "Anápolis",
+      condominioNome: "",
+      valor: a.preco,
+      valorCondominio: 0,
+      iptu: 0,
+      area: a.area,
+      terreno: 0,
+      quartos: a.quartos,
+      suites: 0,
+      banheiros: 0,
+      vagas: 0,
+      matricula: "",
+      descricao: "",
+      diferenciais: "",
+      exclusividade: "",
+      etapa: "visita",
+      checklist: {},
+      fotos: [],
+      corretorId: "",
+      origem: "Varredura",
+      criadoEm: hoje(),
     });
     marcar(gr, "captado");
     avisar("Captado. O imóvel entrou em Captação.");
@@ -90,7 +168,11 @@ export default function Varredura() {
     const a = x.principal;
     return `${i + 1}. ${a.titulo}${a.bairro ? `, ${a.bairro}` : ""}, ${brl(a.preco, false)}${x.motivos.length ? ` (${x.motivos.join(", ")})` : ""}${a.url ? `\n${a.url}` : ""}`;
   };
-  const resumo = [`Varredura de ${br(segundaDe(hoje()))}: ${por.abordar.length} imóveis no padrão e fora da carteira, ${por.abordar.filter((x) => x.novo).length} novos na semana.`, "", ...por.abordar.slice(0, 15).map(linha)].join("\n");
+  const resumo = [
+    `Varredura de ${br(segundaDe(hoje()))}: ${por.abordar.length} imóveis no padrão e fora da carteira, ${por.abordar.filter((x) => x.novo).length} novos na semana.`,
+    "",
+    ...por.abordar.slice(0, 15).map(linha),
+  ].join("\n");
 
   return (
     <>
@@ -147,7 +229,23 @@ export default function Varredura() {
                 `varredura-${hoje()}.csv`,
                 csv([
                   ["Título", "Bairro", "Cidade", "Tipo", "Preço", "Preço anterior", "Área", "Quartos", "Anunciantes", "Sinais", "Situação", "Link"],
-                  ...lista.map((x) => [x.principal.titulo, x.principal.bairro, x.principal.cidade, x.principal.tipo, x.principal.preco, x.principal.precoAnterior || "", x.principal.area || "", x.principal.quartos || "", [x.principal, ...x.outros].map((a) => a.anunciante).filter(Boolean).join("; "), x.motivos.join("; "), STATUS[st(x)], x.principal.url]),
+                  ...lista.map((x) => [
+                    x.principal.titulo,
+                    x.principal.bairro,
+                    x.principal.cidade,
+                    x.principal.tipo,
+                    x.principal.preco,
+                    x.principal.precoAnterior || "",
+                    x.principal.area || "",
+                    x.principal.quartos || "",
+                    [x.principal, ...x.outros]
+                      .map((a) => a.anunciante)
+                      .filter(Boolean)
+                      .join("; "),
+                    x.motivos.join("; "),
+                    STATUS[st(x)],
+                    x.principal.url,
+                  ]),
                 ]),
                 "text/csv;charset=utf-8",
               )
@@ -280,7 +378,9 @@ export default function Varredura() {
                 ))}
               </span>
             </div>
-            {g.sarto && <Nota tom="alerta">{typeof g.sarto === "object" ? `Parece ser o código ${g.sarto.cod} da Sarto.` : "Anúncio da própria Sarto."} Confira antes de abordar.</Nota>}
+            {g.sarto && (
+              <Nota tom="alerta">{typeof g.sarto === "object" ? `Parece ser o código ${g.sarto.cod} da Sarto.` : "Anúncio da própria Sarto."} Confira antes de abordar.</Nota>
+            )}
             <ListaInfo
               itens={[
                 ["Tipo", g.principal.tipo],
@@ -292,9 +392,7 @@ export default function Varredura() {
               ]}
             />
             <div>
-              <h3 className="mb-1 text-[13px] font-semibold uppercase tracking-wide">
-                {g.outros.length ? `Em ${g.outros.length + 1} anúncios` : "Anúncio"}
-              </h3>
+              <h3 className="mb-1 text-[13px] font-semibold uppercase tracking-wide">{g.outros.length ? `Em ${g.outros.length + 1} anúncios` : "Anúncio"}</h3>
               <ul className="divide-y divide-linha border-y border-linha">
                 {[g.principal, ...g.outros].map((a) => (
                   <li key={a.id} className="flex flex-wrap items-center justify-between gap-3 py-2.5">
@@ -317,14 +415,24 @@ export default function Varredura() {
               </ul>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Copiar texto={`Olá. Vi o seu anúncio do imóvel em ${g.principal.bairro || "Anápolis"} e gostaria de conversar. Sou da Sarto Imóveis, trabalhamos com alto padrão em Anápolis.`}>Copiar abordagem</Copiar>
+              <Copiar
+                texto={`Olá. Vi o seu anúncio do imóvel em ${g.principal.bairro || "Anápolis"} e gostaria de conversar. Sou da Sarto Imóveis, trabalhamos com alto padrão em Anápolis.`}
+              >
+                Copiar abordagem
+              </Copiar>
               <a className={estiloBotao("linha", true)} href={linkWhats("", `Varredura: ${linha(g, 0)}`)} target="_blank" rel="noreferrer">
                 <MessageCircle size={14} /> Enviar a um corretor
               </a>
             </div>
             <label className="block text-[12px] font-medium">
               Observações do contato
-              <textarea className="campo mt-1" rows={3} defaultValue={g.principal.obs} key={g.id} onBlur={(e) => e.target.value !== g.principal.obs && mudar("anuncios", g.principal.id, { obs: e.target.value })} />
+              <textarea
+                className="campo mt-1"
+                rows={3}
+                defaultValue={g.principal.obs}
+                key={g.id}
+                onBlur={(e) => e.target.value !== g.principal.obs && mudar("anuncios", g.principal.id, { obs: e.target.value })}
+              />
             </label>
           </div>
         )}

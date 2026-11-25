@@ -86,7 +86,9 @@ export function extrair(html, url) {
     const m = new RegExp(`(?<![0-9a-f])${desc.slice(1)}:T([0-9a-f]+),`).exec(s);
     // o tamanho vem em bytes, não em caracteres
     desc = m
-      ? Buffer.from(s.slice(m.index + m[0].length), "utf8").subarray(0, parseInt(m[1], 16)).toString("utf8")
+      ? Buffer.from(s.slice(m.index + m[0].length), "utf8")
+          .subarray(0, parseInt(m[1], 16))
+          .toString("utf8")
       : "";
   }
   const titulo = (bh.title || im.title || "").replace(/\s+/g, " ").trim();
@@ -100,9 +102,7 @@ export function extrair(html, url) {
   const capa400 = [(fotos[0]?.srcset ?? "").split(" ")[0], fotos[0]?.src].find((u) => /^https:/.test(u ?? "")) ?? null;
 
   // preço citado no texto que não bate com nenhum preço cadastrado
-  const citados = [...`${titulo}\n${desc}`.matchAll(/R\$\s*(\d{1,3}(?:\.\d{3})+|\d{4,})(?:,\d{2})?(?!\d)/g)].map((m) =>
-    Number(m[1].replace(/\./g, "")),
-  );
+  const citados = [...`${titulo}\n${desc}`.matchAll(/R\$\s*(\d{1,3}(?:\.\d{3})+|\d{4,})(?:,\d{2})?(?!\d)/g)].map((m) => Number(m[1].replace(/\./g, "")));
   const base = [venda, aluguel].filter(Boolean);
   const perto = citados.filter((c) => base.some((b) => c > b * 0.6 && c < b * 1.6));
   const bate = perto.some((c) => base.some((b) => Math.abs(c - b) < 1));
@@ -164,10 +164,7 @@ async function main() {
   const destino = path.join(RAIZ, "public", "data");
   await mkdir(destino, { recursive: true });
   const linhas = saida.map((o) => JSON.stringify(o)).join(",\n");
-  await writeFile(
-    path.join(destino, "carteira.json"),
-    `{"atualizadoEm":"${new Date().toISOString()}","fonte":"${SITE}","imoveis":[\n${linhas}\n]}\n`,
-  );
+  await writeFile(path.join(destino, "carteira.json"), `{"atualizadoEm":"${new Date().toISOString()}","fonte":"${SITE}","imoveis":[\n${linhas}\n]}\n`);
   console.log(`${saida.length} gravados, ${falhas} falhas`);
 }
 

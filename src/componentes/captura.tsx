@@ -12,10 +12,13 @@ export function BotaoFavorito({ escuro }: { escuro?: boolean }) {
     r.current?.setAttribute("href", favorito());
   }, []);
   return (
+    // biome-ignore lint/a11y/useKeyWithClickEvents: idem
+    // biome-ignore lint/a11y/noStaticElementInteractions: idem
     <a
       ref={r}
       draggable
       className={cx(estiloBotao("linha", true), escuro && "border-papel hover:bg-papel hover:text-carvao", "cursor-grab")}
+      // biome-ignore lint/a11y/useValidAnchor: favorito para arrastar; o endereço entra pelo efeito
       onClick={(e) => {
         e.preventDefault();
         acao().avisar("Arraste este botão para a barra de favoritos (Ctrl+Shift+B mostra a barra)", "erro");

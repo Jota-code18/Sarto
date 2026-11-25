@@ -17,7 +17,12 @@ const INTEG: { nome: string; faz: string; st: "pronta" | "manual" | "espera"; fa
   { nome: "BrasilAPI", faz: "Dados de empresa pelo CNPJ", st: "pronta", falta: "" },
   { nome: "Google Agenda", faz: "Link e arquivo .ics", st: "manual", falta: "Conta Google da Sarto para agenda compartilhada" },
   { nome: "WhatsApp", faz: "Mensagem pronta para enviar", st: "manual", falta: "Chip novo e verificação no Meta para a IA responder" },
-  { nome: "Jetimob", faz: "Alerta de anúncio pela captura e lista de leads para lançar. A API lê imóveis e grava lead; não cadastra imóvel, não sobe foto e não tem nota", st: "manual", falta: "Chaves do webservice e de leads, quando a IA do WhatsApp entrar" },
+  {
+    nome: "Jetimob",
+    faz: "Alerta de anúncio pela captura e lista de leads para lançar. A API lê imóveis e grava lead; não cadastra imóvel, não sobe foto e não tem nota",
+    st: "manual",
+    falta: "Chaves do webservice e de leads, quando a IA do WhatsApp entrar",
+  },
   { nome: "Banco da Sarto", faz: "Importa extrato OFX ou CSV", st: "manual", falta: "Open Finance ou API do banco" },
   { nome: "Portais de certidão", faz: "Abre com os dados prontos e lê o PDF", st: "manual", falta: "Infosimples, Direct Data e RI Digital (pagos)" },
   { nome: "Supabase", faz: "Banco compartilhado e login", st: "espera", falta: "Conta em nome da Sarto" },
@@ -37,7 +42,9 @@ export default function Custos() {
   const comp = competencia(hoje());
   const mes = dados.custos.filter((c) => c.comp === comp);
   const total = mes.reduce((a, c) => a + c.valor, 0);
-  const por = [...mes.reduce((m, c) => m.set(c.modulo, (m.get(c.modulo) ?? 0) + c.valor), new Map<string, number>())].map(([nome, valor]) => ({ nome, valor, rotulo: brl(valor) })).sort((a, b) => b.valor - a.valor);
+  const por = [...mes.reduce((m, c) => m.set(c.modulo, (m.get(c.modulo) ?? 0) + c.valor), new Map<string, number>())]
+    .map(([nome, valor]) => ({ nome, valor, rotulo: brl(valor) }))
+    .sort((a, b) => b.valor - a.valor);
   return (
     <>
       <Cabecalho area="GESTÃO CUSTOS" titulo="Custos e integrações" texto="O que o sistema gasta por módulo e o que está ligado. Hoje tudo que está funcionando é gratuito.">

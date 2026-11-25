@@ -40,7 +40,11 @@ function EditarMinuta({ m, onFecha }: { m: Minuta; onFecha: () => void }) {
 
   const baixar = async () => {
     const liberada = f.status === "liberada";
-    const nome = `${liberada ? "" : "RASCUNHO "}${f.titulo.replace(/[^\p{L}\p{N} .-]+/gu, " ").replace(/\s+/g, " ").slice(0, 70).trim()}.docx`;
+    const nome = `${liberada ? "" : "RASCUNHO "}${f.titulo
+      .replace(/[^\p{L}\p{N} .-]+/gu, " ")
+      .replace(/\s+/g, " ")
+      .slice(0, 70)
+      .trim()}.docx`;
     try {
       // liberada usa o arquivo da Gabi só se o texto dele ainda for o que ela revisou
       const usaWord = modelo?.docx && (liberada ? preencher(corpo, f.campos) === f.texto : !manual);
@@ -97,13 +101,25 @@ function EditarMinuta({ m, onFecha }: { m: Minuta; onFecha: () => void }) {
             )}
             {f.status === "em_revisao" && (
               <>
-                <Botao disabled={!gabi || !f.notas.trim()} title={!f.notas.trim() ? "Escreva o que ajustar" : undefined} onClick={() => gravar({ ...f, status: "ajustar", revisao: feito() })}>
+                <Botao
+                  disabled={!gabi || !f.notas.trim()}
+                  title={!f.notas.trim() ? "Escreva o que ajustar" : undefined}
+                  onClick={() => gravar({ ...f, status: "ajustar", revisao: feito() })}
+                >
                   Devolver
                 </Botao>
                 <Botao
                   tom="cheio"
                   disabled={!gabi || !modelo?.validado || (vazios.length > 0 && !manual) || (manual && /\{\{/.test(f.texto))}
-                  title={!gabi ? `Quem libera: ${quemPode("minuta")}` : !modelo?.validado ? "O modelo ainda não foi validado pela Gabi" : vazios.length ? `Campos vazios: ${vazios.map(nomeCampo).join(", ")}` : undefined}
+                  title={
+                    !gabi
+                      ? `Quem libera: ${quemPode("minuta")}`
+                      : !modelo?.validado
+                        ? "O modelo ainda não foi validado pela Gabi"
+                        : vazios.length
+                          ? `Campos vazios: ${vazios.map(nomeCampo).join(", ")}`
+                          : undefined
+                  }
                   onClick={() => {
                     const r = feito();
                     gravar({ ...f, status: "liberada", revisao: r, texto });
@@ -162,9 +178,22 @@ function EditarMinuta({ m, onFecha }: { m: Minuta; onFecha: () => void }) {
                         {nomeCampo(k)}
                       </label>
                       {k === "condicoes" || k.endsWith("qualificacao") ? (
-                        <textarea id={`c_${k}`} className="campo" rows={3} disabled={travada} value={f.campos[k] ?? ""} onChange={(e) => setF({ ...f, campos: { ...f.campos, [k]: e.target.value } })} />
+                        <textarea
+                          id={`c_${k}`}
+                          className="campo"
+                          rows={3}
+                          disabled={travada}
+                          value={f.campos[k] ?? ""}
+                          onChange={(e) => setF({ ...f, campos: { ...f.campos, [k]: e.target.value } })}
+                        />
                       ) : (
-                        <input id={`c_${k}`} className="campo" disabled={travada} value={f.campos[k] ?? ""} onChange={(e) => setF({ ...f, campos: { ...f.campos, [k]: e.target.value } })} />
+                        <input
+                          id={`c_${k}`}
+                          className="campo"
+                          disabled={travada}
+                          value={f.campos[k] ?? ""}
+                          onChange={(e) => setF({ ...f, campos: { ...f.campos, [k]: e.target.value } })}
+                        />
                       )}
                     </div>
                   ))}
@@ -218,11 +247,20 @@ function EditarMinuta({ m, onFecha }: { m: Minuta; onFecha: () => void }) {
                   )}
                 </div>
               )}
-              {modelo?.docx && !manual && <p className="mt-2 text-[12px] text-cinza">O Word sai no arquivo original da Gabi ({modelo.docxNome}), com a formatação dela. O texto acima é só prévia.</p>}
+              {modelo?.docx && !manual && (
+                <p className="mt-2 text-[12px] text-cinza">O Word sai no arquivo original da Gabi ({modelo.docxNome}), com a formatação dela. O texto acima é só prévia.</p>
+              )}
               <label className="mb-1 mt-5 block text-[12px] font-medium" htmlFor="notas">
                 Notas da revisão
               </label>
-              <textarea id="notas" className="campo" rows={3} disabled={!gabi && f.status === "em_revisao"} value={f.notas} onChange={(e) => setF({ ...f, notas: e.target.value })} />
+              <textarea
+                id="notas"
+                className="campo"
+                rows={3}
+                disabled={!gabi && f.status === "em_revisao"}
+                value={f.notas}
+                onChange={(e) => setF({ ...f, notas: e.target.value })}
+              />
             </div>
           </div>
         </div>
@@ -321,7 +359,26 @@ function EditarModelo({ m, onFecha }: { m: Modelo; onFecha: () => void }) {
           <input type="file" accept=".docx" className="sr-only" onChange={(e) => subir(e.target.files?.[0])} />
         </label>
         <p className="text-[13px] text-cinza">
-          No Word, escreva os campos entre chaves duplas, por exemplo {"{{vendedor_nome}}"}. Campos que o painel já preenche: {["vendedor_nome", "vendedor_doc", "comprador_nome", "comprador_doc", "imovel_descricao", "preco", "preco_extenso", "sinal", "saldo", "comissao", "locador_nome", "locatario_nome", "aluguel", "inicio", "fim", "data_extenso"].join(", ")}.
+          No Word, escreva os campos entre chaves duplas, por exemplo {"{{vendedor_nome}}"}. Campos que o painel já preenche:{" "}
+          {[
+            "vendedor_nome",
+            "vendedor_doc",
+            "comprador_nome",
+            "comprador_doc",
+            "imovel_descricao",
+            "preco",
+            "preco_extenso",
+            "sinal",
+            "saldo",
+            "comissao",
+            "locador_nome",
+            "locatario_nome",
+            "aluguel",
+            "inicio",
+            "fim",
+            "data_extenso",
+          ].join(", ")}
+          .
         </p>
         {f.docx ? (
           <div className="max-h-[480px] overflow-y-auto whitespace-pre-wrap bg-giz p-5">{f.corpo}</div>
@@ -370,7 +427,11 @@ export default function Minutas() {
 
   return (
     <>
-      <Cabecalho area="JURÍDICO MINUTAS" titulo="Minutas e modelos" texto={`Preenche o modelo com os dados do negócio, sem IA. Nada sai sem a Gabi liberar; prazo de ${regras.prazoMinutaHoras}h.`}>
+      <Cabecalho
+        area="JURÍDICO MINUTAS"
+        titulo="Minutas e modelos"
+        texto={`Preenche o modelo com os dados do negócio, sem IA. Nada sai sem a Gabi liberar; prazo de ${regras.prazoMinutaHoras}h.`}
+      >
         {aba === "modelos" ? (
           <Botao tom="cheio" onClick={() => setMod({ id: novoId(), nome: "", grupo: "Venda", corpo: "" })}>
             <Plus size={16} /> Novo modelo

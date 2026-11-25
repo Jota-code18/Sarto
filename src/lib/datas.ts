@@ -2,7 +2,7 @@
 export type Dia = string;
 
 const p2 = (n: number) => String(n).padStart(2, "0");
-export const isoDe = (d: Date): Dia => `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`;
+const isoDe = (d: Date): Dia => `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`;
 export const hoje = (): Dia => isoDe(new Date());
 export const agora = () => new Date().toISOString();
 export const paraData = (d: Dia) => {
@@ -33,10 +33,7 @@ export const diaNoMes = (comp: string, dia: number): Dia => {
 };
 export const maisComp = (comp: string, n: number) => competencia(maisMeses(`${comp}-01`, n));
 
-export const MESES = [
-  "janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro",
-  "dezembro",
-];
+export const MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
 export const DIAS = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"];
 
 export const br = (d?: Dia | null) => (d ? d.slice(0, 10).split("-").reverse().join("/") : "—");

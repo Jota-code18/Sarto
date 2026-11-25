@@ -90,7 +90,9 @@ function Navegacao({ onIr }: { onIr?: () => void }) {
                       className={cx("-mx-2 flex min-h-9 items-center justify-between gap-2 px-2", on ? "bg-papel font-semibold text-carvao" : "text-papel/85 hover:bg-tecido")}
                     >
                       {i.nome}
-                      {i.href === "/aprovacoes" && n > 0 && <span className={cx("min-w-5 px-1.5 text-center text-[12px] tabular-nums", on ? "bg-carvao text-papel" : "bg-papel text-carvao")}>{n}</span>}
+                      {i.href === "/aprovacoes" && n > 0 && (
+                        <span className={cx("min-w-5 px-1.5 text-center text-[12px] tabular-nums", on ? "bg-carvao text-papel" : "bg-papel text-carvao")}>{n}</span>
+                      )}
                     </Link>
                   </li>
                 );
@@ -108,7 +110,11 @@ function QuemSou() {
   return (
     <label className="block border-t border-tecido px-5 py-4 text-[12px] text-nevoa">
       Usando como
-      <select className="mt-1 block min-h-9 w-full border border-tecido bg-carvao px-2 text-[14px] text-papel" value={perfil} onChange={(e) => acao().setPerfil(e.target.value as Perfil)}>
+      <select
+        className="mt-1 block min-h-9 w-full border border-tecido bg-carvao px-2 text-[14px] text-papel"
+        value={perfil}
+        onChange={(e) => acao().setPerfil(e.target.value as Perfil)}
+      >
         {(Object.keys(PERFIS) as Perfil[]).map((p) => (
           <option key={p} value={p}>
             {PERFIS[p].nome} ({PERFIS[p].area})

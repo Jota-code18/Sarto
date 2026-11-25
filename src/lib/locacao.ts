@@ -46,14 +46,7 @@ export function gerarCobrancas(contratos: Contrato[], existentes: Cobranca[], co
 }
 
 /** Repasse só nasce de cobrança paga. O 1º aluguel fica com a imobiliária. */
-export function calcularRepasse(
-  c: Cobranca,
-  k: Contrato,
-  r: Regras,
-  descontos: number,
-  descontoMotivo: string,
-  id: string,
-): Repasse {
+export function calcularRepasse(c: Cobranca, k: Contrato, r: Regras, descontos: number, descontoMotivo: string, id: string): Repasse {
   const primeiro = c.comp === maisComp(competencia(k.inicio), 1);
   const taxaPct = primeiro ? 100 : taxaAdm(k, r);
   const taxa = arred((c.aluguel * taxaPct) / 100);
@@ -106,16 +99,9 @@ export interface Alerta {
 }
 
 /** Tudo que está fora do lugar em um contrato, do mais grave para o menos grave */
-export function alertasContrato(
-  k: Contrato,
-  cobrancas: Cobranca[],
-  contas: ContaInquilino[],
-  r: Regras,
-  ref: Dia = hoje(),
-): Alerta[] {
+export function alertasContrato(k: Contrato, cobrancas: Cobranca[], contas: ContaInquilino[], r: Regras, ref: Dia = hoje()): Alerta[] {
   const a: Alerta[] = [];
-  const add = (cor: Cor, tipo: Alerta["tipo"], texto: string, quando?: Dia) =>
-    a.push({ cor, tipo, texto, quando, contratoId: k.id });
+  const add = (cor: Cor, tipo: Alerta["tipo"], texto: string, quando?: Dia) => a.push({ cor, tipo, texto, quando, contratoId: k.id });
   if (k.status === "encerrado") return a;
 
   for (const c of cobrancas.filter((x) => x.contratoId === k.id && !x.pagoEm)) {
@@ -166,8 +152,7 @@ export function alertasContrato(
   return a.sort((x, y) => peso[x.cor] - peso[y.cor]);
 }
 
-export const corContrato = (a: Alerta[]): Cor =>
-  a.some((x) => x.cor === "vermelho") ? "vermelho" : a.length ? "amarelo" : "verde";
+export const corContrato = (a: Alerta[]): Cor => (a.some((x) => x.cor === "vermelho") ? "vermelho" : a.length ? "amarelo" : "verde");
 
 export const ETAPAS_FUNIL: { id: string; nome: string; itens: { id: string; nome: string }[] }[] = [
   {

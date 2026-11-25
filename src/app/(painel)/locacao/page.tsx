@@ -27,7 +27,14 @@ const GRUPOS: GrupoDef[] = [
       { k: "bairro", nome: "Bairro", col: 2 },
     ],
   },
-  { grupo: "Proprietário", campos: [...CAMPOS_PESSOA("proprietario", "Nome", true), { k: "proprietario.pix", nome: "Chave Pix do repasse", col: 4 }, { k: "imoveisDoDono", nome: "Imóveis na Sarto", tipo: "numero", col: 2, dica: "3 ou mais usa a taxa reduzida" }] },
+  {
+    grupo: "Proprietário",
+    campos: [
+      ...CAMPOS_PESSOA("proprietario", "Nome", true),
+      { k: "proprietario.pix", nome: "Chave Pix do repasse", col: 4 },
+      { k: "imoveisDoDono", nome: "Imóveis na Sarto", tipo: "numero", col: 2, dica: "3 ou mais usa a taxa reduzida" },
+    ],
+  },
   { grupo: "Inquilino", campos: CAMPOS_PESSOA("inquilino", "Nome", true) },
   {
     grupo: "Valores",
@@ -47,7 +54,17 @@ const GRUPOS: GrupoDef[] = [
     campos: [
       { k: "inicio", nome: "Início", tipo: "data", col: 2, obrigatorio: true },
       { k: "fim", nome: "Fim", tipo: "data", col: 2, obrigatorio: true },
-      { k: "status", nome: "Situação", tipo: "opcoes", col: 2, opcoes: [{ id: "ativo", nome: "Ativo" }, { id: "encerrando", nome: "Em saída" }, { id: "encerrado", nome: "Encerrado" }] },
+      {
+        k: "status",
+        nome: "Situação",
+        tipo: "opcoes",
+        col: 2,
+        opcoes: [
+          { id: "ativo", nome: "Ativo" },
+          { id: "encerrando", nome: "Em saída" },
+          { id: "encerrado", nome: "Encerrado" },
+        ],
+      },
       { k: "indice", nome: "Índice de reajuste", tipo: "opcoes", col: 2, opcoes: ["IGP-M", "IPCA", "INPC"] },
       { k: "ultimoReajuste", nome: "Último reajuste ou início", tipo: "data", col: 2 },
       { k: "seguroVence", nome: "Seguro incêndio vence", tipo: "data", col: 2 },
@@ -95,7 +112,13 @@ function Reajuste({ k, onAplicar }: { k: Contrato; onAplicar: (valor: number, da
             {brl(k.aluguel)} → <strong className="font-medium">{brl(n.valor)}</strong>
           </p>
           <div className="flex flex-wrap gap-2">
-            <Botao pequeno tom="cheio" disabled={!pode(perfil, "reajuste") || !r.completo || data > hoje()} title={data > hoje() ? `Só pode aplicar a partir de ${br(data)}` : undefined} onClick={() => onAplicar(n.valor, data)}>
+            <Botao
+              pequeno
+              tom="cheio"
+              disabled={!pode(perfil, "reajuste") || !r.completo || data > hoje()}
+              title={data > hoje() ? `Só pode aplicar a partir de ${br(data)}` : undefined}
+              onClick={() => onAplicar(n.valor, data)}
+            >
               Aplicar reajuste
             </Botao>
             <Copiar
@@ -201,10 +224,33 @@ export default function Locacao() {
   const [apaga, setApaga] = useState(false);
 
   const novo = (): Contrato => ({
-    id: novoId(), codigo: `L${String(dados.contratos.length + 1).padStart(3, "0")}`, imovel: "", endereco: "", bairro: "", proprietario: { nome: "", doc: "", tel: "", email: "", pix: "" },
-    inquilino: { nome: "", doc: "", tel: "", email: "" }, aluguel: 0, condominio: 0, iptuMensal: 0, encargosNoBoleto: false, diaVencimento: 10, diaRepasse: 15, inicio: hoje(),
-    fim: maisMeses(hoje(), 30), indice: "IPCA", ultimoReajuste: hoje(), garantia: "", garantiaVence: "", seguroVence: "", imoveisDoDono: 1, multaPct: regras.multaPadrao,
-    jurosMes: regras.jurosPadrao, status: "ativo", checklist: {}, saida: {}, obs: "",
+    id: novoId(),
+    codigo: `L${String(dados.contratos.length + 1).padStart(3, "0")}`,
+    imovel: "",
+    endereco: "",
+    bairro: "",
+    proprietario: { nome: "", doc: "", tel: "", email: "", pix: "" },
+    inquilino: { nome: "", doc: "", tel: "", email: "" },
+    aluguel: 0,
+    condominio: 0,
+    iptuMensal: 0,
+    encargosNoBoleto: false,
+    diaVencimento: 10,
+    diaRepasse: 15,
+    inicio: hoje(),
+    fim: maisMeses(hoje(), 30),
+    indice: "IPCA",
+    ultimoReajuste: hoje(),
+    garantia: "",
+    garantiaVence: "",
+    seguroVence: "",
+    imoveisDoDono: 1,
+    multaPct: regras.multaPadrao,
+    jurosMes: regras.jurosPadrao,
+    status: "ativo",
+    checklist: {},
+    saida: {},
+    obs: "",
   });
 
   const linhas = useMemo(
@@ -230,7 +276,12 @@ export default function Locacao() {
   };
   const atual = ed ?? ver?.k ?? null;
   const existe = !!atual && dados.contratos.some((c) => c.id === atual.id);
-  const faltam = atual ? obrigatoriosVazios(GRUPOS.flatMap((g) => g.campos), atual) : [];
+  const faltam = atual
+    ? obrigatoriosVazios(
+        GRUPOS.flatMap((g) => g.campos),
+        atual,
+      )
+    : [];
   const fechar = () => {
     setAberto(null);
     setEd(null);
@@ -257,7 +308,12 @@ export default function Locacao() {
           diaVencimento: lerValor(achar(o, /vencimento|dia_venc/)) || 10,
           inicio,
           fim: lerData(achar(o, /^fim|termino|vigencia_fim/)) ?? maisMeses(inicio, 30),
-          indice: (["IGP-M", "IPCA", "INPC"] as const).find((i) => semAcento(achar(o, /indice/)).replace("-", "").includes(semAcento(i).replace("-", ""))) ?? "IPCA",
+          indice:
+            (["IGP-M", "IPCA", "INPC"] as const).find((i) =>
+              semAcento(achar(o, /indice/))
+                .replace("-", "")
+                .includes(semAcento(i).replace("-", "")),
+            ) ?? "IPCA",
           ultimoReajuste: lerData(achar(o, /reajuste/)) ?? inicio,
           garantia: achar(o, /garantia/),
           seguroVence: lerData(achar(o, /seguro/)) ?? "",
@@ -277,8 +333,46 @@ export default function Locacao() {
     baixarArquivo(
       `locacao-${hoje()}.csv`,
       csv([
-        ["Código", "Imóvel", "Endereço", "Bairro", "Proprietário", "Inquilino", "Aluguel", "Condomínio", "IPTU", "Vencimento", "Início", "Fim", "Índice", "Reajuste", "Garantia", "Seguro", "Situação", "Alertas"],
-        ...lista.map(({ k, al, cor }) => [k.codigo, k.imovel, k.endereco, k.bairro, k.proprietario.nome, k.inquilino.nome, k.aluguel, k.condominio, k.iptuMensal, k.diaVencimento, br(k.inicio), br(k.fim), k.indice, br(proximoReajuste(k)), k.garantia, br(k.seguroVence), NOME_COR[cor], al.map((a) => a.texto).join("; ")]),
+        [
+          "Código",
+          "Imóvel",
+          "Endereço",
+          "Bairro",
+          "Proprietário",
+          "Inquilino",
+          "Aluguel",
+          "Condomínio",
+          "IPTU",
+          "Vencimento",
+          "Início",
+          "Fim",
+          "Índice",
+          "Reajuste",
+          "Garantia",
+          "Seguro",
+          "Situação",
+          "Alertas",
+        ],
+        ...lista.map(({ k, al, cor }) => [
+          k.codigo,
+          k.imovel,
+          k.endereco,
+          k.bairro,
+          k.proprietario.nome,
+          k.inquilino.nome,
+          k.aluguel,
+          k.condominio,
+          k.iptuMensal,
+          k.diaVencimento,
+          br(k.inicio),
+          br(k.fim),
+          k.indice,
+          br(proximoReajuste(k)),
+          k.garantia,
+          br(k.seguroVence),
+          NOME_COR[cor],
+          al.map((a) => a.texto).join("; "),
+        ]),
       ]),
       "text/csv;charset=utf-8",
     );
@@ -296,17 +390,36 @@ export default function Locacao() {
         </Botao>
       </Cabecalho>
       <Numeros>
-        <Numero valor={vivos.length} nome="Contratos ativos" nota={`${brl(vivos.reduce((a, l) => a + l.k.aluguel, 0), false)} por mês`} />
+        <Numero
+          valor={vivos.length}
+          nome="Contratos ativos"
+          nota={`${brl(
+            vivos.reduce((a, l) => a + l.k.aluguel, 0),
+            false,
+          )} por mês`}
+        />
         <Numero valor={vivos.filter((l) => l.cor === "vermelho").length} nome="Para resolver" />
         <Numero valor={vivos.filter((l) => l.al.some((a) => a.tipo === "reajuste")).length} nome="Reajuste em 45 dias" />
         <Numero valor={vivos.filter((l) => l.al.some((a) => a.tipo === "seguro" || a.tipo === "garantia" || a.tipo === "fim")).length} nome="Seguro, garantia ou fim" />
       </Numeros>
       <div className="mb-4 flex flex-wrap gap-3">
         <Busca valor={q} onMuda={setQ} placeholder="Imóvel, inquilino ou proprietário" />
-        <Escolha rotulo="Semáforo" valor={f} onMuda={setF} opcoes={[{ id: "", nome: "Todos" }, { id: "vermelho", nome: "Para resolver" }, { id: "amarelo", nome: "Atenção" }, { id: "verde", nome: "Em dia" }]} />
+        <Escolha
+          rotulo="Semáforo"
+          valor={f}
+          onMuda={setF}
+          opcoes={[
+            { id: "", nome: "Todos" },
+            { id: "vermelho", nome: "Para resolver" },
+            { id: "amarelo", nome: "Atenção" },
+            { id: "verde", nome: "Em dia" },
+          ]}
+        />
       </div>
       {lista.length === 0 ? (
-        <Vazio acao={<Botao onClick={() => abrir(novo(), "dados")}>Cadastrar contrato</Botao>}>Nenhum contrato aqui. Se a planilha da Verônica estiver em Excel, salve como CSV e importe.</Vazio>
+        <Vazio acao={<Botao onClick={() => abrir(novo(), "dados")}>Cadastrar contrato</Botao>}>
+          Nenhum contrato aqui. Se a planilha da Verônica estiver em Excel, salve como CSV e importe.
+        </Vazio>
       ) : (
         <div className="overflow-x-auto">
           <table className="tabela min-w-[900px]">
@@ -487,7 +600,9 @@ export default function Locacao() {
                           <li key={c.id} className="flex items-center justify-between gap-3 py-2">
                             <span>{brComp(c.comp)}</span>
                             <span className="tabular-nums">{brl(c.aluguel + c.encargos + c.extra)}</span>
-                            <Selo tom={s === "paga" ? "ok" : s === "atrasada" ? "erro" : "neutro"}>{s === "paga" ? `Paga em ${br(c.pagoEm)}` : s === "atrasada" ? "Em atraso" : `Vence ${br(c.vencimento)}`}</Selo>
+                            <Selo tom={s === "paga" ? "ok" : s === "atrasada" ? "erro" : "neutro"}>
+                              {s === "paga" ? `Paga em ${br(c.pagoEm)}` : s === "atrasada" ? "Em atraso" : `Vence ${br(c.vencimento)}`}
+                            </Selo>
                           </li>
                         );
                       })}

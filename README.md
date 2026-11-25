@@ -25,22 +25,22 @@ Defina `PAINEL_SENHA` nas variáveis de ambiente da Vercel e publique de novo. S
 
 ## O que já funciona, de graça
 
-| Área | O que faz |
-| --- | --- |
-| Leads | cadastro no celular, lead repetido, lista para lançar no JetImob |
-| Captação | manual de captação, CEP, fotos pelo mínimo do tipo, PDF padrão Sarto |
-| Carteira | lê o site toda segunda (GitHub Actions), recebe a nota do Canal Pro e o alerta do Jetimob, aponta preço divergente |
-| Varredura | ZAP, Viva Real e OLX pela Apify, toda segunda ou no botão, com `APIFY_TOKEN` e `PAINEL_SENHA`; junta repetidos, tira o que é da Sarto, percebe queda de preço |
-| Corretores | checklist de entrada com responsável |
-| Locação | semáforo por contrato, cobrança com multa e juros, WhatsApp pronto, repasse com aprovação, reajuste pelo Banco Central, saída, informe e base da DIMOB |
-| Pós-venda | 7 etapas com trava, resumo para o jurídico, comissão, avisos |
-| Certidões | dossiê, portais com dados prontos, leitura do PDF no navegador, validade, parecer |
-| Minutas | modelos com campos, Word da Gabi, marca de rascunho até ela liberar |
-| Consulta | publicações no DJEN por nome e empresa por CNPJ |
-| Financeiro | extrato OFX ou CSV, contas a pagar |
-| Agenda | videomaker com horários livres, Google Agenda por link e .ics |
-| Marketing | cronograma da semana e pedido pronto para a skill |
-| Rotina | abertura, fechamento, estoque, aniversários, registro de 30 minutos |
+| Área       | O que faz                                                                                                                                                     |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Leads      | cadastro no celular, lead repetido, lista para lançar no JetImob                                                                                              |
+| Captação   | manual de captação, CEP, fotos pelo mínimo do tipo, PDF padrão Sarto                                                                                          |
+| Carteira   | lê o site toda segunda (GitHub Actions), recebe a nota do Canal Pro e o alerta do Jetimob, aponta preço divergente                                            |
+| Varredura  | ZAP, Viva Real e OLX pela Apify, toda segunda ou no botão, com `APIFY_TOKEN` e `PAINEL_SENHA`; junta repetidos, tira o que é da Sarto, percebe queda de preço |
+| Corretores | checklist de entrada com responsável                                                                                                                          |
+| Locação    | semáforo por contrato, cobrança com multa e juros, WhatsApp pronto, repasse com aprovação, reajuste pelo Banco Central, saída, informe e base da DIMOB        |
+| Pós-venda  | 7 etapas com trava, resumo para o jurídico, comissão, avisos                                                                                                  |
+| Certidões  | dossiê, portais com dados prontos, leitura do PDF no navegador, validade, parecer                                                                             |
+| Minutas    | modelos com campos, Word da Gabi, marca de rascunho até ela liberar                                                                                           |
+| Consulta   | publicações no DJEN por nome e empresa por CNPJ                                                                                                               |
+| Financeiro | extrato OFX ou CSV, contas a pagar                                                                                                                            |
+| Agenda     | videomaker com horários livres, Google Agenda por link e .ics                                                                                                 |
+| Marketing  | cronograma da semana e pedido pronto para a skill                                                                                                             |
+| Rotina     | abertura, fechamento, estoque, aniversários, registro de 30 minutos                                                                                           |
 
 ## Regras que o painel não deixa furar
 

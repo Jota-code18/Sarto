@@ -15,9 +15,38 @@ import { acao, useSarto } from "@/lib/store";
 import type { Captacao, Parte } from "@/lib/tipos";
 
 const nova = (): Captacao => ({
-  id: novoId(), codigo: "", tipo: "condominio", finalidade: "venda", titulo: "", proprietario: { nome: "", doc: "", tel: "", email: "" }, cep: "", endereco: "", numero: "",
-  complemento: "", bairro: "", cidade: "Anápolis", condominioNome: "", valor: 0, valorCondominio: 0, iptu: 0, area: 0, terreno: 0, quartos: 0, suites: 0, banheiros: 0,
-  vagas: 0, matricula: "", descricao: "", diferenciais: "", exclusividade: "", etapa: "visita", checklist: {}, fotos: [], corretorId: "", origem: "Indicação", criadoEm: hoje(),
+  id: novoId(),
+  codigo: "",
+  tipo: "condominio",
+  finalidade: "venda",
+  titulo: "",
+  proprietario: { nome: "", doc: "", tel: "", email: "" },
+  cep: "",
+  endereco: "",
+  numero: "",
+  complemento: "",
+  bairro: "",
+  cidade: "Anápolis",
+  condominioNome: "",
+  valor: 0,
+  valorCondominio: 0,
+  iptu: 0,
+  area: 0,
+  terreno: 0,
+  quartos: 0,
+  suites: 0,
+  banheiros: 0,
+  vagas: 0,
+  matricula: "",
+  descricao: "",
+  diferenciais: "",
+  exclusividade: "",
+  etapa: "visita",
+  checklist: {},
+  fotos: [],
+  corretorId: "",
+  origem: "Indicação",
+  criadoEm: hoje(),
 });
 
 const casa = (v: Record<string, unknown>) => v.tipo !== "lote" && v.tipo !== "comercial";
@@ -67,7 +96,12 @@ function Fotos({ c, onMuda }: { c: Captacao; onMuda: (c: Captacao) => void }) {
             </button>
           </div>
         ))}
-        <label className={cx("grid aspect-square cursor-pointer place-items-center border border-dashed border-nevoa text-center text-[13px] text-cinza hover:border-carvao", ocupado && "opacity-50")}>
+        <label
+          className={cx(
+            "grid aspect-square cursor-pointer place-items-center border border-dashed border-nevoa text-center text-[13px] text-cinza hover:border-carvao",
+            ocupado && "opacity-50",
+          )}
+        >
           <input type="file" accept="image/*" multiple className="sr-only" disabled={ocupado} onChange={(e) => incluir(e.target.files)} />
           <span>
             <ImagePlus className="mx-auto mb-1" size={20} />
@@ -123,8 +157,27 @@ export default function Pagina() {
       campos: [
         { k: "titulo", nome: "Título", col: 6, dica: "Ex.: Casa térrea com piscina" },
         { k: "tipo", nome: "Tipo", tipo: "opcoes", col: 2, opcoes: Object.entries(TIPOS_IMOVEL).map(([id, nome]) => ({ id, nome })) },
-        { k: "finalidade", nome: "Finalidade", tipo: "opcoes", col: 2, opcoes: [{ id: "venda", nome: "Venda" }, { id: "locacao", nome: "Locação" }] },
-        { k: "exclusividade", nome: "Exclusividade", tipo: "opcoes", col: 2, opcoes: [{ id: "", nome: "Definir" }, { id: "sim", nome: "Com exclusividade" }, { id: "nao", nome: "Sem exclusividade" }] },
+        {
+          k: "finalidade",
+          nome: "Finalidade",
+          tipo: "opcoes",
+          col: 2,
+          opcoes: [
+            { id: "venda", nome: "Venda" },
+            { id: "locacao", nome: "Locação" },
+          ],
+        },
+        {
+          k: "exclusividade",
+          nome: "Exclusividade",
+          tipo: "opcoes",
+          col: 2,
+          opcoes: [
+            { id: "", nome: "Definir" },
+            { id: "sim", nome: "Com exclusividade" },
+            { id: "nao", nome: "Sem exclusividade" },
+          ],
+        },
         { k: "valor", nome: "Valor", tipo: "dinheiro", col: 2 },
         { k: "valorCondominio", nome: "Condomínio por mês", tipo: "dinheiro", col: 2, se: (v) => v.tipo === "condominio" || v.tipo === "apartamento" || v.tipo === "comercial" },
         { k: "iptu", nome: "IPTU por ano", tipo: "dinheiro", col: 2 },
@@ -159,7 +212,13 @@ export default function Pagina() {
     {
       grupo: "Interno",
       campos: [
-        { k: "corretorId", nome: "Corretor captador", tipo: "opcoes", col: 2, opcoes: [{ id: "", nome: "Sem corretor" }, ...dados.corretores.map((c) => ({ id: c.id, nome: c.nome }))] },
+        {
+          k: "corretorId",
+          nome: "Corretor captador",
+          tipo: "opcoes",
+          col: 2,
+          opcoes: [{ id: "", nome: "Sem corretor" }, ...dados.corretores.map((c) => ({ id: c.id, nome: c.nome }))],
+        },
         { k: "origem", nome: "Origem", tipo: "opcoes", col: 2, opcoes: ["Indicação", "Varredura", "Cliente da casa", "Placa", "Site", "Instagram", "Outro"] },
         { k: "codigo", nome: "Código no JetImob", col: 2 },
       ],
@@ -188,7 +247,14 @@ export default function Pagina() {
     const id = novoId();
     salvar("captacoes", { ...ed, checklist: { ...ed.checklist, certidoes: acao().feito() } });
     salvar("dossies", {
-      id, titulo: ed.titulo || ed.bairro, origem: "captacao", origemId: ed.id, partes: [dono, im], parecer: "", risco: "a_analisar", criadoEm: hoje(),
+      id,
+      titulo: ed.titulo || ed.bairro,
+      origem: "captacao",
+      origemId: ed.id,
+      partes: [dono, im],
+      parecer: "",
+      risco: "a_analisar",
+      criadoEm: hoje(),
       certidoes: [dono, im].flatMap((x) => certidoesPadrao(x.tipo, !!ed.condominioNome).map((tipo) => ({ id: novoId(), parteId: x.id, tipo, status: "pendente" as const }))),
     });
     registrar("Captação", `abriu dossiê de ${ed.titulo || ed.bairro}`);
@@ -323,7 +389,13 @@ export default function Pagina() {
                 <div className="mb-6 flex items-end gap-2">
                   <label className="text-[12px] font-medium">
                     Preencher pelo CEP
-                    <input className="campo mt-1 w-40" inputMode="numeric" value={cep} onChange={(e) => setCep(e.target.value)} onKeyDown={(e) => e.key === "Enter" && buscarCep()} />
+                    <input
+                      className="campo mt-1 w-40"
+                      inputMode="numeric"
+                      value={cep}
+                      onChange={(e) => setCep(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && buscarCep()}
+                    />
                   </label>
                   <Botao onClick={buscarCep}>Buscar</Botao>
                 </div>

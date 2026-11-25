@@ -22,7 +22,9 @@ export default function Obrigacoes() {
           });
           const bruto = arred(mes.reduce((a, b) => a + b, 0));
           const taxa = arred(reps.reduce((a, r) => a + r.taxa, 0));
-          const faltas = [!soDigitos(k.proprietario.doc) && "CPF do proprietário", !soDigitos(k.inquilino.doc) && "CPF do inquilino", !k.endereco && "endereço"].filter(Boolean) as string[];
+          const faltas = [!soDigitos(k.proprietario.doc) && "CPF do proprietário", !soDigitos(k.inquilino.doc) && "CPF do inquilino", !k.endereco && "endereço"].filter(
+            Boolean,
+          ) as string[];
           return { k, bruto, taxa, mes, faltas };
         })
         .filter((l) => l.bruto > 0),
@@ -43,8 +45,32 @@ export default function Obrigacoes() {
     baixarArquivo(
       `dimob-${ano}.csv`,
       csv([
-        ["Locador", "CPF/CNPJ do locador", "Locatário", "CPF/CNPJ do locatário", "Nº do contrato", "Data do contrato", "Endereço", "Bairro", ...["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"], "Total de aluguéis", "Comissão"],
-        ...linhas.map((l) => [l.k.proprietario.nome, mascaraDoc(l.k.proprietario.doc), l.k.inquilino.nome, mascaraDoc(l.k.inquilino.doc), l.k.codigo, br(l.k.inicio), l.k.endereco, l.k.bairro, ...l.mes, l.bruto, l.taxa]),
+        [
+          "Locador",
+          "CPF/CNPJ do locador",
+          "Locatário",
+          "CPF/CNPJ do locatário",
+          "Nº do contrato",
+          "Data do contrato",
+          "Endereço",
+          "Bairro",
+          ...["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"],
+          "Total de aluguéis",
+          "Comissão",
+        ],
+        ...linhas.map((l) => [
+          l.k.proprietario.nome,
+          mascaraDoc(l.k.proprietario.doc),
+          l.k.inquilino.nome,
+          mascaraDoc(l.k.inquilino.doc),
+          l.k.codigo,
+          br(l.k.inicio),
+          l.k.endereco,
+          l.k.bairro,
+          ...l.mes,
+          l.bruto,
+          l.taxa,
+        ]),
       ]),
       "text/csv;charset=utf-8",
     );
@@ -58,15 +84,31 @@ export default function Obrigacoes() {
         </Botao>
       </Cabecalho>
       <Numeros>
-        <Numero valor={brl(donos.reduce((a, d) => a + d.bruto, 0), false)} nome="Aluguéis recebidos" />
-        <Numero valor={brl(donos.reduce((a, d) => a + d.taxa, 0), false)} nome="Taxas da Sarto" />
+        <Numero
+          valor={brl(
+            donos.reduce((a, d) => a + d.bruto, 0),
+            false,
+          )}
+          nome="Aluguéis recebidos"
+        />
+        <Numero
+          valor={brl(
+            donos.reduce((a, d) => a + d.taxa, 0),
+            false,
+          )}
+          nome="Taxas da Sarto"
+        />
         <Numero valor={donos.length} nome="Proprietários" />
         <Numero valor={faltas.length} nome="Contratos com dado faltando" />
       </Numeros>
       {faltas.length > 0 && (
         <div className="mb-5">
           <Nota tom="alerta">
-            Antes de enviar, complete: {faltas.slice(0, 5).map((l) => `${l.k.imovel} (${l.faltas.join(", ")})`).join("; ")}
+            Antes de enviar, complete:{" "}
+            {faltas
+              .slice(0, 5)
+              .map((l) => `${l.k.imovel} (${l.faltas.join(", ")})`)
+              .join("; ")}
             {faltas.length > 5 && ` e mais ${faltas.length - 5}`}.
           </Nota>
         </div>

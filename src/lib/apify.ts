@@ -50,7 +50,16 @@ async function api(caminho: string, init?: RequestInit) {
   return r.json();
 }
 
-const rodada = (ator: string) => (d: { id: string; status: string; startedAt: string; defaultDatasetId: string; usageTotalUsd?: number }): Rodada => ({ id: d.id, ator, status: d.status, inicio: d.startedAt, dataset: d.defaultDatasetId, custo: d.usageTotalUsd ?? 0 });
+const rodada =
+  (ator: string) =>
+  (d: { id: string; status: string; startedAt: string; defaultDatasetId: string; usageTotalUsd?: number }): Rodada => ({
+    id: d.id,
+    ator,
+    status: d.status,
+    inicio: d.startedAt,
+    dataset: d.defaultDatasetId,
+    custo: d.usageTotalUsd ?? 0,
+  });
 
 /** Dos dois coletores, da mais nova para a mais antiga */
 export async function rodadas(): Promise<Rodada[]> {
@@ -102,9 +111,28 @@ export async function iniciar(intervaloHoras: number): Promise<{ ok: boolean; mo
 
 /** Só os campos que o painel usa: descrição, telefone e foto ficam de fora */
 export async function itens({ dataset, ator }: Rodada, offset: number) {
-  const campos = ator === OLX ? "listingId,url,title,categoryName,neighborhood,city,price,oldPrice,priceDisplay,properties,seller,isBusiness,postedAt" : "identity,source_context,timestamps,content,pricing,location,attributes,entities";
+  const campos =
+    ator === OLX
+      ? "listingId,url,title,categoryName,neighborhood,city,price,oldPrice,priceDisplay,properties,seller,isBusiness,postedAt"
+      : "identity,source_context,timestamps,content,pricing,location,attributes,entities";
+  // biome-ignore lint/suspicious/noExplicitAny: formato muda conforme o coletor
   const l: Record<string, any>[] = await api(`/datasets/${encodeURIComponent(dataset)}/items?clean=1&offset=${offset}&limit=400&fields=${campos}`);
-  if (ator === OLX) return l.map(({ listingId, url, title, categoryName, neighborhood, city, price, oldPrice, priceDisplay, properties, seller, isBusiness, postedAt }) => ({ listingId, url, title, categoryName, neighborhood, city, price, oldPrice, priceDisplay: priceDisplay ?? "", properties, seller: { name: seller?.name, type: seller?.type }, isBusiness, postedAt }));
+  if (ator === OLX)
+    return l.map(({ listingId, url, title, categoryName, neighborhood, city, price, oldPrice, priceDisplay, properties, seller, isBusiness, postedAt }) => ({
+      listingId,
+      url,
+      title,
+      categoryName,
+      neighborhood,
+      city,
+      price,
+      oldPrice,
+      priceDisplay: priceDisplay ?? "",
+      properties,
+      seller: { name: seller?.name, type: seller?.type },
+      isBusiness,
+      postedAt,
+    }));
   return l.map((o) => ({
     identity: { external_id: o.identity?.external_id },
     source_context: { url: o.source_context?.url },

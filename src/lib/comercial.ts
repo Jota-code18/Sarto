@@ -113,9 +113,5 @@ export function faltando(c: Captacao): string[] {
 export function leadRepetido(novo: Pick<Lead, "tel" | "email" | "id">, todos: Lead[]) {
   const tel = soDigitos(novo.tel).slice(-8);
   const mail = novo.email.trim().toLowerCase();
-  return todos.find(
-    (l) =>
-      l.id !== novo.id &&
-      ((tel.length === 8 && soDigitos(l.tel).slice(-8) === tel) || (mail && l.email.trim().toLowerCase() === mail)),
-  );
+  return todos.find((l) => l.id !== novo.id && ((tel.length === 8 && soDigitos(l.tel).slice(-8) === tel) || (mail && l.email.trim().toLowerCase() === mail)));
 }

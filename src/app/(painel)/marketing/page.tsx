@@ -17,7 +17,16 @@ const ST: Record<Post["status"], { nome: string; tom: Tom }> = {
   agendado: { nome: "Agendado", tom: "forte" },
   publicado: { nome: "Publicado", tom: "ok" },
 };
-const PAUTAS = ["Quanto custa registrar um imóvel em Goiás", "O que olhar na matrícula antes de comprar", "Diferença entre sinal e entrada", "Como funciona a vistoria de locação", "ITBI: quem paga e quando", "Por que exclusividade vende melhor", "Financiamento: o que o banco avalia no imóvel", "Documentos para alugar com seguro-fiança"];
+const PAUTAS = [
+  "Quanto custa registrar um imóvel em Goiás",
+  "O que olhar na matrícula antes de comprar",
+  "Diferença entre sinal e entrada",
+  "Como funciona a vistoria de locação",
+  "ITBI: quem paga e quando",
+  "Por que exclusividade vende melhor",
+  "Financiamento: o que o banco avalia no imóvel",
+  "Documentos para alugar com seguro-fiança",
+];
 
 export default function Marketing() {
   const { dados, perfil } = useSarto();
@@ -66,7 +75,13 @@ export default function Marketing() {
         : `Tema: ${p.titulo}.`;
     return `Use a skill da Sarto e faça um post de ${TIPO[p.tipo].toLowerCase()} (1080x1350).\n${d}\nVou anexar a foto. Quero a imagem e a legenda.`;
   };
-  const textoJales = [`Cronograma de ${brCurto(seg)} a ${brCurto(fim)}`, "", ...dias.flatMap((d) => daSemana.filter((p) => p.data === d).map((p) => `${DIAS[paraData(d).getDay()]} ${brCurto(d)}: ${TIPO[p.tipo]}, ${p.titulo} (${ST[p.status].nome.toLowerCase()})`))].join("\n");
+  const textoJales = [
+    `Cronograma de ${brCurto(seg)} a ${brCurto(fim)}`,
+    "",
+    ...dias.flatMap((d) =>
+      daSemana.filter((p) => p.data === d).map((p) => `${DIAS[paraData(d).getDay()]} ${brCurto(d)}: ${TIPO[p.tipo]}, ${p.titulo} (${ST[p.status].nome.toLowerCase()})`),
+    ),
+  ].join("\n");
 
   const grupos: GrupoDef[] = [
     {
@@ -75,12 +90,21 @@ export default function Marketing() {
         { k: "titulo", nome: "Título", col: 6 },
         { k: "tipo", nome: "Tipo", tipo: "opcoes", col: 2, opcoes: Object.entries(TIPO).map(([id, nome]) => ({ id, nome })) },
         { k: "data", nome: "Data", tipo: "data", col: 2 },
-        { k: "status", nome: "Situação", tipo: "opcoes", col: 2, opcoes: Object.entries(ST).filter(([id]) => id !== "agendado" || ed?.aprovado || ed?.status === "agendado").map(([id, s]) => ({ id, nome: s.nome })) },
+        {
+          k: "status",
+          nome: "Situação",
+          tipo: "opcoes",
+          col: 2,
+          opcoes: Object.entries(ST)
+            .filter(([id]) => id !== "agendado" || ed?.aprovado || ed?.status === "agendado")
+            .map(([id, s]) => ({ id, nome: s.nome })),
+        },
         { k: "legenda", nome: "Legenda", tipo: "area", col: 6, linhas: 7 },
       ],
     },
   ];
-  const delta = (k: keyof MetricaMkt) => (ult && ant ? `${(ult[k] as number) - (ant[k] as number) >= 0 ? "+" : ""}${num((ult[k] as number) - (ant[k] as number))} no mês` : undefined);
+  const delta = (k: keyof MetricaMkt) =>
+    ult && ant ? `${(ult[k] as number) - (ant[k] as number) >= 0 ? "+" : ""}${num((ult[k] as number) - (ant[k] as number))} no mês` : undefined;
 
   return (
     <>

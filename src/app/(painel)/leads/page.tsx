@@ -21,8 +21,23 @@ const CANAIS = ["ZAP Imóveis", "Viva Real", "OLX", "62imóveis", "Site", "Insta
 const TIPOS = ["Casa em condomínio", "Casa de rua", "Apartamento", "Lote", "Comercial", "Rural"];
 
 const novo = (): Lead => ({
-  id: novoId(), nome: "", tel: "", email: "", canal: "", interesse: "comprar", tipoImovel: "", bairros: "", min: 0, max: 0, imovelCod: "", corretorId: "",
-  status: "novo", obs: "", criadoEm: hoje(), atualizadoEm: hoje(), noJetimob: false,
+  id: novoId(),
+  nome: "",
+  tel: "",
+  email: "",
+  canal: "",
+  interesse: "comprar",
+  tipoImovel: "",
+  bairros: "",
+  min: 0,
+  max: 0,
+  imovelCod: "",
+  corretorId: "",
+  status: "novo",
+  obs: "",
+  criadoEm: hoje(),
+  atualizadoEm: hoje(),
+  noJetimob: false,
 });
 
 export default function Leads() {
@@ -43,13 +58,30 @@ export default function Leads() {
           { k: "tel", nome: "WhatsApp", tipo: "tel", col: 3, obrigatorio: true },
           { k: "email", nome: "E-mail", tipo: "email", col: 3 },
           { k: "canal", nome: "De onde veio", tipo: "opcoes", opcoes: CANAIS, col: 3, obrigatorio: true },
-          { k: "corretorId", nome: "Corretor", tipo: "opcoes", col: 3, opcoes: [{ id: "", nome: "Sem corretor" }, ...dados.corretores.filter((c) => c.status !== "inativo").map((c) => ({ id: c.id, nome: c.nome }))] },
+          {
+            k: "corretorId",
+            nome: "Corretor",
+            tipo: "opcoes",
+            col: 3,
+            opcoes: [{ id: "", nome: "Sem corretor" }, ...dados.corretores.filter((c) => c.status !== "inativo").map((c) => ({ id: c.id, nome: c.nome }))],
+          },
         ],
       },
       {
         grupo: "O que procura",
         campos: [
-          { k: "interesse", nome: "Interesse", tipo: "opcoes", col: 3, opcoes: [{ id: "comprar", nome: "Comprar" }, { id: "alugar", nome: "Alugar" }, { id: "vender", nome: "Vender" }, { id: "investir", nome: "Investir" }] },
+          {
+            k: "interesse",
+            nome: "Interesse",
+            tipo: "opcoes",
+            col: 3,
+            opcoes: [
+              { id: "comprar", nome: "Comprar" },
+              { id: "alugar", nome: "Alugar" },
+              { id: "vender", nome: "Vender" },
+              { id: "investir", nome: "Investir" },
+            ],
+          },
           { k: "tipoImovel", nome: "Tipo de imóvel", tipo: "opcoes", opcoes: TIPOS, col: 3 },
           { k: "imovelCod", nome: "Código do imóvel", col: 2 },
           { k: "bairros", nome: "Bairros ou condomínios", col: 4 },
@@ -88,7 +120,22 @@ export default function Leads() {
       `leads-sarto-${hoje()}.csv`,
       csv([
         ["Nome", "Telefone", "E-mail", "Canal", "Interesse", "Tipo", "Bairros", "Mínimo", "Máximo", "Código do imóvel", "Corretor", "Situação", "Criado em", "Observações"],
-        ...ls.map((l) => [l.nome, mascaraTel(l.tel), l.email, l.canal, l.interesse, l.tipoImovel, l.bairros, l.min || "", l.max || "", l.imovelCod, nomeCor(l.corretorId), l.status, br(l.criadoEm), l.obs]),
+        ...ls.map((l) => [
+          l.nome,
+          mascaraTel(l.tel),
+          l.email,
+          l.canal,
+          l.interesse,
+          l.tipoImovel,
+          l.bairros,
+          l.min || "",
+          l.max || "",
+          l.imovelCod,
+          nomeCor(l.corretorId),
+          l.status,
+          br(l.criadoEm),
+          l.obs,
+        ]),
       ]),
       "text/csv;charset=utf-8",
     );
@@ -121,7 +168,9 @@ export default function Leads() {
       />
       <div className="mb-4 flex flex-wrap gap-3">
         <Busca valor={q} onMuda={setQ} placeholder="Nome, telefone, bairro ou canal" />
-        {perfil !== "corretor" && <Escolha rotulo="Corretor" valor={cor} onMuda={setCor} opcoes={[{ id: "", nome: "Todos os corretores" }, ...dados.corretores.map((c) => ({ id: c.id, nome: c.nome }))]} />}
+        {perfil !== "corretor" && (
+          <Escolha rotulo="Corretor" valor={cor} onMuda={setCor} opcoes={[{ id: "", nome: "Todos os corretores" }, ...dados.corretores.map((c) => ({ id: c.id, nome: c.nome }))]} />
+        )}
       </div>
 
       {lista.length === 0 ? (
@@ -166,7 +215,13 @@ export default function Leads() {
                         Lançado
                       </Botao>
                     ) : (
-                      <a className={estiloBotao("linha", true)} href={linkWhats(l.tel, `Olá, ${l.nome.split(" ")[0]}. Aqui é da Sarto Imóveis.`)} target="_blank" rel="noreferrer" aria-label={`WhatsApp de ${l.nome}`}>
+                      <a
+                        className={estiloBotao("linha", true)}
+                        href={linkWhats(l.tel, `Olá, ${l.nome.split(" ")[0]}. Aqui é da Sarto Imóveis.`)}
+                        target="_blank"
+                        rel="noreferrer"
+                        aria-label={`WhatsApp de ${l.nome}`}
+                      >
                         <MessageCircle size={15} />
                       </a>
                     )}

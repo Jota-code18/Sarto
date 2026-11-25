@@ -23,10 +23,18 @@ export default function Financeiro() {
   const sai = -lan.filter((l) => l.valor < 0).reduce((a, l) => a + l.valor, 0);
   const abertas = dados.contasPagar.filter((c) => !c.pagoEm).sort((a, b) => a.vencimento.localeCompare(b.vencimento));
   const pagas = dados.contasPagar.filter((c) => c.pagoEm?.startsWith(comp));
-  const cat = [...lan.filter((l) => l.valor < 0).reduce((m, l) => m.set(l.categoria, (m.get(l.categoria) ?? 0) - l.valor), new Map<string, number>())].map(([nome, valor]) => ({ nome, valor, rotulo: brl(valor, false) })).sort((a, b) => b.valor - a.valor);
+  const cat = [...lan.filter((l) => l.valor < 0).reduce((m, l) => m.set(l.categoria, (m.get(l.categoria) ?? 0) - l.valor), new Map<string, number>())]
+    .map(([nome, valor]) => ({ nome, valor, rotulo: brl(valor, false) }))
+    .sort((a, b) => b.valor - a.valor);
   const serie = [-5, -4, -3, -2, -1, 0].map((n) => {
     const c = maisComp(comp, n);
-    return { nome: brComp(c), valor: Math.max(0, dados.lancamentos.filter((l) => l.data.startsWith(c)).reduce((a, l) => a + l.valor, 0)) };
+    return {
+      nome: brComp(c),
+      valor: Math.max(
+        0,
+        dados.lancamentos.filter((l) => l.data.startsWith(c)).reduce((a, l) => a + l.valor, 0),
+      ),
+    };
   });
   const foraDia = abertas.filter((c) => Number(c.vencimento.slice(8)) !== regras.diaFornecedores);
 
@@ -65,7 +73,12 @@ export default function Financeiro() {
           <input type="file" accept=".ofx,.csv,.txt" className="sr-only" onChange={(e) => importar(e.target.files?.[0])} />
         </label>
         <Botao onClick={() => setLa({ id: novoId(), data: hoje(), descricao: "", valor: 0, categoria: "Outros", origem: "manual", sai: true })}>Lançar</Botao>
-        <Botao tom="cheio" onClick={() => setCp({ id: novoId(), fornecedor: "", categoria: "Escritório", valor: 0, vencimento: diaNoMes(competencia(hoje()), regras.diaFornecedores), recorrente: true })}>
+        <Botao
+          tom="cheio"
+          onClick={() =>
+            setCp({ id: novoId(), fornecedor: "", categoria: "Escritório", valor: 0, vencimento: diaNoMes(competencia(hoje()), regras.diaFornecedores), recorrente: true })
+          }
+        >
           <Plus size={16} /> Conta a pagar
         </Botao>
       </Cabecalho>
@@ -146,7 +159,11 @@ export default function Financeiro() {
               </table>
             </div>
           )}
-          {pagas.length > 0 && <p className="mt-3 text-[13px] text-cinza">Pagas em {brComp(comp)}: {pagas.map((c) => c.fornecedor).join(", ")}.</p>}
+          {pagas.length > 0 && (
+            <p className="mt-3 text-[13px] text-cinza">
+              Pagas em {brComp(comp)}: {pagas.map((c) => c.fornecedor).join(", ")}.
+            </p>
+          )}
         </>
       )}
       {aba === "lancamentos" &&
@@ -155,7 +172,16 @@ export default function Financeiro() {
         ) : (
           <>
             <div className="mb-3 text-right">
-              <Botao pequeno onClick={() => baixarArquivo(`financeiro-${comp}.csv`, csv([["Data", "Descrição", "Categoria", "Valor", "Origem"], ...lan.map((l) => [br(l.data), l.descricao, l.categoria, l.valor, l.origem])]), "text/csv;charset=utf-8")}>
+              <Botao
+                pequeno
+                onClick={() =>
+                  baixarArquivo(
+                    `financeiro-${comp}.csv`,
+                    csv([["Data", "Descrição", "Categoria", "Valor", "Origem"], ...lan.map((l) => [br(l.data), l.descricao, l.categoria, l.valor, l.origem])]),
+                    "text/csv;charset=utf-8",
+                  )
+                }
+              >
                 Exportar planilha
               </Botao>
             </div>
@@ -179,7 +205,12 @@ export default function Financeiro() {
                         </button>
                       </td>
                       <td>
-                        <select className="campo min-h-9 w-auto py-1" aria-label="Categoria" value={l.categoria} onChange={(e) => mudar("lancamentos", l.id, { categoria: e.target.value })}>
+                        <select
+                          className="campo min-h-9 w-auto py-1"
+                          aria-label="Categoria"
+                          value={l.categoria}
+                          onChange={(e) => mudar("lancamentos", l.id, { categoria: e.target.value })}
+                        >
                           {[...new Set([...CATEGORIAS, l.categoria])].map((c) => (
                             <option key={c}>{c}</option>
                           ))}

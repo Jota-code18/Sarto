@@ -22,7 +22,9 @@ export default function Registro() {
   const semana = dados.registros.filter((r) => r.data >= seg && r.data <= maisDias(seg, 6) && (quem === "Todos" || r.pessoa === quem));
 
   const grupo = (f: (r: (typeof semana)[number]) => string) =>
-    [...semana.reduce((m, r) => m.set(f(r), (m.get(f(r)) ?? 0) + 0.5), new Map<string, number>())].map(([nome, valor]) => ({ nome, valor, rotulo: `${num(valor, 1)} h` })).sort((a, b) => b.valor - a.valor);
+    [...semana.reduce((m, r) => m.set(f(r), (m.get(f(r)) ?? 0) + 0.5), new Map<string, number>())]
+      .map(([nome, valor]) => ({ nome, valor, rotulo: `${num(valor, 1)} h` }))
+      .sort((a, b) => b.valor - a.valor);
   const cats = grupo((r) => r.categoria || "Sem categoria");
   const ativs = grupo((r) => r.atividade.trim() || "Sem descrição");
   const retrab = cats.find((c) => c.nome === "Retrabalho")?.valor ?? 0;
@@ -42,7 +44,12 @@ export default function Registro() {
   return (
     <>
       <Cabecalho area="GESTÃO REGISTRO" titulo="Registro de atividades" texto="O que foi feito em cada bloco de 30 minutos, para achar o que toma tempo demais.">
-        <Escolha rotulo="Pessoa" valor={quem} onMuda={setQuem} opcoes={[...(aba === "semana" ? [{ id: "Todos", nome: "Todos" }] : []), ...pessoas.map((p) => ({ id: p, nome: p }))]} />
+        <Escolha
+          rotulo="Pessoa"
+          valor={quem}
+          onMuda={setQuem}
+          opcoes={[...(aba === "semana" ? [{ id: "Todos", nome: "Todos" }] : []), ...pessoas.map((p) => ({ id: p, nome: p }))]}
+        />
         <input type="date" className="campo w-auto" aria-label="Dia" value={dia} onChange={(e) => e.target.value && setDia(e.target.value)} />
       </Cabecalho>
       <Abas
@@ -63,8 +70,19 @@ export default function Registro() {
             return (
               <li key={b} className="grid grid-cols-[52px_1fr] items-center gap-x-3 gap-y-1.5 py-1.5 sm:grid-cols-[56px_1fr_170px_84px]">
                 <span className="tabular-nums text-cinza">{b}</span>
-                <input key={`${dia}${quem}${b}${r?.atividade ?? ""}`} className="campo" defaultValue={r?.atividade ?? ""} aria-label={`Atividade das ${b}`} onBlur={(e) => e.target.value !== (r?.atividade ?? "") && marcar(b, { atividade: e.target.value })} />
-                <select className="campo col-start-2 sm:col-start-auto" aria-label={`Categoria das ${b}`} value={r?.categoria ?? ""} onChange={(e) => marcar(b, { categoria: e.target.value })}>
+                <input
+                  key={`${dia}${quem}${b}${r?.atividade ?? ""}`}
+                  className="campo"
+                  defaultValue={r?.atividade ?? ""}
+                  aria-label={`Atividade das ${b}`}
+                  onBlur={(e) => e.target.value !== (r?.atividade ?? "") && marcar(b, { atividade: e.target.value })}
+                />
+                <select
+                  className="campo col-start-2 sm:col-start-auto"
+                  aria-label={`Categoria das ${b}`}
+                  value={r?.categoria ?? ""}
+                  onChange={(e) => marcar(b, { categoria: e.target.value })}
+                >
                   <option value="">Categoria</option>
                   {CATEGORIAS.map((c) => (
                     <option key={c}>{c}</option>
@@ -100,7 +118,16 @@ export default function Registro() {
               <Cartao
                 titulo="Por atividade"
                 acao={
-                  <Botao pequeno onClick={() => baixarArquivo(`registro-${seg}.csv`, csv([["Data", "Pessoa", "Bloco", "Atividade", "Categoria"], ...semana.map((r) => [br(r.data), r.pessoa, r.bloco, r.atividade, r.categoria])]), "text/csv;charset=utf-8")}>
+                  <Botao
+                    pequeno
+                    onClick={() =>
+                      baixarArquivo(
+                        `registro-${seg}.csv`,
+                        csv([["Data", "Pessoa", "Bloco", "Atividade", "Categoria"], ...semana.map((r) => [br(r.data), r.pessoa, r.bloco, r.atividade, r.categoria])]),
+                        "text/csv;charset=utf-8",
+                      )
+                    }
+                  >
                     Exportar
                   </Botao>
                 }

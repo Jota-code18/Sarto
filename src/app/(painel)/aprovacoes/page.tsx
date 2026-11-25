@@ -34,7 +34,7 @@ export default function Aprovacoes() {
           titulo={`Repasses (${repasses.length})`}
           acao={
             repasses.length > 1 && pode(perfil, "repasse") ? (
-              <Botao pequeno onClick={() => repasses.forEach((r) => aprovarRepasse(r.id))}>
+              <Botao pequeno onClick={() => repasses.forEach((r) => void aprovarRepasse(r.id))}>
                 Aprovar todos: {brl(totalRep)}
               </Botao>
             ) : undefined
@@ -74,7 +74,13 @@ export default function Aprovacoes() {
                         {br(r.previsto)} <span className="text-[12px] text-cinza">{prazo(r.previsto)}</span>
                       </td>
                       <td>
-                        <Botao pequeno tom="cheio" disabled={!pode(perfil, "repasse")} title={pode(perfil, "repasse") ? undefined : `Quem aprova: ${quemPode("repasse")}`} onClick={() => aprovarRepasse(r.id)}>
+                        <Botao
+                          pequeno
+                          tom="cheio"
+                          disabled={!pode(perfil, "repasse")}
+                          title={pode(perfil, "repasse") ? undefined : `Quem aprova: ${quemPode("repasse")}`}
+                          onClick={() => aprovarRepasse(r.id)}
+                        >
                           Aprovar
                         </Botao>
                       </td>

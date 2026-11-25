@@ -84,14 +84,30 @@ export default function Consulta() {
         const x = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${d}`);
         if (!x.ok) throw new Error();
         const j = await x.json();
-        return { razao: j.razao_social, fantasia: j.nome_fantasia, situacao: j.descricao_situacao_cadastral, abertura: j.data_inicio_atividade, atividade: j.cnae_fiscal_descricao, cidade: `${j.municipio}/${j.uf}`, socios: (j.qsa ?? []).map((s: { nome_socio: string }) => s.nome_socio) };
+        return {
+          razao: j.razao_social,
+          fantasia: j.nome_fantasia,
+          situacao: j.descricao_situacao_cadastral,
+          abertura: j.data_inicio_atividade,
+          atividade: j.cnae_fiscal_descricao,
+          cidade: `${j.municipio}/${j.uf}`,
+          socios: (j.qsa ?? []).map((s: { nome_socio: string }) => s.nome_socio),
+        };
       },
       async () => {
         const x = await fetch(`https://publica.cnpj.ws/cnpj/${d}`);
         if (!x.ok) throw new Error();
         const j = await x.json();
         const e = j.estabelecimento ?? {};
-        return { razao: j.razao_social, fantasia: e.nome_fantasia ?? "", situacao: e.situacao_cadastral, abertura: e.data_inicio_atividade, atividade: e.atividade_principal?.descricao, cidade: `${e.cidade?.nome}/${e.estado?.sigla}`, socios: (j.socios ?? []).map((s: { nome: string }) => s.nome) };
+        return {
+          razao: j.razao_social,
+          fantasia: e.nome_fantasia ?? "",
+          situacao: e.situacao_cadastral,
+          abertura: e.data_inicio_atividade,
+          atividade: e.atividade_principal?.descricao,
+          cidade: `${e.cidade?.nome}/${e.estado?.sigla}`,
+          socios: (j.socios ?? []).map((s: { nome: string }) => s.nome),
+        };
       },
     ];
     for (const f of fontes) {
@@ -136,13 +152,16 @@ export default function Consulta() {
             </form>
           </Cartao>
           <div className="mt-4 space-y-4">
-            <Nota>A busca é por nome, então pode trazer homônimo, e só vê o que foi publicado no Diário de Justiça Eletrônico Nacional. Não achar nada não substitui certidão.</Nota>
+            <Nota>
+              A busca é por nome, então pode trazer homônimo, e só vê o que foi publicado no Diário de Justiça Eletrônico Nacional. Não achar nada não substitui certidão.
+            </Nota>
             {st === "erro" && <Nota tom="erro">O diário não respondeu. Tente de novo em instantes.</Nota>}
             {st === "limite" && <Nota tom="alerta">Muitas consultas seguidas. Espere um minuto.</Nota>}
             {r && (
               <>
                 <p>
-                  <strong className="font-semibold">{processos.length}</strong> {processos.length === 1 ? "processo" : "processos"} nas {r.itens.length} publicações mais recentes de {r.nome}
+                  <strong className="font-semibold">{processos.length}</strong> {processos.length === 1 ? "processo" : "processos"} nas {r.itens.length} publicações mais recentes
+                  de {r.nome}
                   {r.total > r.itens.length && ` (há ${r.total >= 10000 ? "mais de 10 mil" : r.total} no total)`}
                 </p>
                 {processos.length === 0 ? (
@@ -151,7 +170,13 @@ export default function Consulta() {
                   <ul className="divide-y divide-linha border-y border-linha">
                     {processos.map((p) => {
                       const u = p.itens[0];
-                      const polos = [...new Set(p.itens.flatMap((i) => i.destinatarios ?? []).map((d) => `${d.nome}${d.polo ? ` (polo ${d.polo === "A" ? "ativo" : d.polo === "P" ? "passivo" : d.polo})` : ""}`))];
+                      const polos = [
+                        ...new Set(
+                          p.itens
+                            .flatMap((i) => i.destinatarios ?? [])
+                            .map((d) => `${d.nome}${d.polo ? ` (polo ${d.polo === "A" ? "ativo" : d.polo === "P" ? "passivo" : d.polo})` : ""}`),
+                        ),
+                      ];
                       return (
                         <li key={p.numero} className="py-3">
                           <div className="flex flex-wrap items-center justify-between gap-2">
@@ -166,7 +191,8 @@ export default function Consulta() {
                             </span>
                           </div>
                           <p className="text-[13px] text-cinza">
-                            {[u.nomeClasse, u.nomeOrgao].filter(Boolean).join(", ")}. {p.itens.length} {p.itens.length === 1 ? "publicação" : "publicações"}, última em {br(u.data_disponibilizacao)}
+                            {[u.nomeClasse, u.nomeOrgao].filter(Boolean).join(", ")}. {p.itens.length} {p.itens.length === 1 ? "publicação" : "publicações"}, última em{" "}
+                            {br(u.data_disponibilizacao)}
                           </p>
                           {polos.length > 0 && <p className="text-[13px]">{polos.slice(0, 4).join("; ")}</p>}
                         </li>

@@ -147,10 +147,9 @@ export function preencher(corpo: string, campos: Record<string, string>) {
   return corpo.replace(/\{\{\s*([\w.]+)\s*\}\}/g, (tudo, k: string) => campos[k]?.trim() || tudo);
 }
 
-export const camposVazios = (corpo: string, campos: Record<string, string>) =>
-  camposDe(corpo).filter((k) => !campos[k]?.trim());
+export const camposVazios = (corpo: string, campos: Record<string, string>) => camposDe(corpo).filter((k) => !campos[k]?.trim());
 
-export const NOME_CAMPO: Record<string, string> = {
+const NOME_CAMPO: Record<string, string> = {
   vendedor_nome: "Nome do vendedor",
   vendedor_doc: "CPF/CNPJ do vendedor",
   vendedor_qualificacao: "Qualificação do vendedor",

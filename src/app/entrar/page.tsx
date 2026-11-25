@@ -29,7 +29,7 @@ export default async function Entrar({ searchParams }: { searchParams: Promise<{
         <Logo className="mb-10 h-11" />
         <label className="block text-[13px]">
           Senha do painel
-          <input name="senha" type="password" required autoFocus autoComplete="current-password" className="campo mt-2 text-carvao" aria-invalid={erro ? true : undefined} />
+          <input name="senha" type="password" required autoComplete="current-password" className="campo mt-2 text-carvao" aria-invalid={erro ? true : undefined} />
         </label>
         {erro && <p className="mt-2 text-[13px] text-[#f0b5ae]">Senha incorreta.</p>}
         <button type="submit" className="mt-4 min-h-11 w-full bg-papel font-medium text-carvao hover:bg-linho">

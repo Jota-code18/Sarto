@@ -2,7 +2,7 @@ import { arred } from "./formato";
 import { lerData, maisComp } from "./datas";
 
 /** Séries mensais do Banco Central (SGS), gratuitas e sem cadastro */
-export const SERIES = { "IGP-M": 189, IPCA: 433, INPC: 188 } as const;
+const SERIES = { "IGP-M": 189, IPCA: 433, INPC: 188 } as const;
 export type Indice = keyof typeof SERIES;
 export interface PontoIndice {
   comp: string;
