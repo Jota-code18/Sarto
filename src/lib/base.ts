@@ -6,6 +6,7 @@ import type { Dados } from "./tipos";
 /** Base vazia: o que existe antes de qualquer cadastro */
 export function dadosVazios(): Dados {
   return {
+    usuarios: [],
     corretores: [],
     leads: [],
     captacoes: [],

@@ -15,6 +15,7 @@ interface Estado {
   dados: Dados;
   regras: Regras;
   perfil: Perfil;
+  usuarioId: string | null;
   aviso: { texto: string; tom: "ok" | "erro"; n: number } | null;
   salvar: <C extends Colecao>(c: C, item: Dados[C][number]) => void;
   mudar: <C extends Colecao>(c: C, id: string, p: Partial<Dados[C][number]>) => void;
@@ -22,12 +23,16 @@ interface Estado {
   varios: <C extends Colecao>(c: C, itens: Dados[C][number][]) => void;
   setRegras: (p: Partial<Regras>) => void;
   setPerfil: (p: Perfil) => void;
+  setUsuario: (id: string) => void;
   avisar: (texto: string, tom?: "ok" | "erro") => void;
   registrar: (area: string, texto: string) => void;
   feito: () => Feito;
   apagarTudo: () => void;
   importar: (j: unknown) => boolean;
 }
+
+/** Quem está usando: a pessoa cadastrada ou, sem cadastro, o nome do perfil */
+export const nomeAtual = (s: Pick<Estado, "dados" | "usuarioId" | "perfil">) => s.dados.usuarios.find((u) => u.id === s.usuarioId)?.nome ?? PERFIS[s.perfil].nome;
 
 type ComId = { id: string };
 const MAX_LOGS = 400;
@@ -63,6 +68,7 @@ export const useSarto = create<Estado>()(
       dados: dadosVazios(),
       regras: REGRAS,
       perfil: "socios",
+      usuarioId: null,
       aviso: null,
       salvar: (c, item) =>
         set((s) => {
@@ -78,16 +84,21 @@ export const useSarto = create<Estado>()(
       remover: (c, id) => set((s) => ({ dados: { ...s.dados, [c]: (s.dados[c] as ComId[]).filter((x) => x.id !== id) } })),
       varios: (c, itens) => set((s) => ({ dados: { ...s.dados, [c]: [...(itens as ComId[]), ...(s.dados[c] as ComId[])] } })),
       setRegras: (p) => set((s) => ({ regras: { ...s.regras, ...p } })),
-      setPerfil: (perfil) => set({ perfil }),
+      setPerfil: (perfil) => set({ perfil, usuarioId: null }),
+      setUsuario: (id) =>
+        set((s) => {
+          const u = s.dados.usuarios.find((x) => x.id === id && x.ativo);
+          return u ? { usuarioId: u.id, perfil: u.perfil } : {};
+        }),
       avisar: (texto, tom = "ok") => set({ aviso: { texto, tom, n: Date.now() } }),
       registrar: (area, texto) =>
         set((s) => ({
           dados: {
             ...s.dados,
-            logs: [{ id: novoId(), em: agora(), quem: PERFIS[s.perfil].nome, area, texto }, ...s.dados.logs].slice(0, MAX_LOGS),
+            logs: [{ id: novoId(), em: agora(), quem: nomeAtual(s), area, texto }, ...s.dados.logs].slice(0, MAX_LOGS),
           },
         })),
-      feito: () => ({ em: agora(), por: PERFIS[get().perfil].nome }),
+      feito: () => ({ em: agora(), por: nomeAtual(get()) }),
       apagarTudo: () => {
         relerColetas();
         set({ dados: dadosVazios() });
@@ -113,7 +124,7 @@ export const useSarto = create<Estado>()(
         return (modo === "demo" ? { ...g, dados: semExemplos(g.dados ?? {}) } : g) as Estado;
       },
       skipHydration: true,
-      partialize: (s) => ({ dados: s.dados, regras: s.regras, perfil: s.perfil }),
+      partialize: (s) => ({ dados: s.dados, regras: s.regras, perfil: s.perfil, usuarioId: s.usuarioId }),
       merge: (salvo, atual) => {
         const g = (salvo ?? {}) as Partial<Estado>;
         return {

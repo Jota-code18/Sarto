@@ -5,16 +5,19 @@ import { hora, min } from "@/lib/agenda";
 import { br, hoje, maisDias, segundaDe } from "@/lib/datas";
 import { baixarArquivo, csv, novoId, num } from "@/lib/formato";
 import { PERFIS } from "@/lib/regras";
-import { acao, useSarto } from "@/lib/store";
+import { acao, nomeAtual, useSarto } from "@/lib/store";
 
 const CATEGORIAS = ["Atendimento", "Comercial", "Reunião", "Operacional", "Documentos", "Retrabalho", "Deslocamento", "Gestão", "Pausa"];
 const BLOCOS = Array.from({ length: 22 }, (_, i) => hora(min("08:00") + i * 30));
 
 export default function Registro() {
-  const { dados, perfil } = useSarto();
+  const { dados } = useSarto();
   const { salvar, remover } = acao();
-  const pessoas = [...new Set([...Object.values(PERFIS).map((p) => p.nome), "Yan", ...dados.registros.map((r) => r.pessoa)])].filter((p) => p !== "Corretor");
-  const [quem, setQuem] = useState(PERFIS[perfil].nome === "Corretor" ? pessoas[0] : PERFIS[perfil].nome);
+  const pessoas = [
+    ...new Set([...dados.usuarios.filter((u) => u.ativo).map((u) => u.nome), ...Object.values(PERFIS).map((p) => p.nome), "Yan", ...dados.registros.map((r) => r.pessoa)]),
+  ].filter((p) => p !== "Corretor");
+  const eu = useSarto(nomeAtual);
+  const [quem, setQuem] = useState(eu === "Corretor" ? pessoas[0] : eu);
   const [dia, setDia] = useState(hoje());
   const [aba, setAba] = useState<"dia" | "semana">("dia");
   const doDia = dados.registros.filter((r) => r.pessoa === quem && r.data === dia);

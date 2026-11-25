@@ -464,7 +464,19 @@ export interface Regras {
   metaVisitas: number;
 }
 
+/** Pessoa da equipe. O login por convite, no Supabase, parte desta lista. */
+export interface Usuario {
+  id: string;
+  nome: string;
+  email: string;
+  tel: string;
+  perfil: Perfil;
+  ativo: boolean;
+  criadoEm: Dia;
+}
+
 export interface Dados {
+  usuarios: Usuario[];
   corretores: Corretor[];
   leads: Lead[];
   captacoes: Captacao[];
