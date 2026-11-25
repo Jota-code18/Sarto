@@ -61,3 +61,7 @@ Em `skill/sarto`. Para subir: compacte a pasta `sarto` e envie em Configuraçõe
 - `src/app/(painel)` uma pasta por tela
 - `src/app/imprimir` PDF padrão, dossiê, extrato, informe, comissão, minuta
 - `scripts/atualizar-carteira.mjs` leitura da carteira pública
+
+## Como contribuir
+
+Issue, branch, PR que menciona a issue, prévia da Vercel e mesclagem. Tudo em [AGENTS.md](AGENTS.md).
