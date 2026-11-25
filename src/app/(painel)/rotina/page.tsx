@@ -77,9 +77,9 @@ export default function Rotina() {
             );
           })}
           <Cartao titulo="Últimos 7 dias" className="lg:col-span-2">
-            <div className="flex gap-3 overflow-x-auto">
+            <div className="grid grid-cols-4 gap-2 sm:grid-cols-7 sm:gap-3">
               {historico.map((x) => (
-                <div key={x.d} className="min-w-20 text-center text-[13px]">
+                <div key={x.d} className="min-w-0 text-center text-[13px]">
                   <div className={cx("mb-1 py-2 tabular-nums", x.n === total ? "bg-carvao text-papel" : x.n ? "bg-linha" : "border border-dashed border-nevoa text-cinza")}>
                     {x.n} de {total}
                   </div>

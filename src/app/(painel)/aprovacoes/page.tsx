@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { Botao, Cabecalho, Cartao, Selo, Vazio } from "@/componentes/ui";
+import { Botao, Cabecalho, Cartao, Selo, Vazio, Tabela } from "@/componentes/ui";
 import { br, prazo } from "@/lib/datas";
 import { brl, num } from "@/lib/formato";
 import { pendenciasDe } from "@/lib/hoje";
@@ -43,52 +43,50 @@ export default function Aprovacoes() {
           {repasses.length === 0 ? (
             <p className="text-cinza">Nenhum repasse esperando aprovação.</p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="tabela min-w-[720px]">
-                <thead>
-                  <tr>
-                    <th>Proprietário</th>
-                    <th>Imóvel</th>
-                    <th className="n">Aluguel</th>
-                    <th className="n">Taxa</th>
-                    <th className="n">Descontos</th>
-                    <th className="n">Líquido</th>
-                    <th>Previsto</th>
-                    <th />
+            <Tabela className="md:min-w-[720px]">
+              <thead>
+                <tr>
+                  <th>Proprietário</th>
+                  <th>Imóvel</th>
+                  <th className="n">Aluguel</th>
+                  <th className="n">Taxa</th>
+                  <th className="n">Descontos</th>
+                  <th className="n">Líquido</th>
+                  <th>Previsto</th>
+                  <th />
+                </tr>
+              </thead>
+              <tbody>
+                {repasses.map((r) => (
+                  <tr key={r.id}>
+                    <td className="font-medium">{contrato(r.contratoId)?.proprietario.nome}</td>
+                    <td>{contrato(r.contratoId)?.imovel}</td>
+                    <td className="n">{brl(r.bruto)}</td>
+                    <td className="n">
+                      {brl(r.taxa)} <span className="text-cinza">({num(r.taxaPct)}%)</span>
+                    </td>
+                    <td className="n" title={r.descontoMotivo}>
+                      {r.descontos ? brl(r.descontos) : "—"}
+                    </td>
+                    <td className="n font-semibold">{brl(r.liquido)}</td>
+                    <td>
+                      {br(r.previsto)} <span className="text-[12px] text-cinza">{prazo(r.previsto)}</span>
+                    </td>
+                    <td>
+                      <Botao
+                        pequeno
+                        tom="cheio"
+                        disabled={!pode(perfil, "repasse")}
+                        title={pode(perfil, "repasse") ? undefined : `Quem aprova: ${quemPode("repasse")}`}
+                        onClick={() => aprovarRepasse(r.id)}
+                      >
+                        Aprovar
+                      </Botao>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {repasses.map((r) => (
-                    <tr key={r.id}>
-                      <td className="font-medium">{contrato(r.contratoId)?.proprietario.nome}</td>
-                      <td>{contrato(r.contratoId)?.imovel}</td>
-                      <td className="n">{brl(r.bruto)}</td>
-                      <td className="n">
-                        {brl(r.taxa)} <span className="text-cinza">({num(r.taxaPct)}%)</span>
-                      </td>
-                      <td className="n" title={r.descontoMotivo}>
-                        {r.descontos ? brl(r.descontos) : "—"}
-                      </td>
-                      <td className="n font-semibold">{brl(r.liquido)}</td>
-                      <td>
-                        {br(r.previsto)} <span className="text-[12px] text-cinza">{prazo(r.previsto)}</span>
-                      </td>
-                      <td>
-                        <Botao
-                          pequeno
-                          tom="cheio"
-                          disabled={!pode(perfil, "repasse")}
-                          title={pode(perfil, "repasse") ? undefined : `Quem aprova: ${quemPode("repasse")}`}
-                          onClick={() => aprovarRepasse(r.id)}
-                        >
-                          Aprovar
-                        </Botao>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                ))}
+              </tbody>
+            </Tabela>
           )}
         </Cartao>
 

@@ -2,7 +2,7 @@
 import { Plus } from "lucide-react";
 import { useState } from "react";
 import { Formulario, type GrupoDef } from "@/componentes/formulario";
-import { Abas, Botao, Cabecalho, Copiar, Gaveta, Nota, Selo, type Tom, Vazio } from "@/componentes/ui";
+import { Abas, Botao, Cabecalho, Copiar, Gaveta, Nota, Selo, type Tom, Vazio, Tabela } from "@/componentes/ui";
 import { br, hoje, prazo } from "@/lib/datas";
 import { brl, novoId } from "@/lib/formato";
 import { acao, useSarto } from "@/lib/store";
@@ -91,40 +91,38 @@ export default function Atendimento() {
         (dados.chamados.length === 0 ? (
           <Vazio>Nenhum chamado.</Vazio>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="tabela min-w-[720px]">
-              <thead>
-                <tr>
-                  <th>Problema</th>
-                  <th>Imóvel</th>
-                  <th>Aberto</th>
-                  <th>Quem paga</th>
-                  <th className="n">Custo</th>
-                  <th>Situação</th>
-                </tr>
-              </thead>
-              <tbody>
-                {[...dados.chamados]
-                  .sort((a, b) => Number(a.status === "concluido") - Number(b.status === "concluido"))
-                  .map((c) => (
-                    <tr key={c.id} className="clica">
-                      <td>
-                        <button type="button" className="text-left font-medium hover:underline" onClick={() => setCh(c)}>
-                          {c.titulo}
-                        </button>
-                      </td>
-                      <td>{k(c.contratoId)?.imovel}</td>
-                      <td>{prazo(c.abertoEm)}</td>
-                      <td>{c.quemPaga}</td>
-                      <td className="n">{c.custo ? brl(c.custo) : "—"}</td>
-                      <td>
-                        <Selo tom={ST[c.status].tom}>{ST[c.status].nome}</Selo>
-                      </td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
-          </div>
+          <Tabela className="md:min-w-[720px]">
+            <thead>
+              <tr>
+                <th>Problema</th>
+                <th>Imóvel</th>
+                <th>Aberto</th>
+                <th>Quem paga</th>
+                <th className="n">Custo</th>
+                <th>Situação</th>
+              </tr>
+            </thead>
+            <tbody>
+              {[...dados.chamados]
+                .sort((a, b) => Number(a.status === "concluido") - Number(b.status === "concluido"))
+                .map((c) => (
+                  <tr key={c.id} className="clica">
+                    <td>
+                      <button type="button" className="text-left font-medium hover:underline" onClick={() => setCh(c)}>
+                        {c.titulo}
+                      </button>
+                    </td>
+                    <td>{k(c.contratoId)?.imovel}</td>
+                    <td>{prazo(c.abertoEm)}</td>
+                    <td>{c.quemPaga}</td>
+                    <td className="n">{c.custo ? brl(c.custo) : "—"}</td>
+                    <td>
+                      <Selo tom={ST[c.status].tom}>{ST[c.status].nome}</Selo>
+                    </td>
+                  </tr>
+                ))}
+            </tbody>
+          </Tabela>
         ))}
       {aba === "multas" && (
         <>

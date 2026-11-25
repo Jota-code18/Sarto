@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 // a política de segurança usa um código novo a cada página, então nada é pré-montado
 export const dynamic = "force-dynamic";
 
-export const viewport: Viewport = { themeColor: "#262626", width: "device-width", initialScale: 1 };
+export const viewport: Viewport = { themeColor: "#262626", width: "device-width", initialScale: 1, viewportFit: "cover" };
 
 export default function Raiz({ children }: { children: React.ReactNode }) {
   return (

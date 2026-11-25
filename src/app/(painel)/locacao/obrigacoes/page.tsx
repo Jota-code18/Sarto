@@ -1,6 +1,6 @@
 "use client";
 import { useMemo, useState } from "react";
-import { Botao, Cabecalho, Escolha, estiloBotao, Nota, Numero, Numeros, Vazio } from "@/componentes/ui";
+import { Botao, Cabecalho, Escolha, estiloBotao, Nota, Numero, Numeros, Vazio, Tabela } from "@/componentes/ui";
 import { br, hoje } from "@/lib/datas";
 import { arred, baixarArquivo, brl, csv, mascaraDoc, semAcento, soDigitos } from "@/lib/formato";
 import { useSarto } from "@/lib/store";
@@ -116,36 +116,34 @@ export default function Obrigacoes() {
       {donos.length === 0 ? (
         <Vazio>Nenhum aluguel recebido em {ano}.</Vazio>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="tabela min-w-[640px]">
-            <thead>
-              <tr>
-                <th>Proprietário</th>
-                <th>Documento</th>
-                <th className="n">Imóveis</th>
-                <th className="n">Aluguéis</th>
-                <th className="n">Taxas</th>
-                <th />
+        <Tabela className="md:min-w-[640px]">
+          <thead>
+            <tr>
+              <th>Proprietário</th>
+              <th>Documento</th>
+              <th className="n">Imóveis</th>
+              <th className="n">Aluguéis</th>
+              <th className="n">Taxas</th>
+              <th />
+            </tr>
+          </thead>
+          <tbody>
+            {donos.map((d) => (
+              <tr key={d.nome}>
+                <td className="font-medium">{d.nome}</td>
+                <td>{mascaraDoc(d.doc) || "—"}</td>
+                <td className="n">{d.n}</td>
+                <td className="n">{brl(d.bruto)}</td>
+                <td className="n">{brl(d.taxa)}</td>
+                <td className="text-right">
+                  <a className={estiloBotao("linha", true)} href={`/imprimir?tipo=informe&ano=${ano}&dono=${encodeURIComponent(d.nome)}`} target="_blank" rel="noreferrer">
+                    Informe
+                  </a>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {donos.map((d) => (
-                <tr key={d.nome}>
-                  <td className="font-medium">{d.nome}</td>
-                  <td>{mascaraDoc(d.doc) || "—"}</td>
-                  <td className="n">{d.n}</td>
-                  <td className="n">{brl(d.bruto)}</td>
-                  <td className="n">{brl(d.taxa)}</td>
-                  <td className="text-right">
-                    <a className={estiloBotao("linha", true)} href={`/imprimir?tipo=informe&ano=${ano}&dono=${encodeURIComponent(d.nome)}`} target="_blank" rel="noreferrer">
-                      Informe
-                    </a>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </Tabela>
       )}
     </>
   );

@@ -3,7 +3,7 @@ import { ImagePlus, Plus, Printer, X } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { CAMPOS_PESSOA, Formulario, type GrupoDef } from "@/componentes/formulario";
-import { Abas, Botao, Cabecalho, Confirmar, Copiar, cx, estiloBotao, Fita, Gaveta, Itens, Nota, Selo, Vazio } from "@/componentes/ui";
+import { Abas, Botao, Cabecalho, Confirmar, Copiar, cx, estiloBotao, Fita, Gaveta, Itens, Nota, Selo, Vazio, Quadro } from "@/componentes/ui";
 import { useFotos, useParam } from "@/componentes/uso";
 import { apagar, guardar, reduzirFoto } from "@/lib/arquivos";
 import { certidoesPadrao } from "@/lib/certidoes";
@@ -270,8 +270,8 @@ export default function Pagina() {
       </Cabecalho>
 
       {dados.captacoes.length === 0 && <Vazio acao={<Botao onClick={() => abrir(nova(), "dados")}>Cadastrar imóvel</Botao>}>Nenhum imóvel em captação.</Vazio>}
-      <div className="-mx-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0">
-        <div className="grid min-w-[980px] grid-cols-6 gap-3">
+      <Quadro nome="Etapas da captação">
+        <div className="grid grid-cols-1 md:min-w-[980px] md:grid-cols-6 gap-3">
           {ETAPAS_CAPTACAO.map((e) => {
             const cs = dados.captacoes.filter((c) => c.etapa === e.id);
             return (
@@ -302,7 +302,7 @@ export default function Pagina() {
             );
           })}
         </div>
-      </div>
+      </Quadro>
 
       <Gaveta
         larga

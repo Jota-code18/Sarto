@@ -23,6 +23,7 @@ import {
   Numeros,
   Selo,
   Vazio,
+  Tabela,
 } from "@/componentes/ui";
 import { useCarteira } from "@/componentes/uso";
 import { br, diasEntre, hoje, prazo, segundaDe } from "@/lib/datas";
@@ -266,84 +267,82 @@ export default function Varredura() {
           {lista.length === 0 ? (
             <Vazio>{dados.anuncios.length ? "Nada com esse filtro." : "Nenhuma varredura ainda."}</Vazio>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="tabela min-w-[900px]">
-                <thead>
-                  <tr>
-                    <th>Imóvel</th>
-                    <th className="n">Preço</th>
-                    <th className="n">Área e m²</th>
-                    <th>Contato</th>
-                    <th>{aba === "sarto" ? "Na Sarto" : "Por que abordar"}</th>
-                    <th>Situação</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {lista.slice(0, lim).map((x) => {
-                    const a = x.principal;
-                    return (
-                      <tr key={x.id} className="clica">
-                        <td className="max-w-[380px]">
-                          <span className="flex gap-3">
-                            <FotoAnuncio foto={[a, ...x.outros].find((y) => y.foto)?.foto} className="h-16 w-20" />
-                            <span className="min-w-0">
-                              <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                                <button type="button" className="text-left font-medium hover:underline" onClick={() => setVer(x.id)}>
-                                  {a.titulo}
-                                </button>
-                                <LinkPortal a={a} />
-                              </span>
-                              <span className="block text-[13px] text-cinza">{[a.bairro, a.anunciante].filter(Boolean).join(", ")}</span>
+            <Tabela className="md:min-w-[900px]">
+              <thead>
+                <tr>
+                  <th>Imóvel</th>
+                  <th className="n">Preço</th>
+                  <th className="n">Área e m²</th>
+                  <th>Contato</th>
+                  <th>{aba === "sarto" ? "Na Sarto" : "Por que abordar"}</th>
+                  <th>Situação</th>
+                </tr>
+              </thead>
+              <tbody>
+                {lista.slice(0, lim).map((x) => {
+                  const a = x.principal;
+                  return (
+                    <tr key={x.id} className="clica">
+                      <td className="max-w-[380px]">
+                        <span className="flex gap-3">
+                          <FotoAnuncio foto={[a, ...x.outros].find((y) => y.foto)?.foto} className="h-16 w-20" />
+                          <span className="min-w-0">
+                            <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                              <button type="button" className="text-left font-medium hover:underline" onClick={() => setVer(x.id)}>
+                                {a.titulo}
+                              </button>
+                              <LinkPortal a={a} />
                             </span>
+                            <span className="block text-[13px] text-cinza">{[a.bairro, a.anunciante].filter(Boolean).join(", ")}</span>
                           </span>
-                        </td>
-                        <td className="n">
-                          {brl(a.preco, false)}
-                          {a.precoAnterior > a.preco && <span className="block text-[12px] text-cinza line-through">{brl(a.precoAnterior, false)}</span>}
-                        </td>
-                        <td className="n">
-                          {a.area ? `${num(a.area)} m²` : "—"}
-                          {precoM2(a) > 0 && <span className="block text-[12px] text-cinza">{brl(precoM2(a), false)}/m²</span>}
-                        </td>
-                        <td>
-                          <Contato a={melhorContato(x)} />
-                        </td>
-                        <td>
-                          {aba === "sarto" ? (
-                            typeof x.sarto === "object" && x.sarto ? (
-                              <a href={linkSeguro(x.sarto.url)} target="_blank" rel="noreferrer" className="underline underline-offset-4">
-                                cód. {x.sarto.cod}
-                              </a>
-                            ) : (
-                              "anúncio da Sarto"
-                            )
+                        </span>
+                      </td>
+                      <td className="n">
+                        {brl(a.preco, false)}
+                        {a.precoAnterior > a.preco && <span className="block text-[12px] text-cinza line-through">{brl(a.precoAnterior, false)}</span>}
+                      </td>
+                      <td className="n">
+                        {a.area ? `${num(a.area)} m²` : "—"}
+                        {precoM2(a) > 0 && <span className="block text-[12px] text-cinza">{brl(precoM2(a), false)}/m²</span>}
+                      </td>
+                      <td>
+                        <Contato a={melhorContato(x)} />
+                      </td>
+                      <td>
+                        {aba === "sarto" ? (
+                          typeof x.sarto === "object" && x.sarto ? (
+                            <a href={linkSeguro(x.sarto.url)} target="_blank" rel="noreferrer" className="underline underline-offset-4">
+                              cód. {x.sarto.cod}
+                            </a>
                           ) : (
-                            <span className="flex flex-wrap gap-1">
-                              {x.novo && <Selo tom="forte">Novo</Selo>}
-                              {x.motivos.map((m) => (
-                                <Selo key={m} tom={m === "do próprio dono" ? "forte" : "neutro"}>
-                                  {m}
-                                </Selo>
-                              ))}
-                              {!x.novo && !x.motivos.length && <span className="text-cinza">no padrão</span>}
-                            </span>
-                          )}
-                        </td>
-                        <td>
-                          <select className="campo min-h-9 w-36 py-1" aria-label="Situação" value={st(x)} onChange={(e) => marcar(x, e.target.value as Anuncio["status"])}>
-                            {Object.entries(STATUS).map(([id, nome]) => (
-                              <option key={id} value={id}>
-                                {nome}
-                              </option>
+                            "anúncio da Sarto"
+                          )
+                        ) : (
+                          <span className="flex flex-wrap gap-1">
+                            {x.novo && <Selo tom="forte">Novo</Selo>}
+                            {x.motivos.map((m) => (
+                              <Selo key={m} tom={m === "do próprio dono" ? "forte" : "neutro"}>
+                                {m}
+                              </Selo>
                             ))}
-                          </select>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                            {!x.novo && !x.motivos.length && <span className="text-cinza">no padrão</span>}
+                          </span>
+                        )}
+                      </td>
+                      <td>
+                        <select className="campo min-h-9 w-36 py-1" aria-label="Situação" value={st(x)} onChange={(e) => marcar(x, e.target.value as Anuncio["status"])}>
+                          {Object.entries(STATUS).map(([id, nome]) => (
+                            <option key={id} value={id}>
+                              {nome}
+                            </option>
+                          ))}
+                        </select>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </Tabela>
           )}
           {lista.length > lim && (
             <div className="mt-4 text-center">

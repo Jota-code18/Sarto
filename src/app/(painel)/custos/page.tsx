@@ -2,7 +2,7 @@
 import { Plus } from "lucide-react";
 import { useState } from "react";
 import { Formulario } from "@/componentes/formulario";
-import { Barras, Botao, Cabecalho, Cartao, Gaveta, Nota, Numero, Numeros, Selo, Vazio } from "@/componentes/ui";
+import { Barras, Botao, Cabecalho, Cartao, Gaveta, Nota, Numero, Numeros, Selo, Vazio, Tabela } from "@/componentes/ui";
 import { brComp, competencia, hoje } from "@/lib/datas";
 import { brl, novoId } from "@/lib/formato";
 import { acao, useSarto } from "@/lib/store";
@@ -77,30 +77,28 @@ export default function Custos() {
             ))}
           </ul>
         </Cartao>
-        <div className="overflow-x-auto">
-          <table className="tabela min-w-[600px]">
-            <thead>
-              <tr>
-                <th>Integração</th>
-                <th>O que faz hoje</th>
-                <th>Falta</th>
-                <th />
+        <Tabela className="md:min-w-[600px]">
+          <thead>
+            <tr>
+              <th>Integração</th>
+              <th>O que faz hoje</th>
+              <th>Falta</th>
+              <th />
+            </tr>
+          </thead>
+          <tbody>
+            {INTEG.map((i) => (
+              <tr key={i.nome}>
+                <td className="font-medium">{i.nome}</td>
+                <td>{i.faz}</td>
+                <td className="text-cinza">{i.falta || "—"}</td>
+                <td>
+                  <Selo tom={ST[i.st].t}>{ST[i.st].n}</Selo>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {INTEG.map((i) => (
-                <tr key={i.nome}>
-                  <td className="font-medium">{i.nome}</td>
-                  <td>{i.faz}</td>
-                  <td className="text-cinza">{i.falta || "—"}</td>
-                  <td>
-                    <Selo tom={ST[i.st].t}>{ST[i.st].n}</Selo>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </Tabela>
       </div>
       <Gaveta
         aberta={!!ed}

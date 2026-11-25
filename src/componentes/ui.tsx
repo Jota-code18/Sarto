@@ -1,6 +1,6 @@
 "use client";
 import { AlertTriangle, Check, CircleAlert, X } from "lucide-react";
-import { type ReactNode, useEffect, useId, useRef, useState } from "react";
+import { type ReactNode, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { brHora } from "@/lib/datas";
 import type { Checklist } from "@/lib/tipos";
 import { acao } from "@/lib/store";
@@ -12,7 +12,7 @@ export function Cabecalho({ area, titulo, texto, children }: { area: string; tit
   const [a, ...b] = area.split(" ");
   return (
     <header className="mb-6 flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
-      <div className="max-w-2xl">
+      <div className="min-w-0 max-w-2xl">
         <p className="mb-1 text-[11px] uppercase tracking-wide text-cinza">
           #{b.length ? a : ""}
           <strong className="font-semibold text-carvao">{b.length ? b.join("") : a}</strong>
@@ -20,7 +20,7 @@ export function Cabecalho({ area, titulo, texto, children }: { area: string; tit
         <h1 className="text-[26px] font-semibold leading-tight tracking-tight text-balance">{titulo}</h1>
         {texto && <p className="mt-1.5 text-cinza text-pretty">{texto}</p>}
       </div>
-      {children && <div className="flex flex-wrap gap-2">{children}</div>}
+      {children && <div className="flex flex-wrap gap-2 max-sm:w-full max-sm:*:flex-auto">{children}</div>}
     </header>
   );
 }
@@ -32,7 +32,7 @@ export function Botao({ tom = "linha", pequeno, className, type = "button", ...p
 export function estiloBotao(tom: BotaoProps["tom"] = "linha", pequeno = false) {
   return cx(
     "inline-flex items-center justify-center gap-2 font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-45",
-    pequeno ? "min-h-9 px-3 text-[13px]" : "min-h-10 px-4",
+    pequeno ? "min-h-9 px-3 text-[13px] pointer-coarse:min-h-11" : "min-h-10 px-4 pointer-coarse:min-h-11",
     tom === "cheio" && "bg-carvao text-papel hover:bg-tinta",
     tom === "linha" && "border border-carvao bg-transparent hover:bg-carvao hover:text-papel",
     tom === "texto" && "underline decoration-nevoa underline-offset-4 hover:decoration-carvao px-1",
@@ -113,6 +113,34 @@ export function Fita({ parte, total, rotulo }: { parte: number; total: number; r
 
 export const Costura = ({ className }: { className?: string }) => <div className={cx("costura text-nevoa", className)} aria-hidden />;
 
+/** Tabela no computador, cartões no celular: cada célula leva o nome da coluna */
+export function Tabela({ className, children }: { className?: string; children: ReactNode }) {
+  const r = useRef<HTMLTableElement>(null);
+  useLayoutEffect(() => {
+    const t = r.current;
+    if (!t) return;
+    const nomes = [...t.querySelectorAll("thead th")].map((h) => h.textContent?.trim() ?? "");
+    for (const l of t.querySelectorAll("tbody tr")) for (const [i, c] of [...l.children].entries()) c.setAttribute("data-coluna", nomes[i] ?? "");
+  });
+  return (
+    <div className="md:overflow-x-auto">
+      <table ref={r} className={cx("tabela", className)}>
+        {children}
+      </table>
+    </div>
+  );
+}
+
+/** Etapas lado a lado no computador, com rolagem por teclado; empilhadas no celular */
+export function Quadro({ nome, children }: { nome: string; children: ReactNode }) {
+  return (
+    // biome-ignore lint/a11y/noNoninteractiveTabindex: área com rolagem precisa receber o teclado
+    <section aria-label={nome} tabIndex={0} className="pb-2 md:overflow-x-auto">
+      {children}
+    </section>
+  );
+}
+
 export function Vazio({ children, acao: ac }: { children: ReactNode; acao?: ReactNode }) {
   return (
     <div className="border border-dashed border-nevoa px-5 py-8 text-center text-cinza">
@@ -149,7 +177,7 @@ export function Abas<T extends string>({ itens, atual, onMuda }: { itens: { id: 
           role="tab"
           aria-selected={i.id === atual}
           onClick={() => onMuda(i.id)}
-          className={cx("min-h-10 whitespace-nowrap border-b-2 pb-1", i.id === atual ? "border-carvao font-semibold" : "border-transparent text-cinza hover:text-carvao")}
+          className={cx("min-h-11 whitespace-nowrap border-b-2 pb-1", i.id === atual ? "border-carvao font-semibold" : "border-transparent text-cinza hover:text-carvao")}
         >
           {i.nome}
           {i.n != null && <span className="ml-1.5 tabular-nums text-cinza">{i.n}</span>}
@@ -197,19 +225,23 @@ export function Gaveta({
     >
       {aberta && (
         <div className="flex h-full flex-col">
-          <div className="escuro flex items-start justify-between gap-4 bg-carvao px-6 py-4 text-papel">
+          <div className="escuro flex items-start justify-between gap-4 bg-carvao px-4 py-3 text-papel sm:px-6 sm:py-4">
             <div className="min-w-0">
               <h2 id={id} className="text-[18px] font-semibold leading-snug">
                 {titulo}
               </h2>
               {sub && <div className="mt-0.5 text-[13px] text-nevoa">{sub}</div>}
             </div>
-            <button type="button" onClick={onFecha} aria-label="Fechar" className="-mr-2 grid size-10 shrink-0 place-items-center hover:bg-tecido">
+            <button type="button" onClick={onFecha} aria-label="Fechar" className="-mr-2 grid size-11 shrink-0 place-items-center hover:bg-tecido">
               <X size={20} />
             </button>
           </div>
-          <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">{children}</div>
-          {rodape && <div className="flex flex-wrap justify-end gap-2 border-t border-linha bg-papel px-6 py-3">{rodape}</div>}
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-5 sm:px-6">{children}</div>
+          {rodape && (
+            <div className="flex flex-wrap justify-end gap-2 border-t border-linha bg-papel px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] max-sm:*:flex-auto sm:px-6">
+              {rodape}
+            </div>
+          )}
         </div>
       )}
     </dialog>
@@ -267,7 +299,7 @@ export function Itens({
         const f = check[i.id];
         return (
           <li key={i.id}>
-            <label className={cx("flex min-h-10 items-center gap-3 py-1.5", travado ? "cursor-default" : "cursor-pointer")}>
+            <label className={cx("flex min-h-11 items-center gap-3 py-1.5", travado ? "cursor-default" : "cursor-pointer")}>
               <input
                 type="checkbox"
                 className="size-[18px] shrink-0 accent-carvao"
@@ -341,7 +373,7 @@ export function Colunas({ dados, formato }: { dados: { nome: string; valor: numb
 }
 
 export function Busca({ valor, onMuda, placeholder = "Buscar" }: { valor: string; onMuda: (v: string) => void; placeholder?: string }) {
-  return <input type="search" className="campo max-w-xs" value={valor} onChange={(e) => onMuda(e.target.value)} placeholder={placeholder} aria-label={placeholder} />;
+  return <input type="search" className="campo sm:max-w-xs" value={valor} onChange={(e) => onMuda(e.target.value)} placeholder={placeholder} aria-label={placeholder} />;
 }
 
 export function Escolha<T extends string>({
@@ -358,7 +390,12 @@ export function Escolha<T extends string>({
   className?: string;
 }) {
   return (
-    <select className={cx("campo w-auto max-w-full", className)} value={valor} onChange={(e) => onMuda(e.target.value as T)} aria-label={rotulo}>
+    <select
+      className={cx("campo max-w-full max-sm:min-w-[44%] max-sm:flex-1 sm:w-auto", className)}
+      value={valor}
+      onChange={(e) => onMuda(e.target.value as T)}
+      aria-label={rotulo}
+    >
       {opcoes.map((o) => (
         <option key={o.id} value={o.id}>
           {o.nome}
@@ -392,7 +429,7 @@ export function Copiar({ texto, children, pequeno = true }: { texto: string; chi
 
 export function ListaInfo({ itens }: { itens: [string, ReactNode][] }) {
   return (
-    <dl className="grid grid-cols-[minmax(110px,auto)_1fr] gap-x-5 gap-y-1.5 text-[13px]">
+    <dl className="grid grid-cols-[minmax(96px,auto)_1fr] gap-x-4 sm:gap-x-5 gap-y-1.5 text-[13px]">
       {itens.map(([k, v]) => (
         <div key={k} className="contents">
           <dt className="text-cinza">{k}</dt>
