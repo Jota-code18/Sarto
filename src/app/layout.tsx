@@ -15,6 +15,9 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
+// a política de segurança usa um código novo a cada página, então nada é pré-montado
+export const dynamic = "force-dynamic";
+
 export const viewport: Viewport = { themeColor: "#262626", width: "device-width", initialScale: 1 };
 
 export default function Raiz({ children }: { children: React.ReactNode }) {

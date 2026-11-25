@@ -1,23 +1,32 @@
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Logo } from "@/componentes/logo";
-import { carimbo, COOKIE, igual } from "@/lib/acesso";
+import { COOKIE, criarTrava, DURACAO_DIAS, emitirPasse, senhaConfere } from "@/lib/acesso";
 
 export const metadata = { title: "Entrar" };
 export const dynamic = "force-dynamic";
+const trava = criarTrava();
 
 async function entrar(f: FormData) {
   "use server";
   const senha = process.env.PAINEL_SENHA;
   if (!senha) redirect("/");
-  const certo = await carimbo(senha);
-  const dada = await carimbo(String(f.get("senha") ?? "") || " ");
-  if (!igual(dada, certo)) {
+  const ip = (await headers()).get("x-real-ip") ?? "local";
+  if (trava.travado(ip)) redirect("/entrar?erro=espera");
+  if (!(await senhaConfere(senha, String(f.get("senha") ?? "").slice(0, 200)))) {
+    trava.errou(ip);
     // atrasa tentativa em série
     await new Promise((r) => setTimeout(r, 900));
     redirect("/entrar?erro=1");
   }
-  (await cookies()).set(COOKIE, certo, { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: "/", maxAge: 60 * 60 * 24 * 30 });
+  trava.acertou(ip);
+  (await cookies()).set(COOKIE, await emitirPasse(senha), {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: 60 * 60 * 24 * DURACAO_DIAS,
+  });
   redirect("/");
 }
 
@@ -31,7 +40,7 @@ export default async function Entrar({ searchParams }: { searchParams: Promise<{
           Senha do painel
           <input name="senha" type="password" required autoComplete="current-password" className="campo mt-2 text-carvao" aria-invalid={erro ? true : undefined} />
         </label>
-        {erro && <p className="mt-2 text-[13px] text-[#f0b5ae]">Senha incorreta.</p>}
+        {erro && <p className="mt-2 text-[13px] text-[#f0b5ae]">{erro === "espera" ? "Muitas tentativas. Espere 15 minutos." : "Senha incorreta."}</p>}
         <button type="submit" className="mt-4 min-h-11 w-full bg-papel font-medium text-carvao hover:bg-linho">
           Entrar
         </button>

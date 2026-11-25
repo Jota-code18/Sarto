@@ -26,6 +26,7 @@ import {
 import { useCarteira } from "@/componentes/uso";
 import { br, diasEntre, hoje, prazo, segundaDe } from "@/lib/datas";
 import { baixarArquivo, brl, csv, linkWhats, novoId, num, semAcento } from "@/lib/formato";
+import { linkSeguro } from "@/lib/protecao";
 import { acao, useSarto } from "@/lib/store";
 import type { Anuncio } from "@/lib/tipos";
 import { type Grupo, montarGrupos } from "@/lib/varredura";
@@ -291,7 +292,7 @@ export default function Varredura() {
                         <td>
                           {aba === "sarto" ? (
                             typeof x.sarto === "object" && x.sarto ? (
-                              <a href={x.sarto.url} target="_blank" rel="noreferrer" className="underline underline-offset-4">
+                              <a href={linkSeguro(x.sarto.url)} target="_blank" rel="noreferrer" className="underline underline-offset-4">
                                 cód. {x.sarto.cod}
                               </a>
                             ) : (
@@ -405,8 +406,8 @@ export default function Varredura() {
                         {diasEntre(a.vistoEm, hoje()) > 21 && ", não aparece há mais de 3 semanas"}
                       </span>
                     </span>
-                    {a.url && (
-                      <a className={estiloBotao("linha", true)} href={a.url} target="_blank" rel="noreferrer">
+                    {linkSeguro(a.url) && (
+                      <a className={estiloBotao("linha", true)} href={linkSeguro(a.url)} target="_blank" rel="noreferrer">
                         <ExternalLink size={14} /> Abrir
                       </a>
                     )}

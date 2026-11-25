@@ -1,4 +1,5 @@
 "use client";
+import { linkSeguro } from "@/lib/protecao";
 import { useState } from "react";
 import { Botao, Cabecalho, Cartao, Nota, Selo, Vazio } from "@/componentes/ui";
 import { br } from "@/lib/datas";
@@ -184,7 +185,7 @@ export default function Consulta() {
                             <span className="flex gap-1.5">
                               <Selo>{u.siglaTribunal}</Selo>
                               {u.link && (
-                                <a href={u.link} target="_blank" rel="noreferrer" className="text-[13px] underline underline-offset-4">
+                                <a href={linkSeguro(u.link)} target="_blank" rel="noreferrer" className="text-[13px] underline underline-offset-4">
                                   Ver publicação
                                 </a>
                               )}
