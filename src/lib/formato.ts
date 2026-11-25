@@ -16,8 +16,6 @@ export function brlCurto(v: number) {
 
 export const num = (v: number, casas = 0) => v.toLocaleString("pt-BR", { minimumFractionDigits: casas, maximumFractionDigits: casas });
 
-const pct = (v: number, casas = 2) => `${num(v, casas)}%`;
-
 /** Lê "1.234,56", "1234,56", "1234.56" ou "R$ 1.234" */
 export function lerValor(t: string): number {
   const s = t.replace(/[^\d,.-]/g, "");
