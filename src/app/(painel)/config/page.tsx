@@ -56,10 +56,14 @@ const GRUPOS: GrupoDef[] = [
   {
     grupo: "Padrão Sarto para a varredura",
     campos: [
-      c("padraoPrecoMin", "Preço mínimo", "dinheiro", 3),
+      c("padraoPrecoMin", "Preço mínimo (0 = sem limite)", "dinheiro", 3),
       c("padraoPrecoMax", "Preço máximo (0 = sem limite)", "dinheiro", 3),
       c("padraoCidade", "Cidade", "texto", 3),
-      { ...c("padraoBairros", "Bairros e condomínios, separados por vírgula", "area", 6), linhas: 2 },
+      {
+        ...c("padraoBairros", "Outros empreendimentos e bairros, separados por vírgula", "area", 6),
+        linhas: 2,
+        dica: "Somam à lista fixa, que aceita erro de escrita. Ver em Varredura.",
+      },
     ],
   },
   {

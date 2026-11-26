@@ -1,5 +1,5 @@
 import { mesmaOrigem } from "@/lib/protecao";
-import { entregou, gastoDoMes, iniciar, itens, rodadas, rodando } from "@/lib/apify";
+import { entregou, gastoDoMes, tetoDoMes, iniciar, itens, rodadas, rodando } from "@/lib/apify";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -26,7 +26,14 @@ export async function GET(req: Request) {
       const r = rs.find((x) => x.ator === c);
       return !!r && !rodando(r) && !entregou(r);
     });
-    return Response.json({ ligada: true, rodando: rs.some(rodando), prontas: prontas.map((r) => ({ id: r.id, inicio: r.inicio })), falhou, gasto: await gastoDoMes() });
+    return Response.json({
+      ligada: true,
+      rodando: rs.some(rodando),
+      prontas: prontas.map((r) => ({ id: r.id, inicio: r.inicio })),
+      falhou,
+      gasto: await gastoDoMes(),
+      teto: tetoDoMes(),
+    });
   } catch (e) {
     return erro(e);
   }

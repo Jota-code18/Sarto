@@ -36,7 +36,7 @@ export const nomeAtual = (s: Pick<Estado, "dados" | "usuarioId" | "perfil">) => 
 
 type ComId = { id: string };
 const MAX_LOGS = 400;
-const VERSAO = 3;
+const VERSAO = 4;
 /** Varreduras já trazidas; esquecer faz o painel trazer de novo */
 export const CHAVE_COLETAS = "sarto-coletas-lidas-2";
 const relerColetas = () => localStorage.removeItem(CHAVE_COLETAS);
@@ -119,8 +119,10 @@ export const useSarto = create<Estado>()(
       name: "sarto-painel",
       version: VERSAO,
       storage: createJSONStorage(() => guarda),
-      migrate: (salvo) => {
+      migrate: (salvo, versao) => {
         const { modo, ...g } = (salvo ?? {}) as Partial<Estado> & { modo?: string };
+        // até a versão 3 a varredura cortava abaixo de R$ 1 milhão
+        if (versao < 4 && g.regras?.padraoPrecoMin === 1_000_000) g.regras = { ...g.regras, padraoPrecoMin: 0 };
         return (modo === "demo" ? { ...g, dados: semExemplos(g.dados ?? {}) } : g) as Estado;
       },
       skipHydration: true,

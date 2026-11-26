@@ -29,7 +29,8 @@ Corrigiu um erro? Deixe um teste que falharia sem a correção. Não desligue re
 - Dado inventado na tela. Sem dado, mostre um estado vazio que diga o próximo passo. Dados de exemplo só em teste.
 - Critério próprio de nota de anúncio: a nota é a do Canal Pro.
 - Passo manual fora do painel (subir arquivo, colar link) quando der para fazer por dentro.
-- Gasto acima do crédito gratuito sem autorização: o teto fica em `src/lib/apify.ts`.
+- Gasto acima do crédito gratuito sem autorização: o teto mensal é `APIFY_TETO_MES` (padrão 4,95), lido em `src/lib/apify.ts`.
+- Preço mínimo na varredura: lote e anúncio só com ágio precisam entrar. O que conta é o empreendimento, em `src/lib/empreendimentos.ts`.
 
 ## Produto
 
