@@ -13,6 +13,7 @@ interface Estado {
   prontas?: { id: string; inicio: string }[];
   falhou?: boolean;
   gasto?: number;
+  teto?: number;
   erro?: string;
 }
 
@@ -111,12 +112,13 @@ export function Coleta() {
         ) : lendo ? (
           "Trazendo os anúncios…"
         ) : s.rodando ? (
-          "Varrendo ZAP, Viva Real e OLX. Pode sair desta tela: o resultado entra sozinho quando você voltar."
+          "Varrendo ZAP e OLX. Pode sair desta tela: o resultado entra sozinho quando você voltar."
         ) : (
           <>
             <b className="font-semibold">{ultima ? `Última varredura: ${brHora(ultima.inicio)}` : "Nenhuma varredura ainda"}</b>
             <span className="block text-cinza">
-              Roda sozinha toda segunda às 5h. ZAP, Viva Real e OLX, em Anápolis, a partir de R$ 1 milhão. Uso do mês: US$ {num(s.gasto ?? 0, 2)} de 5 gratuitos.
+              Roda sozinha toda segunda às 5h. ZAP e OLX em Anápolis, sem preço mínimo; os empreendimentos acompanhados uma vez por mês. Uso do mês: US$ {num(s.gasto ?? 0, 2)} de{" "}
+              {num(s.teto ?? 5, 0)}.
             </span>
             {s.falhou && <span className="block text-erro">A tentativa mais recente falhou.</span>}
           </>

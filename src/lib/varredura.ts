@@ -1,5 +1,6 @@
 import { type Dia, diasEntre, hoje, lerData } from "./datas";
 import { brl, lerValor, novoId, semAcento } from "./formato";
+import { acharEmpreendimento, mediana, precoEstranho } from "./empreendimentos";
 import { achar, type Linha } from "./planilha";
 import type { Anuncio, ImovelSite, Regras } from "./tipos";
 
@@ -21,6 +22,7 @@ export type Bruto = Pick<
   | "particular"
   | "telefone"
   | "foto"
+  | "empreendimento"
   | "publicadoEm"
 >;
 
@@ -157,6 +159,7 @@ export function normalizar(x: unknown): Bruto | null {
       publicadoEm: lerData(achar(l, /publicado|data|created/)) ?? undefined,
     };
   }
+  a.empreendimento = txt(o.empreendimento) || acharEmpreendimento(`${a.titulo} ${a.bairro}`) || undefined;
   if (!a.titulo) a.titulo = [a.tipo || "Imóvel", a.bairro].filter(Boolean).join(", ");
   return a.preco > 0 ? a : null;
 }
@@ -210,6 +213,7 @@ export function mesclar(atuais: Anuncio[], brutos: Bruto[], cidade: string, ref:
       bairro: b.bairro || a.bairro,
       telefone: b.telefone ?? a.telefone,
       foto: b.foto ?? a.foto,
+      empreendimento: b.empreendimento ?? a.empreendimento,
       publicadoEm: a.publicadoEm ?? b.publicadoEm,
       precoAnterior: baixou ? a.preco : b.preco === a.preco ? Math.max(a.precoAnterior, b.precoAnterior) : b.precoAnterior,
       id: a.id,
@@ -255,10 +259,16 @@ function naCarteiraDaSarto(a: Anuncio, carteira: ImovelSite[]): ImovelSite | "sa
   );
 }
 
-export function dentroPadrao(a: Pick<Anuncio, "preco" | "bairro" | "titulo" | "url">, r: Regras) {
-  if (a.preco < r.padraoPrecoMin || (r.padraoPrecoMax > 0 && a.preco > r.padraoPrecoMax)) return false;
-  const nomes = r.padraoBairros.split(/[,;\n]/).filter((x) => x.trim());
-  return !nomes.length || mesmoLugar(a, nomes);
+/** Empreendimento do anúncio: o que veio da coleta ou o que o título e o bairro citam */
+const empreendimentoDe = (a: Pick<Anuncio, "empreendimento" | "titulo" | "bairro">, extras: string[] = []) =>
+  a.empreendimento || acharEmpreendimento(`${a.titulo} ${a.bairro}`, extras);
+
+const extrasDe = (r: Regras) => r.padraoBairros.split(/[,;\n]/).filter((x) => x.trim());
+
+/** Está no padrão se cita um empreendimento acompanhado. Preço só filtra quando a Sarto define um. */
+export function dentroPadrao(a: Pick<Anuncio, "preco" | "bairro" | "titulo" | "url" | "empreendimento">, r: Regras) {
+  if ((r.padraoPrecoMin > 0 && a.preco < r.padraoPrecoMin) || (r.padraoPrecoMax > 0 && a.preco > r.padraoPrecoMax)) return false;
+  return !!empreendimentoDe(a, extrasDe(r));
 }
 
 export interface Grupo {
@@ -267,6 +277,9 @@ export interface Grupo {
   outros: Anuncio[];
   sarto: ImovelSite | "sarto" | null;
   noPadrao: boolean;
+  empreendimento: string;
+  /** preço de digitação errada ou só do ágio */
+  precoEstranho: boolean;
   novo: boolean;
   baixou: number;
   parado: number;
@@ -296,6 +309,14 @@ export function montarGrupos(anuncios: Anuncio[], carteira: ImovelSite[], r: Reg
     grupos[g].push(a);
     porArea.set(faixa, [...(porArea.get(faixa) ?? []), g]);
   }
+  const extras = extrasDe(r);
+  const emp = new Map(anuncios.map((a) => [a.id, empreendimentoDe(a, extras)]));
+  const precos = new Map<string, number[]>();
+  for (const a of anuncios) {
+    const e = emp.get(a.id);
+    if (e) precos.set(e, [...(precos.get(e) ?? []), a.preco]);
+  }
+  const medianas = new Map([...precos].map(([e, v]) => [e, mediana(v)]));
   return grupos
     .map((g): Grupo => {
       const ord = [...g].sort((x, y) => Number(y.particular) - Number(x.particular) || Number(y.status !== "abordar") - Number(x.status !== "abordar") || x.preco - y.preco);
@@ -309,13 +330,30 @@ export function montarGrupos(anuncios: Anuncio[], carteira: ImovelSite[], r: Reg
         .sort()[0];
       const parado = pub ? diasEntre(pub, ref) : 0;
       const novo = diasEntre(p.primeiraVez, ref) < 7;
+      const empreendimento = g.map((a) => emp.get(a.id)).find(Boolean) ?? "";
+      const estranho = precoEstranho(p.preco, medianas.get(empreendimento) ?? 0);
       const motivos: string[] = [];
+      if (estranho) motivos.push("preço a conferir");
       if (particular) motivos.push("do próprio dono");
       if (baixou) motivos.push(`baixou ${brl(baixou, false)}`);
       if (parado >= 90) motivos.push(`parado há ${parado} dias`);
       if (g.length > 1) motivos.push(`em ${g.length} anúncios`);
       const peso = (particular ? 4 : 0) + (parado >= 90 ? 2 : 0) + (baixou ? 2 : 0) + (g.length > 1 ? 1 : 0);
-      return { id: p.id, principal: p, outros: ord.slice(1), sarto, noPadrao: g.some((a) => dentroPadrao(a, r)), novo, baixou, parado, particular, peso, motivos };
+      return {
+        id: p.id,
+        principal: p,
+        outros: ord.slice(1),
+        sarto,
+        noPadrao: g.some((a) => dentroPadrao({ ...a, empreendimento: empreendimento || a.empreendimento }, r)),
+        empreendimento,
+        precoEstranho: estranho,
+        novo,
+        baixou,
+        parado,
+        particular,
+        peso,
+        motivos,
+      };
     })
     .sort((x, y) => y.peso - x.peso || y.principal.preco - x.principal.preco);
 }

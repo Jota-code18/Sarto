@@ -327,3 +327,41 @@ describe("saída real dos coletores", () => {
     expect(melhorContato({ principal: imob, outros: [] })).toBe(imob);
   });
 });
+
+describe("padrão por empreendimento", () => {
+  const base = {
+    portal: "OLX",
+    url: "https://x/1000001",
+    titulo: "Casa no Anavile",
+    tipo: "Casa",
+    bairro: "",
+    cidade: "Anápolis",
+    preco: 1_500_000,
+    precoAnterior: 0,
+    area: 300,
+    quartos: 4,
+    anunciante: "",
+    codAnunciante: "",
+    particular: false,
+  };
+  it("sem preço mínimo e com erro de escrita", () => {
+    const l = mesclar(
+      [],
+      [base, { ...base, url: "https://x/1000002", titulo: "Lote no Alfaville", preco: 35_000, area: 0 }, { ...base, url: "https://x/1000003", titulo: "Casa no Jundiaí" }],
+      "Anápolis",
+      REF,
+    ).lista;
+    const g = montarGrupos(l, [], REGRAS, REF);
+    const por = (t: string) => g.find((x) => x.principal.titulo.includes(t));
+    expect(por("Anavile")).toMatchObject({ noPadrao: true, empreendimento: "Anaville", precoEstranho: false });
+    expect(por("Alfaville")).toMatchObject({ noPadrao: true, empreendimento: "Alphaville", precoEstranho: true });
+    expect(por("Alfaville")?.motivos).toContain("preço a conferir");
+    expect(por("Jundiaí")).toMatchObject({ noPadrao: false, empreendimento: "" });
+    expect(montarGrupos(l, [], { ...REGRAS, padraoBairros: "Jundiaí" }, REF).find((x) => x.principal.titulo.includes("Jundiaí"))?.noPadrao).toBe(true);
+  });
+  it("empreendimento achado no texto da coleta continua depois", () => {
+    const [a] = mesclar([], [{ ...base, titulo: "Casa 4 suítes", empreendimento: "Belas Artes" }], "Anápolis", REF).lista;
+    const [b] = mesclar([a], [{ ...base, titulo: "Casa 4 suítes", empreendimento: undefined }], "Anápolis", REF).lista;
+    expect(b.empreendimento).toBe("Belas Artes");
+  });
+});

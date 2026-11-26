@@ -2,17 +2,18 @@
 import http from "node:http";
 
 let rodadas = [];
+let anotado = {};
 const PRONTA_EM = 600;
 const item = (o) => JSON.parse(JSON.stringify(o));
 const OLX = [
   {
     listingId: "1",
     url: "https://go.olx.com.br/grande-goiania-e-anapolis/imoveis/sobrado-1508484603",
-    title: "Sobrado de teste no Bairro Exemplo",
+    title: "Sobrado de teste no Anavile",
     description: "Falar com o dono 62 9 9999-0000",
     categoryName: "Casas",
     city: "Anápolis",
-    neighborhood: "Bairro Exemplo",
+    neighborhood: "Setor de teste",
     price: 1733000,
     priceDisplay: "R$ 1.733.000",
     seller: { type: "private", name: "Dono de teste", id: "9", phoneAvailable: true },
@@ -23,6 +24,17 @@ const OLX = [
       { name: "size", value: "377m²" },
       { name: "rooms", value: "4" },
     ],
+  },
+  {
+    listingId: "3",
+    url: "https://go.olx.com.br/grande-goiania-e-anapolis/terrenos/lote-1508484605",
+    title: "Lote no Alphavile, só o ágio",
+    categoryName: "Terrenos, sítios e fazendas",
+    city: "Anápolis",
+    price: 40000,
+    priceDisplay: "R$ 40.000",
+    seller: { type: "business" },
+    properties: [{ name: "size", value: "450m²" }],
   },
   {
     listingId: "2",
@@ -40,7 +52,7 @@ const ZAP = [
   {
     identity: { external_id: "T1" },
     source_context: { url: "https://www.zapimoveis.com.br/imovel/casa-teste-id-2891363600/" },
-    content: { title: "Casa de teste no Jundiaí", description: "texto que não pode sair do servidor" },
+    content: { title: "Casa de teste em condomínio", description: "No Grand Trianom. Texto que não pode sair do servidor" },
     pricing: { amount: 2200000 },
     location: { neighborhood: "Jundiaí", city: "Anápolis" },
     attributes: { area: { usable_area: 200 }, rooms: { bedrooms: 3 }, unit_types: ["HOME"] },
@@ -60,9 +72,23 @@ http
     if (u.pathname === "/") return json({ ok: true });
     if (u.pathname === "/zerar") {
       rodadas = [];
+      anotado = {};
       return json({});
     }
     if (q.headers.authorization !== "Bearer simulado") return json({}, 401);
+    if (u.pathname === "/key-value-stores" && q.method === "POST") return json({ data: { id: "loja" } });
+    if (u.pathname === "/key-value-stores/loja/records/buscas") {
+      if (q.method === "PUT") {
+        let b = "";
+        q.on("data", (d) => (b += d));
+        q.on("end", () => {
+          anotado = JSON.parse(b);
+          json({});
+        });
+        return;
+      }
+      return json(anotado);
+    }
     const ator = u.pathname.split("/")[2];
     if (q.method === "POST") {
       const d = { id: `r${rodadas.length}`, ator, startedAt: new Date().toISOString(), defaultDatasetId: /olx/.test(ator) ? "olx" : "zap", criada: Date.now() };

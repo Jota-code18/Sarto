@@ -46,10 +46,15 @@ test.describe("varredura completa", () => {
     await entrar(page);
     await page.goto(`${COM_SENHA}/varredura`);
     await page.getByRole("button", { name: "Varrer agora" }).click();
-    await expect(page.getByRole("button", { name: "Sobrado de teste no Bairro Exemplo" })).toBeVisible({ timeout: 30000 });
+    await expect(page.getByRole("button", { name: "Sobrado de teste no Anavile" })).toBeVisible({ timeout: 30000 });
     // coleta do ZAP interrompida por tempo também entra
-    await expect(page.getByRole("button", { name: "Casa de teste no Jundiaí" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Casa de teste em condomínio" })).toBeVisible();
     await expect(page.getByText("Casa de teste em Goiânia")).toHaveCount(0);
+    // erro de escrita e preço só do ágio não tiram o anúncio da lista
+    const lote = page.getByRole("row").filter({ hasText: "Lote no Alphavile" });
+    await expect(lote.getByText("preço a conferir")).toBeVisible();
+    await expect(lote.getByText(/^Alphaville/)).toBeVisible();
+    await expect(page.getByRole("row").filter({ hasText: "Casa de teste em condomínio" }).getByText("Grand Trianon")).toBeVisible();
     const linha = page.getByRole("row").filter({ hasText: "Sobrado de teste" });
     await expect(linha.getByText("377 m²")).toBeVisible();
     await expect(linha.getByText(/4.597\/m²/)).toBeVisible();
@@ -64,7 +69,7 @@ test.describe("varredura completa", () => {
     await expect(page.getByText("A última varredura é recente")).toBeVisible();
     // recarregar não duplica
     await page.reload();
-    await expect(page.getByRole("button", { name: "Sobrado de teste no Bairro Exemplo" })).toHaveCount(1);
+    await expect(page.getByRole("button", { name: "Sobrado de teste no Anavile" })).toHaveCount(1);
   });
   test("a API não devolve texto do anúncio nem dado a mais", async ({ page }, info) => {
     test.skip(info.project.name !== "computador", "uma rodada basta");

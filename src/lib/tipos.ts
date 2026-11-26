@@ -98,6 +98,8 @@ export interface Anuncio {
   /** só quando o anúncio publica */
   telefone?: string;
   foto?: string;
+  /** empreendimento que o anúncio cita, achado mesmo com erro de escrita */
+  empreendimento?: string;
   publicadoEm?: Dia;
   primeiraVez: Dia;
   vistoEm: Dia;

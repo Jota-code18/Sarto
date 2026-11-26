@@ -84,9 +84,10 @@ export default function Varredura() {
   const { salvar, avisar, mudar, registrar, remover } = acao();
   const { carteira } = useCarteira();
   const [aba, setAba] = useState<Aba>("abordar");
-  const [filtro, setFiltro] = useState<"" | "novo" | "dono" | "baixou" | "parado">("");
+  const [filtro, setFiltro] = useState<"" | "novo" | "dono" | "baixou" | "parado" | "estranho">("");
   const [q, setQ] = useState("");
   const [tipo, setTipo] = useState("");
+  const [emp, setEmp] = useState("");
   const [ver, setVer] = useState<string | null>(null);
   const [ed, setEd] = useState<Anuncio | null>(null);
   const [limpa, setLimpa] = useState(false);
@@ -102,13 +103,26 @@ export default function Varredura() {
   };
   const t = semAcento(q);
   const lista = por[aba]
-    .filter((g) => (filtro === "novo" ? g.novo : filtro === "dono" ? g.particular : filtro === "baixou" ? g.baixou > 0 : filtro === "parado" ? g.parado >= 90 : true))
+    .filter((g) =>
+      filtro === "novo"
+        ? g.novo
+        : filtro === "dono"
+          ? g.particular
+          : filtro === "baixou"
+            ? g.baixou > 0
+            : filtro === "parado"
+              ? g.parado >= 90
+              : filtro === "estranho"
+                ? g.precoEstranho
+                : true,
+    )
     .filter((g) => !tipo || g.principal.tipo === tipo)
+    .filter((g) => !emp || g.empreendimento === emp)
     .filter((g) => !t || semAcento([g.principal, ...g.outros].map((a) => `${a.titulo} ${a.bairro} ${a.anunciante}`).join(" ")).includes(t));
   const tipos = [...new Set(dados.anuncios.map((a) => a.tipo).filter(Boolean))].sort();
-  const bairros = [...por.abordar.reduce((m, g) => m.set(g.principal.bairro || "Sem bairro", (m.get(g.principal.bairro || "Sem bairro") ?? 0) + 1), new Map<string, number>())]
-    .map(([nome, valor]) => ({ nome, valor }))
-    .sort((a, b) => b.valor - a.valor);
+  const contar = (l: Grupo[], chave: (g: Grupo) => string) =>
+    [...l.reduce((m, g) => m.set(chave(g), (m.get(chave(g)) ?? 0) + 1), new Map<string, number>())].map(([nome, valor]) => ({ nome, valor })).sort((a, b) => b.valor - a.valor);
+  const bairros = contar(por.abordar, (g) => g.empreendimento || "Outros");
   const ultima = dados.anuncios
     .map((a) => a.vistoEm)
     .sort()
@@ -180,7 +194,11 @@ export default function Varredura() {
 
   return (
     <>
-      <Cabecalho area="COMERCIAL VARREDURA" titulo="Varredura dos portais" texto="Uma linha por imóvel: junta repetidos, tira o que a Sarto já tem e ordena por chance de captar.">
+      <Cabecalho
+        area="COMERCIAL VARREDURA"
+        titulo="Varredura dos portais"
+        texto="Uma linha por imóvel nos empreendimentos acompanhados: junta repetidos, tira o que a Sarto já tem e ordena por chance de captar."
+      >
         <Copiar texto={resumo} pequeno={false}>
           Copiar lista do Igor
         </Copiar>
@@ -220,6 +238,18 @@ export default function Varredura() {
             { id: "dono", nome: "Do próprio dono" },
             { id: "baixou", nome: "Baixaram de preço" },
             { id: "parado", nome: "Parados há 90 dias" },
+            { id: "estranho", nome: "Preço a conferir" },
+          ]}
+        />
+        <Escolha
+          rotulo="Empreendimento"
+          valor={emp}
+          onMuda={setEmp}
+          opcoes={[
+            { id: "", nome: "Todos os empreendimentos" },
+            ...contar(grupos, (g) => g.empreendimento)
+              .filter((x) => x.nome)
+              .map((x) => ({ id: x.nome, nome: `${x.nome} (${x.valor})` })),
           ]}
         />
         <Escolha rotulo="Tipo" valor={tipo} onMuda={setTipo} opcoes={[{ id: "", nome: "Todos os tipos" }, ...tipos.map((x) => ({ id: x, nome: x }))]} />
@@ -293,7 +323,7 @@ export default function Varredura() {
                               </button>
                               <LinkPortal a={a} />
                             </span>
-                            <span className="block text-[13px] text-cinza">{[a.bairro, a.anunciante].filter(Boolean).join(", ")}</span>
+                            <span className="block text-[13px] text-cinza">{[x.empreendimento || a.bairro, a.anunciante].filter(Boolean).join(", ")}</span>
                           </span>
                         </span>
                       </td>
@@ -321,7 +351,7 @@ export default function Varredura() {
                           <span className="flex flex-wrap gap-1">
                             {x.novo && <Selo tom="forte">Novo</Selo>}
                             {x.motivos.map((m) => (
-                              <Selo key={m} tom={m === "do próprio dono" ? "forte" : "neutro"}>
+                              <Selo key={m} tom={m === "do próprio dono" ? "forte" : m === "preço a conferir" ? "alerta" : "neutro"}>
                                 {m}
                               </Selo>
                             ))}
@@ -351,8 +381,8 @@ export default function Varredura() {
           )}
         </div>
         {aba === "abordar" && bairros.length > 2 && (
-          <Cartao titulo="Por bairro" className="self-start">
-            <Barras dados={bairros.slice(0, 12)} />
+          <Cartao titulo="Por empreendimento" className="self-start">
+            <Barras dados={bairros.slice(0, 16)} />
           </Cartao>
         )}
       </div>
@@ -403,6 +433,7 @@ export default function Varredura() {
             )}
             <ListaInfo
               itens={[
+                ["Empreendimento", g.empreendimento],
                 ["Tipo", g.principal.tipo],
                 ["Área", g.principal.area ? `${num(g.principal.area)} m²` : ""],
                 ["Quartos", g.principal.quartos || ""],
