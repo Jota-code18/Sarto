@@ -26,6 +26,17 @@ const OLX = [
     ],
   },
   {
+    listingId: "4",
+    url: "https://go.olx.com.br/grande-goiania-e-anapolis/imoveis/casa-1508484606",
+    title: "Casa de teste no Belas Artes",
+    categoryName: "Casas",
+    city: "Anápolis",
+    price: 2100000,
+    priceDisplay: "R$ 2.100.000",
+    seller: { type: "private", name: "Dono de teste", id: "9" },
+    properties: [{ name: "size", value: "300m²" }],
+  },
+  {
     listingId: "3",
     url: "https://go.olx.com.br/grande-goiania-e-anapolis/terrenos/lote-1508484605",
     title: "Lote no Alphavile, só o ágio",

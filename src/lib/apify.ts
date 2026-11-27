@@ -9,6 +9,7 @@ const OLX = "solidcode~olx-brazil-scraper";
 const TETO_MES = Math.max(1, Number(process.env.APIFY_TETO_MES) || 4.95);
 const PAGO = TETO_MES >= 25;
 const OLX_VENDA = "https://www.olx.com.br/imoveis/venda/estado-go/anapolis";
+const OLX_ALUGUEL = "https://www.olx.com.br/imoveis/aluguel/estado-go/anapolis";
 
 interface Busca {
   /** identifica a busca entre as rodadas do mesmo coletor */
@@ -39,7 +40,9 @@ const BUSCAS: Busca[] = [
     : { id: "zap", ator: ZAP, completa: { limite: 200, teto: 0.4 }, recente: { limite: 200, teto: 0.4 }, entrada: zap },
   PAGO
     ? { id: "olx", ator: OLX, completa: { limite: 9000, teto: 10.8 }, recente: { limite: 300, teto: 0.36 }, entrada: olx([`${OLX_VENDA}?sf=1`], false) }
-    : { id: "olx", ator: OLX, completa: { limite: 250, teto: 0.3 }, recente: { limite: 250, teto: 0.3 }, entrada: olx([`${OLX_VENDA}?sf=1`], false) },
+    : { id: "olx", ator: OLX, completa: { limite: 220, teto: 0.27 }, recente: { limite: 220, teto: 0.27 }, entrada: olx([`${OLX_VENDA}?sf=1`], false) },
+  // aluguel para a captação da locação
+  { id: "aluguel", ator: OLX, completa: { limite: 100, teto: 0.12 }, recente: { limite: 100, teto: 0.12 }, entrada: olx([`${OLX_ALUGUEL}?sf=1`], false) },
   ...(PAGO
     ? []
     : [
@@ -179,7 +182,8 @@ export async function iniciar(intervaloHoras: number): Promise<{ ok: boolean; mo
 }
 
 /** Só os campos que o painel usa. Do texto do anúncio sai apenas o telefone; o texto fica no servidor. */
-export async function itens({ dataset, ator }: Rodada, offset: number) {
+export async function itens({ dataset, ator, busca }: Rodada, offset: number) {
+  const negocio = busca === "aluguel" ? "aluguel" : undefined;
   const campos =
     ator === OLX
       ? "listingId,url,title,description,categoryName,neighborhood,city,price,oldPrice,priceDisplay,properties,seller,isBusiness,postedAt,thumbnailUrl,photos"
@@ -198,12 +202,13 @@ export async function itens({ dataset, ator }: Rodada, offset: number) {
       oldPrice: o.oldPrice,
       priceDisplay: o.priceDisplay ?? "",
       properties: o.properties,
-      seller: { name: o.seller?.name, type: o.seller?.type },
+      seller: { name: o.seller?.name, type: o.seller?.type, id: o.seller?.id },
       isBusiness: o.isBusiness,
       postedAt: o.postedAt,
       foto: fotoDoMolde(o.photos?.[0] ?? o.thumbnailUrl),
       telefone: telefoneNoTexto(`${o.title ?? ""} ${o.description ?? ""}`),
       empreendimento: acharEmpreendimento(`${o.title ?? ""} ${o.neighborhood ?? ""} ${o.description ?? ""}`),
+      negocio,
     }));
   return l.map((o) => ({
     identity: { external_id: o.identity?.external_id },
@@ -219,7 +224,13 @@ export async function itens({ dataset, ator }: Rodada, offset: number) {
       area: o.attributes?.area,
       publisher_type: o.attributes?.publisher_type,
     },
-    entities: { seller: { name: o.entities?.seller?.name, license_number: o.entities?.seller?.license_number } },
+    entities: {
+      seller: {
+        name: o.entities?.seller?.name,
+        license_number: o.entities?.seller?.license_number,
+        account_id: o.entities?.seller?.account_id ?? o.entities?.seller?.advertiser_id,
+      },
+    },
     foto: fotoDoMolde(o.media?.images?.[0]?.url),
     telefone: telefone(o.contact?.whatsapp) || (o.contact?.phones ?? []).map(telefone).find(Boolean) || "",
     empreendimento: acharEmpreendimento(`${o.content?.title ?? ""} ${o.location?.neighborhood ?? ""} ${o.content?.description ?? ""}`),

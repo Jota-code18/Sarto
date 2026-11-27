@@ -50,6 +50,15 @@ test.describe("varredura completa", () => {
     // coleta do ZAP interrompida por tempo também entra
     await expect(page.getByRole("button", { name: "Casa de teste em condomínio" })).toBeVisible();
     await expect(page.getByText("Casa de teste em Goiânia")).toHaveCount(0);
+    // o número que o dono escreveu num anúncio vale para o outro anúncio dele
+    await expect(
+      page
+        .getByRole("row")
+        .filter({ hasText: "Casa de teste no Belas Artes" })
+        .getByRole("link", { name: /WhatsApp/ }),
+    ).toHaveAttribute("href", /wa\.me\/5562999990000/);
+    // sem número publicado não há botão de chat
+    await expect(page.getByRole("link", { name: /Chat da OLX/ })).toHaveCount(0);
     // erro de escrita e preço só do ágio não tiram o anúncio da lista
     const lote = page.getByRole("row").filter({ hasText: "Lote no Alphavile" });
     await expect(lote.getByText("preço a conferir")).toBeVisible();
