@@ -3,6 +3,7 @@ import http from "node:http";
 
 let rodadas = [];
 let anotado = {};
+const registros = {};
 const PRONTA_EM = 600;
 const item = (o) => JSON.parse(JSON.stringify(o));
 const OLX = [
@@ -88,6 +89,19 @@ http
     }
     if (q.headers.authorization !== "Bearer simulado") return json({}, 401);
     if (u.pathname === "/key-value-stores" && q.method === "POST") return json({ data: { id: "loja" } });
+    if (u.pathname.startsWith("/key-value-stores/loja/records/") && u.pathname !== "/key-value-stores/loja/records/buscas") {
+      const chave = u.pathname.split("/").pop();
+      if (q.method === "PUT") {
+        let b = "";
+        q.on("data", (d) => (b += d));
+        q.on("end", () => {
+          registros[chave] = JSON.parse(b);
+          json({});
+        });
+        return;
+      }
+      return registros[chave] ? json(registros[chave]) : json({}, 404);
+    }
     if (u.pathname === "/key-value-stores/loja/records/buscas") {
       if (q.method === "PUT") {
         let b = "";

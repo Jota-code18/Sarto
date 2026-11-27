@@ -48,7 +48,7 @@ test.describe("varredura completa", () => {
     await page.getByRole("button", { name: "Varrer agora" }).click();
     await expect(page.getByRole("button", { name: "Sobrado de teste no Anavile" })).toBeVisible({ timeout: 30000 });
     // coleta do ZAP interrompida por tempo também entra
-    await expect(page.getByRole("button", { name: "Casa de teste em condomínio" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Casa de teste em condomínio" })).toBeVisible({ timeout: 15000 });
     await expect(page.getByText("Casa de teste em Goiânia")).toHaveCount(0);
     // o número que o dono escreveu num anúncio vale para o outro anúncio dele
     await expect(
@@ -103,6 +103,38 @@ test.describe("varredura completa", () => {
     });
     expect(corpo).toContain("62999990000");
     expect(corpo).not.toMatch(/description|não pode sair|Falar com o dono|phoneAvailable/);
+  });
+});
+
+test.describe("robô do Canal Pro", () => {
+  test("só aceita a chave do robô e a leitura aparece na carteira", async ({ page, request }, info) => {
+    test.skip(info.project.name !== "computador", "uma rodada basta");
+    const url = `${COM_SENHA}/api/canalpro`;
+    const leitura = {
+      coletadoEm: new Date().toISOString(),
+      cartoes: [
+        [
+          "Rua 2 - Bairro Exemplo, Anápolis - Goiás",
+          "Venda",
+          "Via Integração",
+          "TS1002",
+          "220 m²",
+          "R$ 1.650.000",
+          "Identificamos que este anúncio está duplicado em sua conta.",
+          "9.1/10",
+          "Bloqueado",
+        ],
+      ],
+    };
+    expect((await request.post(url, { data: leitura })).status()).toBe(401);
+    expect((await request.post(url, { data: leitura, headers: { authorization: "Bearer chave-errada-chave-errada-123" } })).status()).toBe(401);
+    expect((await request.get(url)).status()).toBe(401);
+    const ok = await request.post(url, { data: leitura, headers: { authorization: "Bearer robo-de-teste-com-mais-de-24-letras" } });
+    expect(await ok.json()).toEqual({ ok: true, anuncios: 1 });
+    await entrar(page);
+    await page.goto(`${COM_SENHA}/carteira`);
+    await expect(page.getByText("Cód. TS1002").first()).toBeVisible({ timeout: 20000 });
+    await expect(page.getByText(/feita pelo robô do computador da Sarto/)).toBeVisible();
   });
 });
 

@@ -115,6 +115,21 @@ async function anotacoes(): Promise<{ loja: string; buscas: Record<string, strin
   const buscas = r.ok ? await r.json().catch(() => ({})) : {};
   return { loja, buscas: buscas && typeof buscas === "object" ? buscas : {} };
 }
+/** Guarda e lê um registro no mesmo armazenamento (ex.: a leitura do Canal Pro) */
+export async function guardarRegistro(chave: string, valor: unknown) {
+  const { loja } = await anotacoes();
+  await api(`/key-value-stores/${loja}/records/${encodeURIComponent(chave)}`, { method: "PUT", body: JSON.stringify(valor) });
+}
+export async function lerRegistro(chave: string): Promise<unknown> {
+  const { loja } = await anotacoes();
+  const r = await fetch(`${BASE}/key-value-stores/${loja}/records/${encodeURIComponent(chave)}`, {
+    cache: "no-store",
+    signal: AbortSignal.timeout(15000),
+    headers: { Authorization: `Bearer ${process.env.APIFY_TOKEN}` },
+  });
+  return r.ok ? r.json().catch(() => null) : null;
+}
+
 async function anotar(id: string, busca: string) {
   const { loja, buscas } = await anotacoes();
   // guarda só as 200 mais novas

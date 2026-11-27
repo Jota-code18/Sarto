@@ -1,6 +1,6 @@
 "use client";
 import { ExternalLink, Upload } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { BotaoFavorito, ColarCaptura } from "@/componentes/captura";
 import { Formulario } from "@/componentes/formulario";
 import { Abas, Botao, Busca, Cabecalho, Cartao, Copiar, Escolha, estiloBotao, Gaveta, ListaInfo, Nota, Numero, Numeros, Selo, Vazio } from "@/componentes/ui";
@@ -9,20 +9,57 @@ import { type Captura, notasDaCaptura } from "@/lib/captura";
 import { br, brHora, hoje } from "@/lib/datas";
 import { baixarArquivo, brl, csv, num, semAcento } from "@/lib/formato";
 import { idNota, juntarNotas, lerNotas, mostrarNota, porImovel, type ResumoNota } from "@/lib/notas";
+import { type LeituraCanal, type LinhaPresenca, type Presenca, presencaNosPortais } from "@/lib/portais";
+import { linkSeguro } from "@/lib/protecao";
 import { lerArquivo, type Linha } from "@/lib/planilha";
 import { acao, useSarto } from "@/lib/store";
 import type { ImovelSite, NotaPortal } from "@/lib/tipos";
 
 type Item = { cod: string; im: ImovelSite | null; r: ResumoNota | null };
-type Aba = "atencao" | "nota" | "preco" | "todos";
+type Aba = "portais" | "atencao" | "nota" | "preco" | "todos";
+const NOME_PRESENCA: Record<Presenca, string> = {
+  publicado: "Publicado",
+  bloqueado: "Bloqueado",
+  nao_publicado: "Não publicado",
+  processando: "Em processamento",
+  fora_do_canal: "Fora do Canal Pro",
+  so_no_canal: "Só no Canal Pro",
+  sem_leitura: "Sem leitura",
+};
 
 export default function Carteira() {
   const { dados } = useSarto();
   const { avisar, registrar, salvar, remover } = acao();
   const { carteira, atualizadoEm, carregando, erro } = useCarteira();
-  const notas = dados.notas;
+  const [canal, setCanal] = useState<LeituraCanal | null>(null);
+  useEffect(() => {
+    let vivo = true;
+    fetch("/api/canalpro", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => vivo && setCanal(j?.leitura ?? null))
+      .catch(() => undefined);
+    return () => {
+      vivo = false;
+    };
+  }, []);
+  // a nota do robô vale como a do Canal Pro; o que foi colado à mão continua
+  const notas = useMemo(() => {
+    if (!canal) return dados.notas;
+    const doRobo = canal.anuncios.map((a) => ({
+      id: idNota(a.cod, "Canal Pro"),
+      cod: a.cod,
+      portal: "Canal Pro",
+      nota: a.nota,
+      motivo: a.situacao === "publicado" ? "" : a.motivo || "Fora do ar",
+      em: canal.coletadoEm.slice(0, 10),
+    }));
+    const ids = new Set(doRobo.map((n) => n.id));
+    return [...dados.notas.filter((n) => !ids.has(n.id)), ...doRobo];
+  }, [dados.notas, canal]);
+  const presenca = useMemo(() => presencaNosPortais(carteira, canal), [carteira, canal]);
+  const problemas = presenca.filter((p) => p.problema).sort((a, b) => Number(b.grave) - Number(a.grave));
   const pa = useParam("aba") as Aba | null;
-  const [aba, setAba] = useState<Aba>(pa ?? (notas.some((n) => n.motivo) ? "atencao" : notas.length ? "nota" : "todos"));
+  const [aba, setAba] = useState<Aba>(pa ?? "portais");
   const [q, setQ] = useState("");
   const [tipo, setTipo] = useState("");
   const [op, setOp] = useState<"" | "venda" | "aluguel">("");
@@ -45,6 +82,7 @@ export default function Carteira() {
   const media = comNota.length ? comNota.reduce((a, i) => a + (i.r?.nota ?? 0), 0) / comNota.length : null;
   const t = semAcento(q);
   const base: Record<Aba, Item[]> = {
+    portais: [],
     atencao,
     nota: [...comNota].sort((a, b) => (a.r?.nota ?? 0) - (b.r?.nota ?? 0)),
     preco,
@@ -202,6 +240,7 @@ export default function Carteira() {
               setLim(40);
             }}
             itens={[
+              { id: "portais", nome: "Nos portais", n: problemas.length },
               { id: "atencao", nome: "Requer atenção", n: atencao.length },
               { id: "nota", nome: "Menor nota primeiro", n: comNota.length },
               { id: "preco", nome: "Preço divergente", n: preco.length },
@@ -224,7 +263,15 @@ export default function Carteira() {
             <Botao onClick={exportar}>Exportar</Botao>
           </div>
 
-          {lista.length === 0 ? (
+          {aba === "portais" ? (
+            <NosPortais
+              linhas={problemas
+                .filter((p) => !t || semAcento(`${p.cod} ${p.im?.titulo ?? ""} ${p.im?.bairro ?? ""} ${p.im?.cond ?? ""}`).includes(t))
+                .filter((p) => !tipo || p.im?.tipo === tipo)}
+              todas={presenca}
+              canal={canal}
+            />
+          ) : lista.length === 0 ? (
             <Vazio>
               {aba === "atencao"
                 ? "Nenhum alerta do Jetimob colado ainda."
@@ -388,5 +435,74 @@ export default function Carteira() {
         )}
       </Gaveta>
     </>
+  );
+}
+
+const ORDEM: Presenca[] = ["bloqueado", "nao_publicado", "fora_do_canal", "processando", "publicado", "so_no_canal", "sem_leitura"];
+
+/** Quais imóveis do site estão fora dos portais, por quê, e o que fazer */
+function NosPortais({ linhas, todas, canal }: { linhas: LinhaPresenca[]; todas: LinhaPresenca[]; canal: LeituraCanal | null }) {
+  const conta = (p: Presenca) => todas.filter((x) => x.presenca === p).length;
+  return (
+    <div>
+      {canal ? (
+        <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {[
+            ["Publicados", conta("publicado")],
+            ["Bloqueados ou sem publicar", conta("bloqueado") + conta("nao_publicado")],
+            ["Fora do Canal Pro", conta("fora_do_canal")],
+            ["Só no Canal Pro", conta("so_no_canal")],
+          ].map(([n, v]) => (
+            <div key={n as string} className="rounded-2xl bg-linho p-4">
+              <span className="block text-[26px] font-light leading-none tabular-nums">{v}</span>
+              <span className="mt-1.5 block text-[13px]">{n}</span>
+            </div>
+          ))}
+          <p className="col-span-full text-[12px] text-cinza">Leitura do Canal Pro de {brHora(canal.coletadoEm)}, feita pelo robô do computador da Sarto.</p>
+        </div>
+      ) : (
+        <div className="mb-5">
+          <Nota tom="alerta">
+            Ainda sem leitura do Canal Pro. Quando o robô rodar no computador da Sarto, esta aba mostra o que está publicado, bloqueado ou fora do Canal Pro, com o motivo. Por
+            enquanto, só o que o site já mostra.
+          </Nota>
+        </div>
+      )}
+      {linhas.length === 0 ? (
+        <Vazio>Nenhum problema com esse filtro.</Vazio>
+      ) : (
+        <ul className="divide-y divide-linha border-y border-linha">
+          {[...linhas]
+            .sort((a, b) => ORDEM.indexOf(a.presenca) - ORDEM.indexOf(b.presenca))
+            .map((p) => {
+              const site = linkSeguro(p.im?.url);
+              return (
+                <li key={p.cod} className="flex flex-wrap items-start gap-x-4 gap-y-2 py-3">
+                  <Selo tom={p.grave ? "erro" : "alerta"}>{NOME_PRESENCA[p.presenca]}</Selo>
+                  <span className="min-w-0 flex-1 basis-60">
+                    <span className="block font-medium">
+                      Cód. {p.cod}
+                      {p.im ? ` · ${p.im.tipo}, ${p.im.cond || p.im.bairro || "sem bairro"}` : ""}
+                      {p.canal?.nota != null ? ` · nota ${mostrarNota(p.canal.nota)}` : ""}
+                    </span>
+                    <span className="block text-[13px] text-cinza">{p.problema}</span>
+                    {p.fazer && <span className="block text-[13px]">→ {p.fazer}</span>}
+                  </span>
+                  <span className="flex gap-2">
+                    <a className={estiloBotao("linha", true)} href={`https://app.jetimob.com/imoveis/${encodeURIComponent(p.cod)}/editar`} target="_blank" rel="noreferrer">
+                      Jetimob
+                    </a>
+                    {site && (
+                      <a className={estiloBotao("linha", true)} href={site} target="_blank" rel="noreferrer">
+                        Site
+                      </a>
+                    )}
+                  </span>
+                </li>
+              );
+            })}
+        </ul>
+      )}
+    </div>
   );
 }
