@@ -88,6 +88,7 @@ export default function Varredura() {
   const [q, setQ] = useState("");
   const [tipo, setTipo] = useState("");
   const [emp, setEmp] = useState("");
+  const [negocio, setNegocio] = useState<"" | "venda" | "aluguel">("");
   const [ver, setVer] = useState<string | null>(null);
   const [ed, setEd] = useState<Anuncio | null>(null);
   const [limpa, setLimpa] = useState(false);
@@ -118,6 +119,7 @@ export default function Varredura() {
     )
     .filter((g) => !tipo || g.principal.tipo === tipo)
     .filter((g) => !emp || g.empreendimento === emp)
+    .filter((g) => !negocio || (g.principal.negocio ?? "venda") === negocio)
     .filter((g) => !t || semAcento([g.principal, ...g.outros].map((a) => `${a.titulo} ${a.bairro} ${a.anunciante}`).join(" ")).includes(t));
   const tipos = [...new Set(dados.anuncios.map((a) => a.tipo).filter(Boolean))].sort();
   const contar = (l: Grupo[], chave: (g: Grupo) => string) =>
@@ -239,6 +241,16 @@ export default function Varredura() {
             { id: "baixou", nome: "Baixaram de preço" },
             { id: "parado", nome: "Parados há 90 dias" },
             { id: "estranho", nome: "Preço a conferir" },
+          ]}
+        />
+        <Escolha
+          rotulo="Negócio"
+          valor={negocio}
+          onMuda={setNegocio}
+          opcoes={[
+            { id: "", nome: "Venda e aluguel" },
+            { id: "venda", nome: "Só venda" },
+            { id: "aluguel", nome: "Só aluguel" },
           ]}
         />
         <Escolha
@@ -453,7 +465,7 @@ export default function Varredura() {
                       </span>
                       <span className="text-[13px] text-cinza">
                         {a.portal}, {brl(a.preco, false)}
-                        {a.telefone && `, ${mascaraTel(a.telefone)}`}
+                        {a.telefone && `, ${mascaraTel(a.telefone)}${a.telefoneDeOutro ? " (de outro anúncio dele)" : ""}`}
                         {diasEntre(a.vistoEm, hoje()) > 21 && ", não aparece há mais de 3 semanas"}
                       </span>
                     </span>

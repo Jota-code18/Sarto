@@ -1,5 +1,6 @@
 import { type Dia, diasEntre, hoje, lerData } from "./datas";
 import { brl, lerValor, novoId, semAcento } from "./formato";
+import { ehCelular } from "./contato";
 import { acharEmpreendimento, mediana, precoEstranho } from "./empreendimentos";
 import { achar, type Linha } from "./planilha";
 import type { Anuncio, ImovelSite, Regras } from "./tipos";
@@ -23,6 +24,8 @@ export type Bruto = Pick<
   | "telefone"
   | "foto"
   | "empreendimento"
+  | "idAnunciante"
+  | "negocio"
   | "publicadoEm"
 >;
 
@@ -96,6 +99,11 @@ export function normalizar(x: unknown): Bruto | null {
       particular: !v.license_number && (DONO.test(txt(v.name)) || /owner/i.test(txt(r.publisher_type))),
       telefone: txt(o.telefone) || undefined,
       foto: txt(o.foto) || undefined,
+      idAnunciante: txt(v.account_id) || undefined,
+      negocio:
+        o.pricing.offers?.some((f: Obj) => /rent|rental|aluguel/i.test(txt(f.business_type))) && !o.pricing.offers?.some((f: Obj) => /sale/i.test(txt(f.business_type)))
+          ? "aluguel"
+          : "venda",
       publicadoEm: lerData(txt(o.timestamps?.created_at)) ?? undefined,
     };
   } else if (o.listingId && (o.seller || o.priceDisplay)) {
@@ -118,6 +126,8 @@ export function normalizar(x: unknown): Bruto | null {
       particular: dono,
       telefone: txt(o.telefone) || undefined,
       foto: txt(o.foto) || undefined,
+      idAnunciante: txt(o.seller?.id) || undefined,
+      negocio: o.negocio === "aluguel" || /^aluguel/i.test(p(/real_estate_type|re_types/)) || /\/aluguel\//.test(txt(o.url)) ? "aluguel" : "venda",
       publicadoEm: lerData(txt(o.postedAt)) ?? undefined,
     };
   } else if (o.advertiserName !== undefined || o.usableArea !== undefined) {
@@ -214,6 +224,9 @@ export function mesclar(atuais: Anuncio[], brutos: Bruto[], cidade: string, ref:
       telefone: b.telefone ?? a.telefone,
       foto: b.foto ?? a.foto,
       empreendimento: b.empreendimento ?? a.empreendimento,
+      idAnunciante: b.idAnunciante ?? a.idAnunciante,
+      negocio: b.negocio ?? a.negocio,
+      telefoneDeOutro: b.telefone ? undefined : a.telefoneDeOutro,
       publicadoEm: a.publicadoEm ?? b.publicadoEm,
       precoAnterior: baixou ? a.preco : b.preco === a.preco ? Math.max(a.precoAnterior, b.precoAnterior) : b.precoAnterior,
       id: a.id,
@@ -223,8 +236,27 @@ export function mesclar(atuais: Anuncio[], brutos: Bruto[], cidade: string, ref:
       obs: a.obs,
     });
   }
-  r.lista = [...m.values()];
+  r.lista = espalharTelefones([...m.values()]);
   return r;
+}
+
+/**
+ * O número que o anunciante escreveu num anúncio vale para os outros dele no mesmo portal.
+ * Celular ganha de fixo; o anúncio fica marcado para a tela dizer de onde veio.
+ */
+function espalharTelefones(lista: Anuncio[]): Anuncio[] {
+  const chave = (a: Anuncio) => (a.idAnunciante ? `${a.portal}|${a.idAnunciante}` : "");
+  const por = new Map<string, string>();
+  for (const a of lista) {
+    const k = chave(a);
+    if (!k || !a.telefone || a.telefoneDeOutro) continue;
+    const atual = por.get(k);
+    if (!atual || (ehCelular(a.telefone) && !ehCelular(atual))) por.set(k, a.telefone);
+  }
+  return lista.map((a) => {
+    const t = por.get(chave(a));
+    return t && (!a.telefone || a.telefoneDeOutro) ? { ...a, telefone: t, telefoneDeOutro: true } : a;
+  });
 }
 
 const perto = (x: number, y: number, tol: number) => x > 0 && y > 0 && Math.abs(x - y) / Math.max(x, y) <= tol;
@@ -266,7 +298,9 @@ const empreendimentoDe = (a: Pick<Anuncio, "empreendimento" | "titulo" | "bairro
 const extrasDe = (r: Regras) => r.padraoBairros.split(/[,;\n]/).filter((x) => x.trim());
 
 /** Está no padrão se cita um empreendimento acompanhado. Preço só filtra quando a Sarto define um. */
-export function dentroPadrao(a: Pick<Anuncio, "preco" | "bairro" | "titulo" | "url" | "empreendimento">, r: Regras) {
+export function dentroPadrao(a: Pick<Anuncio, "preco" | "bairro" | "titulo" | "url" | "empreendimento" | "negocio">, r: Regras) {
+  // aluguel: empreendimento acompanhado ou o mínimo que a Sarto administra
+  if (a.negocio === "aluguel") return a.preco >= r.locacaoMinimo || !!empreendimentoDe(a, extrasDe(r));
   if ((r.padraoPrecoMin > 0 && a.preco < r.padraoPrecoMin) || (r.padraoPrecoMax > 0 && a.preco > r.padraoPrecoMax)) return false;
   return !!empreendimentoDe(a, extrasDe(r));
 }
@@ -314,7 +348,7 @@ export function montarGrupos(anuncios: Anuncio[], carteira: ImovelSite[], r: Reg
   const precos = new Map<string, number[]>();
   for (const a of anuncios) {
     const e = emp.get(a.id);
-    if (e) precos.set(e, [...(precos.get(e) ?? []), a.preco]);
+    if (e) precos.set(`${e}|${a.negocio ?? "venda"}`, [...(precos.get(`${e}|${a.negocio ?? "venda"}`) ?? []), a.preco]);
   }
   const medianas = new Map([...precos].map(([e, v]) => [e, mediana(v)]));
   return grupos
@@ -331,7 +365,7 @@ export function montarGrupos(anuncios: Anuncio[], carteira: ImovelSite[], r: Reg
       const parado = pub ? diasEntre(pub, ref) : 0;
       const novo = diasEntre(p.primeiraVez, ref) < 7;
       const empreendimento = g.map((a) => emp.get(a.id)).find(Boolean) ?? "";
-      const estranho = precoEstranho(p.preco, medianas.get(empreendimento) ?? 0);
+      const estranho = precoEstranho(p.preco, medianas.get(`${empreendimento}|${p.negocio ?? "venda"}`) ?? 0, p.negocio);
       const motivos: string[] = [];
       if (estranho) motivos.push("preço a conferir");
       if (particular) motivos.push("do próprio dono");

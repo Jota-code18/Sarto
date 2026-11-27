@@ -117,8 +117,10 @@ export function acharEmpreendimento(texto: string, extras: string[] = []): strin
 }
 
 /** Preço que não combina com o resto do mesmo empreendimento: erro de digitação ou só o ágio */
-export function precoEstranho(preco: number, mediana: number): boolean {
+export function precoEstranho(preco: number, mediana: number, negocio: "venda" | "aluguel" = "venda"): boolean {
   if (preco <= 0) return false;
+  // aluguel abaixo de R$ 300 ou acima de R$ 100 mil é quase sempre erro ou preço de venda
+  if (negocio === "aluguel") return preco < 300 || preco > 100_000 || (mediana > 0 && (preco < mediana * 0.25 || preco > mediana * 6));
   if (preco < 50_000) return true;
   return mediana > 0 && (preco < mediana * 0.25 || preco > mediana * 6);
 }

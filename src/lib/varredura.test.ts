@@ -365,3 +365,98 @@ describe("padrão por empreendimento", () => {
     expect(b.empreendimento).toBe("Belas Artes");
   });
 });
+
+describe("número do mesmo anunciante", () => {
+  const b = {
+    portal: "OLX",
+    url: "https://x/2000001",
+    titulo: "Casa",
+    tipo: "Casa",
+    bairro: "",
+    cidade: "Anápolis",
+    preco: 900_000,
+    precoAnterior: 0,
+    area: 200,
+    quartos: 3,
+    anunciante: "Dono",
+    codAnunciante: "",
+    particular: true,
+    idAnunciante: "77",
+  };
+  it("número de um anúncio vale para os outros dele, e só dele", () => {
+    const l = mesclar(
+      [],
+      [
+        { ...b, telefone: "6233000000" },
+        { ...b, url: "https://x/2000002", telefone: "62999990000" },
+        { ...b, url: "https://x/2000003" },
+        { ...b, url: "https://x/2000004", idAnunciante: "88" },
+        { ...b, url: "https://x/2000005", portal: "ZAP Imóveis" },
+      ],
+      "Anápolis",
+      REF,
+    ).lista;
+    const t = (u: string) => l.find((a) => a.url.endsWith(u));
+    expect(t("2000003")).toMatchObject({ telefone: "62999990000", telefoneDeOutro: true });
+    expect(t("2000001")).toMatchObject({ telefone: "6233000000" });
+    expect(t("2000001")?.telefoneDeOutro).toBeUndefined();
+    expect(t("2000004")?.telefone).toBeUndefined();
+    expect(t("2000005")?.telefone).toBeUndefined();
+  });
+  it("número próprio que aparece depois substitui o emprestado", () => {
+    const l1 = mesclar(
+      [],
+      [
+        { ...b, telefone: "62999990000" },
+        { ...b, url: "https://x/2000003" },
+      ],
+      "Anápolis",
+      REF,
+    ).lista;
+    const l2 = mesclar(l1, [{ ...b, url: "https://x/2000003", telefone: "62988880000" }], "Anápolis", REF).lista;
+    expect(l2.find((a) => a.url.endsWith("2000003"))).toMatchObject({ telefone: "62988880000" });
+    expect(l2.find((a) => a.url.endsWith("2000003"))?.telefoneDeOutro).toBeUndefined();
+  });
+});
+
+describe("aluguel", () => {
+  const base = {
+    portal: "OLX",
+    url: "https://x/3000001",
+    titulo: "Casa para alugar",
+    tipo: "Casa",
+    bairro: "",
+    cidade: "Anápolis",
+    preco: 4_000,
+    precoAnterior: 0,
+    area: 150,
+    quartos: 3,
+    anunciante: "",
+    codAnunciante: "",
+    particular: true,
+    negocio: "aluguel" as const,
+  };
+  it("entra no padrão pelo mínimo da locação e preço baixo não é erro", () => {
+    const l = mesclar([], [base, { ...base, url: "https://x/3000002", preco: 1_200 }, { ...base, url: "https://x/3000003", preco: 850_000 }], "Anápolis", REF).lista;
+    const g = montarGrupos(l, [], REGRAS, REF);
+    const por = (p: number) => g.find((x) => x.principal.preco === p);
+    expect(por(4_000)).toMatchObject({ noPadrao: true, precoEstranho: false });
+    expect(por(1_200)).toMatchObject({ noPadrao: false, precoEstranho: false });
+    expect(por(850_000)?.precoEstranho).toBe(true);
+  });
+  it("a OLX marca aluguel no tipo do imóvel", () => {
+    const o = {
+      listingId: "9",
+      url: "https://go.olx.com.br/x-9",
+      title: "Casa",
+      city: "Anápolis",
+      price: 3000,
+      priceDisplay: "R$ 3.000",
+      seller: { type: "private", id: "5" },
+      properties: [{ name: "real_estate_type", value: "Aluguel - casa em rua pública" }],
+    };
+    expect(normalizar(o)).toMatchObject({ negocio: "aluguel", idAnunciante: "5" });
+    expect(normalizar({ ...o, properties: [] })).toMatchObject({ negocio: "venda" });
+    expect(normalizar({ ...o, properties: [], negocio: "aluguel" })).toMatchObject({ negocio: "aluguel" });
+  });
+});

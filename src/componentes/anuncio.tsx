@@ -47,7 +47,7 @@ export function Contato({ a, cheio }: { a: Anuncio; cheio?: boolean }) {
   if (a.telefone && ehCelular(a.telefone))
     return (
       <a className={estilo} href={linkWhats(a.telefone, mensagem(a))} target="_blank" rel="noreferrer" aria-label={`WhatsApp de ${a.anunciante || "quem anuncia"}`}>
-        <MessageCircle size={14} aria-hidden /> WhatsApp
+        <MessageCircle size={14} aria-hidden /> WhatsApp{a.telefoneDeOutro && <span className="sr-only"> (número de outro anúncio da mesma pessoa)</span>}
       </a>
     );
   if (a.telefone)
@@ -56,11 +56,6 @@ export function Contato({ a, cheio }: { a: Anuncio; cheio?: boolean }) {
         <Phone size={14} aria-hidden /> Ligar
       </a>
     );
-  const u = linkSeguro(a.url);
-  if (!u) return null;
-  return (
-    <a className={estilo} href={u} target="_blank" rel="noreferrer">
-      <MessageCircle size={14} aria-hidden /> {a.portal === "OLX" ? "Chat da OLX" : "Contato no anúncio"}
-    </a>
-  );
+  // sem número publicado não há botão: o link da plataforma fica ao lado do nome
+  return null;
 }

@@ -117,8 +117,8 @@ export function Coleta() {
           <>
             <b className="font-semibold">{ultima ? `Última varredura: ${brHora(ultima.inicio)}` : "Nenhuma varredura ainda"}</b>
             <span className="block text-cinza">
-              Roda sozinha toda segunda às 5h. ZAP e OLX em Anápolis, sem preço mínimo; os empreendimentos acompanhados uma vez por mês. Uso do mês: US$ {num(s.gasto ?? 0, 2)} de{" "}
-              {num(s.teto ?? 5, 0)}.
+              Roda sozinha toda segunda às 5h. ZAP e OLX em Anápolis, venda sem preço mínimo e aluguel; os empreendimentos acompanhados uma vez por mês. Uso do mês: US${" "}
+              {num(s.gasto ?? 0, 2)} de {num(s.teto ?? 5, 0)}.
             </span>
             {s.falhou && <span className="block text-erro">A tentativa mais recente falhou.</span>}
           </>

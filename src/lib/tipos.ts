@@ -100,6 +100,11 @@ export interface Anuncio {
   foto?: string;
   /** empreendimento que o anúncio cita, achado mesmo com erro de escrita */
   empreendimento?: string;
+  /** quem anuncia, no portal: junta os anúncios da mesma pessoa */
+  idAnunciante?: string;
+  /** o número veio de outro anúncio da mesma pessoa */
+  telefoneDeOutro?: boolean;
+  negocio?: "venda" | "aluguel";
   publicadoEm?: Dia;
   primeiraVez: Dia;
   vistoEm: Dia;
