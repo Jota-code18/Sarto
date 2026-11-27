@@ -2,8 +2,8 @@ import { type NextRequest, NextResponse } from "next/server";
 import { COOKIE, passeVale } from "@/lib/acesso";
 import { politica } from "@/lib/protecao";
 
-/** Abrem sem senha: a entrada, a chamada da Vercel (confere o próprio segredo) e o envio de erros */
-const LIVRES = /^\/(entrar|api\/agendada|monitor)(\/|$)/;
+/** Abrem sem senha: a entrada, a chamada da Vercel e o robô do Canal Pro (conferem o próprio segredo) e o envio de erros */
+const LIVRES = /^\/(entrar|api\/agendada|api\/canalpro|monitor)(\/|$)/;
 
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;

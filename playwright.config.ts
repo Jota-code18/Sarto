@@ -27,7 +27,13 @@ export default defineConfig({
       command: `npm run start -- -p ${PORTA + 1}`,
       port: PORTA + 1,
       reuseExistingServer: !process.env.CI,
-      env: { APIFY_BASE: "http://localhost:3991", APIFY_TOKEN: "simulado", PAINEL_SENHA: "senha-de-teste", CRON_SECRET: "segredo-de-teste" },
+      env: {
+        APIFY_BASE: "http://localhost:3991",
+        APIFY_TOKEN: "simulado",
+        PAINEL_SENHA: "senha-de-teste",
+        CRON_SECRET: "segredo-de-teste",
+        CANALPRO_ROBO_TOKEN: "robo-de-teste-com-mais-de-24-letras",
+      },
     },
   ],
 });
