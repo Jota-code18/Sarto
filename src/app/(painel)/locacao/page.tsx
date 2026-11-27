@@ -111,7 +111,7 @@ function Reajuste({ k, onAplicar }: { k: Contrato; onAplicar: (valor: number, da
   };
   const n = r && novoAluguel(k.aluguel, r.pct);
   return (
-    <div className="bg-linho p-4">
+    <div className="rounded-[var(--radius-cartao)] bg-linho p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p>
           Próximo reajuste em <strong className="font-semibold">{br(data)}</strong> pelo {k.indice} <span className="text-cinza">({prazo(data)})</span>

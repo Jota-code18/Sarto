@@ -395,7 +395,7 @@ function Conteudo({ p }: { p: URLSearchParams }) {
               </table>
             </section>
           ))}
-          <section className="bg-linho p-4">
+          <section className="rounded-[var(--radius-cartao)] bg-linho p-4">
             <h2 className="text-[12px] font-semibold uppercase">Parecer</h2>
             <p className="whitespace-pre-line text-[12px]">{ds.parecer || "Sem parecer."}</p>
             <p className="mt-2 text-[11px] text-cinza">
@@ -443,7 +443,7 @@ export default function Imprimir() {
     <div className="min-h-dvh bg-linho print:min-h-0 print:bg-white">
       <div className="nao-imprime escuro sticky top-0 z-10 flex items-center justify-between bg-carvao px-5 py-3 text-papel">
         <span className="text-[13px] text-nevoa">Na janela de impressão, escolha Salvar como PDF e ligue os gráficos de fundo.</span>
-        <button type="button" className="min-h-9 bg-papel px-4 font-medium text-carvao hover:bg-linho" onClick={() => window.print()}>
+        <button type="button" className="min-h-9 rounded-full bg-papel px-4 font-medium text-carvao hover:bg-linho" onClick={() => window.print()}>
           Imprimir ou salvar PDF
         </button>
       </div>

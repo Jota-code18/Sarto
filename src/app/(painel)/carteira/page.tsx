@@ -283,12 +283,12 @@ export default function Carteira() {
             <ul className="divide-y divide-linha border-y border-linha">
               {lista.slice(0, lim).map((i) => (
                 <li key={i.cod}>
-                  <button type="button" onClick={() => setAb(i)} className="flex w-full items-center gap-4 py-2.5 text-left hover:bg-linho">
+                  <button type="button" onClick={() => setAb(i)} className="rounded-[var(--radius-cartao)] flex w-full items-center gap-4 py-2.5 text-left hover:bg-linho">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     {i.im?.capa ? (
-                      <img src={i.im.capa} alt="" loading="lazy" referrerPolicy="no-referrer" className="h-16 w-20 shrink-0 bg-linho object-cover" />
+                      <img src={i.im.capa} alt="" loading="lazy" referrerPolicy="no-referrer" className="rounded-xl h-16 w-20 shrink-0 bg-linho object-cover" />
                     ) : (
-                      <span className="h-16 w-20 shrink-0 bg-linho" />
+                      <span className="rounded-xl h-16 w-20 shrink-0 bg-linho" />
                     )}
                     <span className="min-w-0 flex-1">
                       <span className="block truncate font-medium">{i.im?.titulo ?? `Imóvel ${i.cod}`}</span>

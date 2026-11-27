@@ -156,7 +156,7 @@ export default function Atendimento() {
         <div className="space-y-4">
           <Nota>Textos provisórios, até a Verônica enviar os que já usa. A IA que responde sozinha depende do WhatsApp oficial e da API da Anthropic.</Nota>
           {RESPOSTAS.map((r) => (
-            <div key={r.t} className="flex flex-wrap items-start justify-between gap-3 bg-linho p-4">
+            <div key={r.t} className="rounded-[var(--radius-cartao)] flex flex-wrap items-start justify-between gap-3 bg-linho p-4">
               <div className="max-w-2xl">
                 <p className="font-medium">{r.t}</p>
                 <p className="mt-1 text-cinza">{r.r}</p>

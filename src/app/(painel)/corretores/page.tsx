@@ -76,7 +76,7 @@ export default function Corretores() {
             const n = todos.filter((i) => c.checklist[i.id]).length;
             const leads = dados.leads.filter((l) => l.corretorId === c.id);
             return (
-              <button key={c.id} type="button" onClick={() => setEd(c)} className="bg-linho p-5 text-left hover:bg-linha">
+              <button key={c.id} type="button" onClick={() => setEd(c)} className="rounded-[var(--radius-cartao)] bg-linho p-5 text-left hover:bg-linha">
                 <span className="flex items-start justify-between gap-3">
                   <span className="text-[16px] font-semibold">{c.nome}</span>
                   {aba === "entrando" && diasEntre(c.entrada, hoje()) > 10 && <Selo tom="erro">{diasEntre(c.entrada, hoje())} dias</Selo>}

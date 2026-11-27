@@ -18,6 +18,14 @@
   --color-erro: #9c2f26;
   --color-errof: #f5e3e0;
   --breakpoint-xs: 26rem;
+  /* forma: cantos de alfaiataria, macios mas firmes */
+  --radius-campo: 0.625rem;
+  --radius-cartao: 1rem;
+  --radius-painel: 1.5rem;
+  /* profundidade: sombra curta e uma difusa, nunca um halo */
+  --shadow-suave: 0 1px 2px rgb(38 38 38 / 0.05), 0 6px 20px -10px rgb(38 38 38 / 0.14);
+  --shadow-flutua: 0 2px 6px rgb(38 38 38 / 0.08), 0 24px 48px -16px rgb(38 38 38 / 0.28);
+  --ease-saida: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @layer base {
@@ -40,6 +48,16 @@
   :focus-visible {
     outline: 2px solid var(--color-carvao);
     outline-offset: 2px;
+    border-radius: 0.375rem;
+  }
+  ::placeholder {
+    color: var(--color-cinza);
+    opacity: 0.85;
+  }
+  html {
+    accent-color: var(--color-carvao);
+    caret-color: var(--color-carvao);
+    scrollbar-color: var(--color-nevoa) transparent;
   }
   .escuro :focus-visible {
     outline-color: var(--color-papel);
@@ -80,6 +98,7 @@
 @utility fita {
   position: relative;
   height: 14px;
+  border-radius: 999px;
   border: 1px solid var(--color-carvao);
   background-color: var(--color-giz);
   overflow: hidden;
@@ -105,16 +124,21 @@
   min-height: 40px;
   padding: 8px 11px;
   border: 1px solid var(--color-linha);
+  border-radius: var(--radius-campo);
   background: var(--color-giz);
   font: inherit;
   color: inherit;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
 }
 .campo:hover {
   border-color: var(--color-nevoa);
 }
 .campo:focus {
-  outline: 2px solid var(--color-carvao);
-  outline-offset: -1px;
+  outline: none;
+  border-color: var(--color-carvao);
+  box-shadow: 0 0 0 3px rgb(38 38 38 / 0.14);
 }
 .campo[aria-invalid="true"] {
   border-color: var(--color-erro);
@@ -157,8 +181,29 @@
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
+.tabela tbody tr:last-child td {
+  border-bottom: 0;
+}
 .tabela tr.clica:hover td {
   background: var(--color-linho);
+}
+@media (min-width: 768px) {
+  .tabela {
+    background: var(--color-giz);
+    border-radius: var(--radius-cartao);
+    box-shadow: var(--shadow-suave);
+    border-collapse: separate;
+    border-spacing: 0;
+    overflow: hidden;
+  }
+  .tabela th {
+    background: var(--color-linho);
+    border-bottom: 0;
+    padding: 10px 12px;
+  }
+  .tabela td {
+    padding: 12px;
+  }
 }
 
 /* no celular cada linha vira um cartão: a primeira célula é o título, as outras levam o nome da coluna */
@@ -177,11 +222,11 @@
   }
   .tabela tr {
     display: block;
-    padding: 12px 0;
-    border-bottom: 1px solid var(--color-linha);
-  }
-  .tabela tbody tr:first-child {
-    border-top: 1px solid var(--color-carvao);
+    margin-bottom: 10px;
+    padding: 14px 16px;
+    border-radius: var(--radius-cartao);
+    background: var(--color-giz);
+    box-shadow: var(--shadow-suave);
   }
   .tabela td,
   .tabela td.n {
@@ -241,9 +286,21 @@
   border: 0;
   padding: 0;
   background: var(--color-papel);
+  box-shadow: var(--shadow-flutua);
+  overflow: hidden;
+}
+@media (min-width: 640px) {
+  .gaveta {
+    inset: 10px 10px 10px auto;
+    height: calc(100dvh - 20px);
+    border-radius: var(--radius-painel);
+  }
+  .gaveta.larga {
+    width: min(1040px, calc(100vw - 20px));
+  }
 }
 .gaveta[open] {
-  animation: entra 0.18s ease-out;
+  animation: entra 0.32s var(--ease-saida);
 }
 .gaveta.larga {
   width: min(1040px, 100vw);
@@ -254,11 +311,26 @@
   border: 0;
   padding: 0;
   background: var(--color-papel);
+  border-radius: var(--radius-painel);
+  box-shadow: var(--shadow-flutua);
+}
+.caixa[open] {
+  animation: surge 0.28s var(--ease-saida);
 }
 @keyframes entra {
   from {
-    transform: translateX(28px);
+    transform: translateX(32px);
+    opacity: 0.6;
   }
+}
+@keyframes surge {
+  from {
+    transform: translateY(8px) scale(0.98);
+    opacity: 0;
+  }
+}
+dialog::backdrop {
+  backdrop-filter: blur(2px);
 }
 @media (prefers-reduced-motion: reduce) {
   * {

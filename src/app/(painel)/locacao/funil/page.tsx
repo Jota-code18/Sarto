@@ -150,7 +150,7 @@ export default function Funil() {
                 {dados.funil
                   .filter((f) => f.etapa === e.id)
                   .map((f) => (
-                    <button key={f.id} type="button" onClick={() => setEd(f)} className="block w-full bg-linho p-3 text-left hover:bg-linha">
+                    <button key={f.id} type="button" onClick={() => setEd(f)} className="rounded-[var(--radius-cartao)] block w-full bg-linho p-3 text-left hover:bg-linha">
                       <span className="block font-medium leading-snug">{f.imovel}</span>
                       <span className="block text-[12px] text-cinza">{f.interessado.nome || f.proprietario.nome}</span>
                       <span className="mt-1.5 block tabular-nums">{brl(f.aluguel, false)}</span>

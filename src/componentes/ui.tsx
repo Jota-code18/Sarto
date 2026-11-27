@@ -13,11 +13,11 @@ export function Cabecalho({ area, titulo, texto, children }: { area: string; tit
   return (
     <header className="mb-6 flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
       <div className="min-w-0 max-w-2xl">
-        <p className="mb-1 text-[11px] uppercase tracking-wide text-cinza">
+        <p className="mb-1.5 text-[11px] uppercase tracking-[0.08em] text-cinza">
           #{b.length ? a : ""}
           <strong className="font-semibold text-carvao">{b.length ? b.join("") : a}</strong>
         </p>
-        <h1 className="text-[26px] font-semibold leading-tight tracking-tight text-balance">{titulo}</h1>
+        <h1 className="text-[28px] font-semibold leading-[1.15] tracking-[-0.02em] text-balance sm:text-[32px]">{titulo}</h1>
         {texto && <p className="mt-1.5 text-cinza text-pretty">{texto}</p>}
       </div>
       {children && <div className="flex flex-wrap gap-2 max-sm:w-full max-sm:*:flex-auto">{children}</div>}
@@ -31,18 +31,24 @@ export function Botao({ tom = "linha", pequeno, className, type = "button", ...p
 }
 export function estiloBotao(tom: BotaoProps["tom"] = "linha", pequeno = false) {
   return cx(
-    "inline-flex items-center justify-center gap-2 font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-45",
+    "inline-flex items-center justify-center gap-2 rounded-full font-medium transition-[background-color,color,box-shadow,transform] duration-150 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45 disabled:active:scale-100",
     pequeno ? "min-h-9 px-3 text-[13px] pointer-coarse:min-h-11" : "min-h-10 px-4 pointer-coarse:min-h-11",
-    tom === "cheio" && "bg-carvao text-papel hover:bg-tinta",
-    tom === "linha" && "border border-carvao bg-transparent hover:bg-carvao hover:text-papel",
-    tom === "texto" && "underline decoration-nevoa underline-offset-4 hover:decoration-carvao px-1",
+    tom === "cheio" && "bg-carvao text-papel shadow-[0_1px_2px_rgb(38_38_38/0.2)] hover:bg-tinta",
+    tom === "linha" && "border border-carvao/80 bg-giz hover:bg-carvao hover:text-papel",
+    tom === "texto" && "rounded-md underline decoration-nevoa underline-offset-4 hover:decoration-carvao px-1 active:scale-100",
     tom === "erro" && "border border-erro text-erro hover:bg-erro hover:text-papel",
   );
 }
 
 export function Cartao({ titulo, acao: ac, children, className, escuro }: { titulo?: ReactNode; acao?: ReactNode; children: ReactNode; className?: string; escuro?: boolean }) {
   return (
-    <section className={cx("min-w-0 p-5", escuro ? "escuro bg-carvao text-papel" : "bg-linho", className)}>
+    <section
+      className={cx(
+        "min-w-0 rounded-[var(--radius-cartao)] p-5",
+        escuro ? "escuro bg-carvao text-papel shadow-[var(--shadow-suave)]" : "bg-giz shadow-[var(--shadow-suave)]",
+        className,
+      )}
+    >
       {(titulo || ac) && (
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           {titulo && <h2 className="text-[13px] font-semibold uppercase tracking-wide">{titulo}</h2>}
@@ -57,7 +63,7 @@ export function Cartao({ titulo, acao: ac, children, className, escuro }: { titu
 export function Numero({ valor, nome, nota, href }: { valor: ReactNode; nome: string; nota?: ReactNode; href?: string }) {
   const c = (
     <>
-      <span className="block text-[34px] font-light leading-none tracking-tight tabular-nums">{valor}</span>
+      <span className="block text-[26px] font-light leading-none tracking-tight tabular-nums [overflow-wrap:anywhere] sm:text-[34px]">{valor}</span>
       <span className="mt-2 block text-[13px] font-medium">{nome}</span>
       {nota && <span className="block text-[12px] text-cinza">{nota}</span>}
     </>
@@ -72,7 +78,9 @@ export function Numero({ valor, nome, nota, href }: { valor: ReactNode; nome: st
 }
 
 export function Numeros({ children }: { children: ReactNode }) {
-  return <div className="mb-6 grid grid-cols-2 gap-x-6 gap-y-6 border-y border-carvao py-5 md:grid-cols-4">{children}</div>;
+  return (
+    <div className="mb-7 grid grid-cols-2 gap-x-4 gap-y-6 rounded-[var(--radius-painel)] bg-giz px-5 py-5 shadow-[var(--shadow-suave)] sm:px-7 md:grid-cols-4">{children}</div>
+  );
 }
 
 export type Tom = "ok" | "alerta" | "erro" | "neutro" | "forte";
@@ -81,7 +89,7 @@ export function Selo({ tom = "neutro", children }: { tom?: Tom; children: ReactN
   return (
     <span
       className={cx(
-        "inline-flex items-center gap-1 whitespace-nowrap px-2 py-0.5 text-[12px] font-medium",
+        "inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[12px] font-medium",
         tom === "ok" && "bg-okf text-ok",
         tom === "alerta" && "bg-alertaf text-alerta",
         tom === "erro" && "bg-errof text-erro",
@@ -143,7 +151,7 @@ export function Quadro({ nome, children }: { nome: string; children: ReactNode }
 
 export function Vazio({ children, acao: ac }: { children: ReactNode; acao?: ReactNode }) {
   return (
-    <div className="border border-dashed border-nevoa px-5 py-8 text-center text-cinza">
+    <div className="rounded-[var(--radius-cartao)] border border-dashed border-nevoa bg-giz/60 px-5 py-9 text-center text-cinza">
       <p className="mx-auto max-w-md text-pretty">{children}</p>
       {ac && <div className="mt-3">{ac}</div>}
     </div>
@@ -154,7 +162,7 @@ export function Nota({ tom = "neutro", children }: { tom?: Tom; children: ReactN
   return (
     <div
       className={cx(
-        "px-4 py-3 text-[13px]",
+        "rounded-xl px-4 py-3 text-[13px]",
         tom === "neutro" && "bg-linho",
         tom === "ok" && "bg-okf text-ok",
         tom === "alerta" && "bg-alertaf text-alerta",
@@ -169,7 +177,7 @@ export function Nota({ tom = "neutro", children }: { tom?: Tom; children: ReactN
 
 export function Abas<T extends string>({ itens, atual, onMuda }: { itens: { id: T; nome: string; n?: number }[]; atual: T; onMuda: (t: T) => void }) {
   return (
-    <div className="mb-5 flex gap-5 overflow-x-auto overflow-y-hidden border-b border-linha" role="tablist">
+    <div className="mb-5 flex w-fit max-w-full gap-1 overflow-x-auto overflow-y-hidden rounded-full bg-linho p-1" role="tablist">
       {itens.map((i) => (
         <button
           key={i.id}
@@ -177,10 +185,13 @@ export function Abas<T extends string>({ itens, atual, onMuda }: { itens: { id: 
           role="tab"
           aria-selected={i.id === atual}
           onClick={() => onMuda(i.id)}
-          className={cx("min-h-11 whitespace-nowrap border-b-2 pb-1", i.id === atual ? "border-carvao font-semibold" : "border-transparent text-cinza hover:text-carvao")}
+          className={cx(
+            "min-h-10 whitespace-nowrap rounded-full px-4 transition-colors duration-150 pointer-coarse:min-h-11",
+            i.id === atual ? "bg-carvao font-semibold text-papel shadow-[0_1px_2px_rgb(38_38_38/0.25)]" : "text-cinza hover:bg-papel hover:text-carvao",
+          )}
         >
           {i.nome}
-          {i.n != null && <span className="ml-1.5 tabular-nums text-cinza">{i.n}</span>}
+          {i.n != null && <span className={cx("ml-1.5 tabular-nums", i.id === atual ? "text-nevoa" : "text-cinza")}>{i.n}</span>}
         </button>
       ))}
     </div>
@@ -225,20 +236,20 @@ export function Gaveta({
     >
       {aberta && (
         <div className="flex h-full flex-col">
-          <div className="escuro flex items-start justify-between gap-4 bg-carvao px-4 py-3 text-papel sm:px-6 sm:py-4">
+          <div className="escuro flex items-start justify-between gap-4 bg-carvao px-5 py-4 text-papel sm:px-7 sm:py-5">
             <div className="min-w-0">
               <h2 id={id} className="text-[18px] font-semibold leading-snug">
                 {titulo}
               </h2>
               {sub && <div className="mt-0.5 text-[13px] text-nevoa">{sub}</div>}
             </div>
-            <button type="button" onClick={onFecha} aria-label="Fechar" className="-mr-2 grid size-11 shrink-0 place-items-center hover:bg-tecido">
+            <button type="button" onClick={onFecha} aria-label="Fechar" className="-mr-2 grid size-11 shrink-0 place-items-center rounded-full transition-colors hover:bg-tecido">
               <X size={20} />
             </button>
           </div>
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-5 sm:px-6">{children}</div>
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-6 sm:px-7">{children}</div>
           {rodape && (
-            <div className="flex flex-wrap justify-end gap-2 border-t border-linha bg-papel px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] max-sm:*:flex-auto sm:px-6">
+            <div className="flex flex-wrap justify-end gap-2 border-t border-linha/70 bg-giz px-5 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] max-sm:*:flex-auto sm:px-7">
               {rodape}
             </div>
           )}
@@ -340,8 +351,8 @@ export function Barras({ dados, vazio = "Sem dados ainda." }: { dados: Barra[]; 
             <span className="truncate">{d.nome}</span>
             <span className="tabular-nums font-medium">{d.rotulo ?? d.valor}</span>
           </div>
-          <div className="h-2 bg-linha">
-            <div className="h-full rounded-r-[4px] bg-carvao" style={{ width: `${Math.max(d.valor > 0 ? 1.5 : 0, (d.valor / max) * 100)}%` }} />
+          <div className="h-2 overflow-hidden rounded-full bg-linha">
+            <div className="h-full rounded-full bg-carvao" style={{ width: `${Math.max(d.valor > 0 ? 1.5 : 0, (d.valor / max) * 100)}%` }} />
           </div>
         </li>
       ))}
