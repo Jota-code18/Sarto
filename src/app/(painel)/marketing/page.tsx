@@ -145,7 +145,7 @@ export default function Marketing() {
             </Botao>
           </div>
           <Quadro nome="Semana de posts">
-            <div className="grid grid-cols-1 md:min-w-[920px] md:grid-cols-7 gap-px border border-linha bg-linha">
+            <div className="grid grid-cols-1 md:min-w-[920px] md:grid-cols-7 gap-px overflow-hidden rounded-[var(--radius-cartao)] border border-linha bg-linha">
               {dias.map((d) => (
                 <section key={d} className={cx("p-2.5 md:min-h-44", d === hoje() ? "bg-giz" : "bg-papel")}>
                   <h2 className="mb-2 flex items-baseline justify-between">
@@ -156,7 +156,12 @@ export default function Marketing() {
                     {daSemana
                       .filter((p) => p.data === d)
                       .map((p) => (
-                        <button key={p.id} type="button" onClick={() => setEd(p)} className="block w-full bg-linho p-2 text-left text-[13px] leading-snug hover:bg-linha">
+                        <button
+                          key={p.id}
+                          type="button"
+                          onClick={() => setEd(p)}
+                          className="rounded-[var(--radius-cartao)] block w-full bg-linho p-2 text-left text-[13px] leading-snug hover:bg-linha"
+                        >
                           <span className="block text-[11px] uppercase text-cinza">{TIPO[p.tipo]}</span>
                           <span className="mb-1.5 block font-medium">{p.titulo}</span>
                           <Selo tom={ST[p.status].tom}>{ST[p.status].nome}</Selo>
@@ -272,7 +277,7 @@ export default function Marketing() {
         {ed && (
           <div className="space-y-5">
             <Formulario grupos={grupos} valor={ed} onMuda={setEd} />
-            <div className="bg-linho p-4">
+            <div className="rounded-[var(--radius-cartao)] bg-linho p-4">
               <p className="mb-2 text-[13px]">Para a arte: copie o pedido, cole no Claude com a skill da Sarto ligada e anexe a foto.</p>
               <Copiar texto={pedidoSkill(ed)}>Copiar pedido para o Claude</Copiar>
             </div>

@@ -35,13 +35,13 @@ function Navegacao({ onIr }: { onIr?: () => void }) {
                       onClick={onIr}
                       aria-current={on ? "page" : undefined}
                       className={cx(
-                        "-mx-2 flex min-h-11 items-center justify-between gap-2 px-2 lg:min-h-9",
-                        on ? "bg-papel font-semibold text-carvao" : "text-papel/85 hover:bg-tecido",
+                        "-mx-2 flex min-h-11 items-center justify-between gap-2 rounded-xl px-3 transition-colors lg:min-h-9",
+                        on ? "bg-papel font-semibold text-carvao shadow-[0_1px_2px_rgb(0_0_0/0.3)]" : "text-papel/85 hover:bg-tecido",
                       )}
                     >
                       {i.nome}
                       {i.href === "/aprovacoes" && n > 0 && (
-                        <span className={cx("min-w-5 px-1.5 text-center text-[12px] tabular-nums", on ? "bg-carvao text-papel" : "bg-papel text-carvao")}>{n}</span>
+                        <span className={cx("min-w-5 rounded-full px-1.5 text-center text-[12px] tabular-nums", on ? "bg-carvao text-papel" : "bg-papel text-carvao")}>{n}</span>
                       )}
                     </Link>
                   </li>
@@ -74,9 +74,16 @@ function BarraInferior({ menu, onMenu }: { menu: boolean; onMenu: () => void }) 
     podeVer(perfil, "/aprovacoes") ? { href: "/aprovacoes", nome: "Aprovações", icone: CircleCheck } : null,
     { href: "/agenda", nome: "Agenda", icone: CalendarDays },
   ].filter((x) => x !== null);
-  const estilo = (on: boolean) => cx("flex min-h-14 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 text-[11px]", on ? "font-semibold text-papel" : "text-nevoa");
+  const estilo = (on: boolean) =>
+    cx(
+      "flex min-h-12 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-2xl text-[11px] transition-colors",
+      on ? "bg-tecido font-semibold text-papel" : "text-nevoa",
+    );
   return (
-    <nav aria-label="Atalhos" className="escuro nao-imprime fixed inset-x-0 bottom-0 z-40 flex bg-carvao pb-[env(safe-area-inset-bottom)] lg:hidden">
+    <nav
+      aria-label="Atalhos"
+      className="escuro nao-imprime fixed inset-x-2 bottom-[max(0.5rem,env(safe-area-inset-bottom))] z-40 flex rounded-[1.25rem] bg-carvao p-1 shadow-[var(--shadow-flutua)] lg:hidden"
+    >
       {itens.map(({ href, nome, icone: I }) => {
         const on = !menu && path === href;
         return (
@@ -104,7 +111,7 @@ function QuemSou() {
     <label className="block border-t border-tecido px-5 py-4 text-[12px] text-nevoa">
       Usando como
       <select
-        className="mt-1 block min-h-11 w-full border border-tecido bg-carvao px-2 text-[14px] text-papel lg:min-h-9"
+        className="mt-1 block min-h-11 w-full rounded-xl border border-tecido bg-carvao px-3 text-[14px] text-papel lg:min-h-9"
         value={valor}
         onChange={(e) => {
           const [t, id] = e.target.value.split(":");
@@ -126,7 +133,7 @@ function QuemSou() {
           ))}
       </select>
       <form method="post" action="/sair" className="mt-3">
-        <button type="submit" className="min-h-11 w-full rounded-lg border border-tecido text-[13px] text-papel/85 hover:bg-tecido lg:min-h-9">
+        <button type="submit" className="min-h-11 w-full rounded-xl border border-tecido text-[13px] text-papel/85 hover:bg-tecido lg:min-h-9">
           Sair deste aparelho
         </button>
       </form>
@@ -157,9 +164,9 @@ function Aviso() {
     return () => clearTimeout(t);
   }, [a]);
   return (
-    <div aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-[calc(72px+env(safe-area-inset-bottom))] z-50 flex justify-center px-4 lg:bottom-5">
+    <div aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-[calc(84px+env(safe-area-inset-bottom))] z-50 flex justify-center px-4 lg:bottom-5">
       {a && vis && (
-        <div className={cx("flex items-center gap-2 px-4 py-2.5 text-papel", a.tom === "erro" ? "bg-erro" : "bg-carvao")}>
+        <div className={cx("flex items-center gap-2 rounded-full px-5 py-2.5 text-papel shadow-[var(--shadow-flutua)]", a.tom === "erro" ? "bg-erro" : "bg-carvao")}>
           {a.tom === "erro" ? <TriangleAlert size={16} /> : <Check size={16} />}
           {a.texto}
         </div>
@@ -214,7 +221,7 @@ export function Moldura({ children }: { children: React.ReactNode }) {
       {menu && pronto && (
         <div
           id="menu-celular"
-          className="escuro fixed inset-x-0 top-0 bottom-[calc(56px+env(safe-area-inset-bottom))] z-40 flex flex-col bg-carvao pt-[env(safe-area-inset-top)] text-papel lg:hidden"
+          className="escuro fixed inset-x-0 top-0 bottom-0 z-40 flex flex-col bg-carvao pt-[env(safe-area-inset-top)] pb-[calc(76px+env(safe-area-inset-bottom))] text-papel lg:hidden"
         >
           <Navegacao onIr={() => setMenu(false)} />
           <QuemSou />
@@ -222,7 +229,7 @@ export function Moldura({ children }: { children: React.ReactNode }) {
       )}
       {pronto && <BarraInferior menu={menu} onMenu={() => setMenu(!menu)} />}
 
-      <main key={path} className="mx-auto max-w-[1240px] px-4 pt-6 pb-[calc(88px+env(safe-area-inset-bottom))] sm:px-8 sm:pt-9 lg:pb-9">
+      <main key={path} className="mx-auto max-w-[1240px] px-4 pt-6 pb-[calc(100px+env(safe-area-inset-bottom))] sm:px-8 sm:pt-9 lg:pb-9">
         {!pronto ? <p className="py-20 text-center text-cinza">Abrindo o painel…</p> : podeVer(perfil, path) ? children : <SemPermissao />}
       </main>
       <Aviso />

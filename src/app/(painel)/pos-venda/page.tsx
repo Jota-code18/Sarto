@@ -200,7 +200,7 @@ export default function PosVenda() {
                           setEd(v);
                           setAba("etapas");
                         }}
-                        className="block w-full bg-linho p-3 text-left hover:bg-linha"
+                        className="rounded-[var(--radius-cartao)] block w-full bg-linho p-3 text-left hover:bg-linha"
                       >
                         <span className="block font-medium leading-snug">{v.imovel}</span>
                         <span className="block text-[12px] text-cinza">{nomeCor(v.corretorId)}</span>
@@ -326,7 +326,7 @@ export default function PosVenda() {
                   )}
                 </div>
                 {dossie && (
-                  <div className="bg-linho p-4">
+                  <div className="rounded-[var(--radius-cartao)] bg-linho p-4">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <p className="font-medium">
                         Certidões: {resumoDossie(dossie.certidoes).prontas} de {resumoDossie(dossie.certidoes).total}
@@ -342,7 +342,7 @@ export default function PosVenda() {
                   </div>
                 )}
                 {minutas.length > 0 && (
-                  <div className="bg-linho p-4">
+                  <div className="rounded-[var(--radius-cartao)] bg-linho p-4">
                     {minutas.map((m) => (
                       <p key={m.id} className="flex flex-wrap justify-between gap-2">
                         <span>{m.titulo}</span>
@@ -527,7 +527,7 @@ export default function PosVenda() {
 function NovoParticipante({ onIncluir }: { onIncluir: (p: { nome: string; papel: string; pct: number }) => void }) {
   const [p, setP] = useState({ nome: "", papel: "", pct: 0 });
   return (
-    <div className="bg-linho p-4">
+    <div className="rounded-[var(--radius-cartao)] bg-linho p-4">
       <Formulario
         grupos={[
           {

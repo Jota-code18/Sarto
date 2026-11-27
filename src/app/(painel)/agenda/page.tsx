@@ -84,7 +84,7 @@ export default function Agenda() {
       </div>
 
       <Quadro nome="Semana">
-        <div className="grid grid-cols-1 md:min-w-[880px] md:grid-cols-6 gap-px border border-linha bg-linha">
+        <div className="grid grid-cols-1 md:min-w-[880px] md:grid-cols-6 gap-px overflow-hidden rounded-[var(--radius-cartao)] border border-linha bg-linha">
           {semana.map((d) => (
             <section key={d} className={cx("p-2.5 md:min-h-56", d === hoje() ? "bg-giz" : "bg-papel")}>
               <h2 className="mb-2 flex items-baseline justify-between">

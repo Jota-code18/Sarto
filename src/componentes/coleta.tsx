@@ -99,7 +99,7 @@ export function Coleta() {
 
   const ultima = s?.prontas?.at(-1);
   return (
-    <section className="mb-7 flex flex-wrap items-center justify-between gap-4 bg-linho px-5 py-4" aria-live="polite">
+    <section className="rounded-[var(--radius-cartao)] mb-7 flex flex-wrap items-center justify-between gap-4 bg-linho px-5 py-4" aria-live="polite">
       <div className="text-[13px]">
         {!s ? (
           "Consultando a varredura…"

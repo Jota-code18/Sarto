@@ -55,7 +55,7 @@ export default function Usuarios() {
                   <button
                     type="button"
                     onClick={() => setU(x)}
-                    className="flex min-h-14 w-full flex-wrap items-center justify-between gap-x-4 gap-y-1 py-2.5 text-left hover:bg-linho"
+                    className="rounded-[var(--radius-cartao)] flex min-h-14 w-full flex-wrap items-center justify-between gap-x-4 gap-y-1 py-2.5 text-left hover:bg-linho"
                   >
                     <span className="min-w-0">
                       <span className="block font-medium">{x.nome}</span>

@@ -461,7 +461,11 @@ export default function Minutas() {
               const hh = horasAte(x.prazo);
               return (
                 <li key={x.id}>
-                  <button type="button" onClick={() => setAb(x.id)} className="flex w-full flex-wrap items-center justify-between gap-3 py-3 text-left hover:bg-linho">
+                  <button
+                    type="button"
+                    onClick={() => setAb(x.id)}
+                    className="rounded-[var(--radius-cartao)] flex w-full flex-wrap items-center justify-between gap-3 py-3 text-left hover:bg-linho"
+                  >
                     <span>
                       <span className="block font-medium">{x.titulo}</span>
                       <span className="text-[13px] text-cinza">
@@ -483,7 +487,7 @@ export default function Minutas() {
           </div>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {dados.modelos.map((x) => (
-              <button key={x.id} type="button" onClick={() => setMod(x)} className="bg-linho p-4 text-left hover:bg-linha">
+              <button key={x.id} type="button" onClick={() => setMod(x)} className="rounded-[var(--radius-cartao)] bg-linho p-4 text-left hover:bg-linha">
                 <span className="text-[12px] uppercase text-cinza">{x.grupo}</span>
                 <span className="block font-semibold">{x.nome}</span>
                 <span className="mt-2 flex flex-wrap gap-1">

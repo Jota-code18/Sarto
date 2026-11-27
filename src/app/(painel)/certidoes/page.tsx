@@ -200,7 +200,7 @@ function FichaCert({ ds, c, onFecha }: { ds: Dossie; c: Certidao; onFecha: () =>
       }
     >
       <div className="space-y-6">
-        <section className="bg-linho p-4">
+        <section className="rounded-[var(--radius-cartao)] bg-linho p-4">
           <h3 className="mb-2 text-[13px] font-semibold uppercase tracking-wide">1. Emitir</h3>
           <p className="text-[13px]">{t?.como}</p>
           <div className="mt-3 flex flex-wrap gap-2">
@@ -555,7 +555,7 @@ export default function Certidoes() {
           {dados.dossies.map((d) => {
             const r = resumoDossie(d.certidoes);
             return (
-              <button key={d.id} type="button" onClick={() => setAb(d.id)} className="block w-full bg-linho p-5 text-left hover:bg-linha">
+              <button key={d.id} type="button" onClick={() => setAb(d.id)} className="rounded-[var(--radius-cartao)] block w-full bg-linho p-5 text-left hover:bg-linha">
                 <span className="mb-3 flex flex-wrap items-start justify-between gap-2">
                   <span>
                     <span className="block text-[16px] font-semibold">{d.titulo}</span>

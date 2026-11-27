@@ -11,7 +11,7 @@ export function FotoAnuncio({ foto, className }: { foto?: string; className?: st
   const [falhou, setFalhou] = useState(false);
   const u = linkSeguro(foto);
   return (
-    <span className={cx("grid shrink-0 place-items-center overflow-hidden bg-linho text-nevoa", className)}>
+    <span className={cx("grid shrink-0 place-items-center overflow-hidden rounded-xl bg-linho text-nevoa", className)}>
       {u && !falhou ? (
         <img src={u} alt="" loading="lazy" decoding="async" referrerPolicy="no-referrer" className="size-full object-cover" onError={() => setFalhou(true)} />
       ) : (
@@ -31,7 +31,7 @@ export function LinkPortal({ a }: { a: Pick<Anuncio, "url" | "portal" | "titulo"
       target="_blank"
       rel="noreferrer"
       aria-label={`Abrir ${a.titulo} em ${a.portal}`}
-      className="toque inline-flex shrink-0 items-center gap-1 whitespace-nowrap border border-linha px-2 text-[12px] font-medium hover:border-carvao"
+      className="toque inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border border-linha bg-giz px-2.5 text-[12px] font-medium transition-colors hover:border-carvao"
     >
       {a.portal} <ExternalLink size={12} aria-hidden />
     </a>

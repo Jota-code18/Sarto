@@ -84,7 +84,7 @@ function Fotos({ c, onMuda }: { c: Captacao; onMuda: (c: Captacao) => void }) {
       <Fita parte={Math.min(c.fotos.length, min)} total={min} rotulo={`Mínimo para ${TIPOS_IMOVEL[c.tipo].toLowerCase()}`} />
       <div className="mt-4 grid grid-cols-3 gap-2 sm:grid-cols-4">
         {c.fotos.map((k) => (
-          <div key={k} className="relative aspect-square bg-linho">
+          <div key={k} className="rounded-xl relative aspect-square bg-linho">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             {urls[k] && <img src={urls[k]} alt="" className="size-full object-cover" />}
             <button
@@ -293,7 +293,7 @@ export default function Pagina() {
                   {cs.map((c) => {
                     const f = faltando(c).length;
                     return (
-                      <button key={c.id} type="button" onClick={() => abrir(c)} className="block w-full bg-linho p-3 text-left hover:bg-linha">
+                      <button key={c.id} type="button" onClick={() => abrir(c)} className="rounded-[var(--radius-cartao)] block w-full bg-linho p-3 text-left hover:bg-linha">
                         <span className="block font-medium leading-snug">{c.titulo || c.bairro || "Sem título"}</span>
                         <span className="mt-0.5 block text-[12px] text-cinza">
                           {TIPOS_IMOVEL[c.tipo]}, {c.bairro || "sem bairro"}
