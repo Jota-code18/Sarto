@@ -1,6 +1,7 @@
 "use client";
 import { createStore, del, get, set } from "idb-keyval";
 import { novoId } from "./formato";
+import { MIME, recusa, type Tipo, tipoReal } from "./tipoArquivo";
 
 /** Arquivos (PDF, fotos, .docx) ficam no IndexedDB deste navegador. */
 const loja = () => createStore("sarto-arquivos", "arquivos");
@@ -13,11 +14,27 @@ export async function guardar(b: Blob, prefixo = "arq") {
 export const pegar = (k: string) => get<Blob>(k, loja());
 export const apagar = (k: string) => del(k, loja());
 
-export async function abrir(k: string) {
+const cabeca = async (b: Blob) => new Uint8Array(await b.slice(0, 4096).arrayBuffer());
+
+/** Recusa o que não é do tipo esperado pelo conteúdo: devolve o motivo ou null */
+export async function conferir(b: Blob, aceitos: Tipo[]) {
+  return recusa(await cabeca(b), b.size, aceitos);
+}
+
+/** Abre PDF e imagem numa aba com o tipo certo; o resto só baixa, nunca vira página */
+export async function abrir(k: string, nome = "arquivo") {
   const b = await pegar(k);
   if (!b) return false;
-  const u = URL.createObjectURL(b);
-  window.open(u, "_blank", "noopener");
+  const t = tipoReal(await cabeca(b));
+  const seguro = new Blob([b], { type: t ? MIME[t] : "application/octet-stream" });
+  const u = URL.createObjectURL(seguro);
+  if (t && t !== "docx") window.open(u, "_blank", "noopener");
+  else {
+    const a = document.createElement("a");
+    a.href = u;
+    a.download = nome;
+    a.click();
+  }
   setTimeout(() => URL.revokeObjectURL(u), 60000);
   return true;
 }

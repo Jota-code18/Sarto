@@ -5,7 +5,7 @@ import { useState } from "react";
 import { CAMPOS_PESSOA, Formulario, type GrupoDef } from "@/componentes/formulario";
 import { Abas, Botao, Cabecalho, Confirmar, Copiar, cx, estiloBotao, Fita, Gaveta, Itens, Nota, Selo, Vazio, Quadro } from "@/componentes/ui";
 import { useFotos, useParam } from "@/componentes/uso";
-import { apagar, guardar, reduzirFoto } from "@/lib/arquivos";
+import { apagar, guardar, reduzirFoto, conferir } from "@/lib/arquivos";
 import { certidoesPadrao } from "@/lib/certidoes";
 import { ETAPAS_CAPTACAO, faltando, TIPOS_IMOVEL } from "@/lib/comercial";
 import { hoje, prazo } from "@/lib/datas";
@@ -65,6 +65,7 @@ function Fotos({ c, onMuda }: { c: Captacao; onMuda: (c: Captacao) => void }) {
     for (const f of Array.from(fs)) {
       try {
         if (/whatsapp/i.test(f.name)) zap++;
+        if (await conferir(f, ["jpeg", "png", "webp", "heic"])) throw new Error("não é foto");
         novas.push(await guardar(await reduzirFoto(f), "foto"));
       } catch {
         ruins++;

@@ -31,7 +31,15 @@ beforeAll(async () => {
     grant usage on schema auth, public to anon, authenticated; grant execute on function auth.uid() to anon, authenticated;
     alter default privileges in schema public grant all on tables to anon, authenticated;
   `);
-  await db.exec(readFileSync("supabase/migrations/0001_base.sql", "utf8"));
+  // o mínimo do esquema de arquivos do Supabase, para testar as políticas
+  await db.exec(`
+    create schema storage; grant usage on schema storage to anon, authenticated;
+    create table storage.buckets (id text primary key, name text, public boolean, file_size_limit bigint, allowed_mime_types text[]);
+    create table storage.objects (id bigint generated always as identity primary key, bucket_id text references storage.buckets (id), name text, owner uuid default auth.uid());
+    alter table storage.objects enable row level security;
+    grant select, insert, update, delete on storage.objects to authenticated;
+  `);
+  for (const m of ["0001_base.sql", "0002_arquivos.sql"]) await db.exec(readFileSync(`supabase/migrations/${m}`, "utf8"));
   for (const id of [SOCIO, LOCACAO, CORRETOR, INATIVO, SEM_CONVITE]) await db.exec(`insert into auth.users values ('${id}')`);
   await db.exec(`insert into public.usuarios (id, nome, email, perfil, ativo) values
     ('${SOCIO}', 'S', 's@x', 'socios', true), ('${LOCACAO}', 'L', 'l@x', 'locacao', true), ('${CORRETOR}', 'C', 'c@x', 'corretor', true), ('${INATIVO}', 'I', 'i@x', 'socios', false)`);
@@ -74,6 +82,19 @@ describe("políticas do banco", () => {
         .filter((c) => !fora.has(c))
         .sort(),
     );
+  });
+});
+
+describe("arquivos", () => {
+  const envia = (quem: string | null, nome: string) => como(quem, `insert into storage.objects (bucket_id, name) values ('documentos', '${nome}') returning name`);
+  it("bucket privado: só quem pode ver a coleção vê o arquivo", async () => {
+    expect(await db.query("select public from storage.buckets where id = 'documentos'")).toMatchObject({ rows: [{ public: false }] });
+    await envia(LOCACAO, "contratos/c1/contrato.pdf");
+    await expect(envia(CORRETOR, "contratos/c2/x.pdf")).rejects.toThrow(/row-level security/);
+    expect(await como(CORRETOR, "select name from storage.objects")).toEqual([]);
+    expect(await como(SOCIO, "select name from storage.objects")).toEqual([{ name: "contratos/c1/contrato.pdf" }]);
+    await expect(como(null, "select name from storage.objects")).rejects.toThrow(/permission denied/);
+    for (const q of [INATIVO, SEM_CONVITE]) expect(await como(q, "select name from storage.objects")).toEqual([]);
   });
 });
 
