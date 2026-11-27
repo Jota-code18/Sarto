@@ -4,6 +4,7 @@ import { conferirLeitura, lerCertidao, resumoDossie, situacaoCert } from "./cert
 import { faltando, leadRepetido } from "./comercial";
 import { diaNoMes, maisMeses, segundaDe } from "./datas";
 import { dadosVazios, semExemplos } from "./base";
+import { captacaoDoAnuncio, tipoDaCaptacao } from "./comercial";
 import { dadosDemo } from "./exemplo.fixture";
 import { lerCsv, lerExtratoCsv, lerOfx } from "./extrato";
 import { cnpjValido, cpfValido, csv, lerValor, linkWhats, valorExtenso } from "./formato";
@@ -376,5 +377,62 @@ describe("saída da demonstração", () => {
     const s = semExemplos({ ...d, leads: [meu, ...d.leads], anuncios: [anuncio, ...d.anuncios] });
     expect(s.leads).toEqual([meu]);
     expect(s.anuncios).toEqual([anuncio]);
+  });
+});
+
+describe("captação a partir da varredura", () => {
+  const a = {
+    id: "x",
+    portal: "OLX",
+    url: "https://go.olx.com.br/x-1",
+    titulo: "Casa no Anaville",
+    tipo: "Casa em condomínio",
+    bairro: "Residencial Anaville",
+    cidade: "Anápolis",
+    preco: 2_400_000,
+    precoAnterior: 0,
+    area: 245,
+    quartos: 4,
+    anunciante: "Maria",
+    codAnunciante: "",
+    particular: true,
+    telefone: "62999990000",
+    empreendimento: "Anaville",
+    primeiraVez: "2026-11-20",
+    vistoEm: "2026-11-27",
+    status: "abordar" as const,
+    obs: "",
+  };
+  it("leva os dados do anúncio e do dono", () => {
+    const c = captacaoDoAnuncio(a, "venda", "2026-11-27");
+    expect(c).toMatchObject({
+      tipo: "condominio",
+      finalidade: "venda",
+      valor: 2_400_000,
+      area: 245,
+      quartos: 4,
+      condominioNome: "Anaville",
+      origem: "Varredura",
+      anuncioUrl: a.url,
+      etapa: "visita",
+    });
+    expect(c.proprietario).toMatchObject({ nome: "Maria", tel: "62999990000" });
+  });
+  it("de imobiliária não leva nome nem telefone como se fosse o dono", () => {
+    const c = captacaoDoAnuncio({ ...a, particular: false, anunciante: "Imobiliária X" }, "locacao", "2026-11-27");
+    expect(c.finalidade).toBe("locacao");
+    expect(c.proprietario).toMatchObject({ nome: "", tel: "" });
+  });
+  it("tipo pelo texto do anúncio", () => {
+    expect(["Apartamento", "Cobertura", "Lote", "Terreno", "Sala comercial", "Galpão", "Casa", "Sobrado"].map(tipoDaCaptacao)).toEqual([
+      "apartamento",
+      "apartamento",
+      "lote",
+      "lote",
+      "comercial",
+      "comercial",
+      "casa_rua",
+      "casa_rua",
+    ]);
   });
 });

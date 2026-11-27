@@ -76,6 +76,8 @@ export interface Captacao {
   fotosAprovadas?: Feito;
   corretorId: string;
   origem: string;
+  /** anúncio da varredura de onde a captação saiu */
+  anuncioUrl?: string;
   criadoEm: Dia;
 }
 

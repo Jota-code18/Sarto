@@ -76,8 +76,22 @@ test.describe("varredura completa", () => {
     await page.goto(`${COM_SENHA}/varredura`);
     await page.getByRole("button", { name: "Varrer agora" }).click();
     await expect(page.getByText("A última varredura é recente")).toBeVisible();
+    // da varredura para o checklist da captação
+    await page.getByRole("button", { name: "Sobrado de teste no Anavile" }).click();
+    await page.getByRole("dialog").getByRole("button", { name: "Captar para venda" }).click();
+    await expect(page).toHaveURL(/\/captacao\?c=/);
+    await expect(page.getByRole("dialog").getByText("Sobrado de teste no Anavile").first()).toBeVisible();
+    await page.goto(`${COM_SENHA}/captacao`);
+    await page.getByRole("button", { name: "Puxar da varredura" }).click();
+    await page.getByLabel("Buscar na varredura").fill("Belas Artes");
+    await page.getByRole("dialog").getByRole("button", { name: "Captar para locação" }).first().click();
+    await expect(page.getByRole("dialog").getByText("Casa de teste no Belas Artes").first()).toBeVisible();
+    await page.goto(`${COM_SENHA}/varredura`);
     // recarregar não duplica
     await page.reload();
+    await expect(page.getByRole("button", { name: "Casa de teste em condomínio" })).toHaveCount(1);
+    // captado sai de "Abordar" e vai para "Em andamento"
+    await page.getByRole("tab", { name: /Em andamento/ }).click();
     await expect(page.getByRole("button", { name: "Sobrado de teste no Anavile" })).toHaveCount(1);
   });
   test("a API não devolve texto do anúncio nem dado a mais", async ({ page }, info) => {

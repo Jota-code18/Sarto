@@ -1,7 +1,9 @@
 "use client";
-import { ImagePlus, Plus, Printer, X } from "lucide-react";
+import { ExternalLink, ImagePlus, Plus, Printer, Radar, X } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { FotoAnuncio } from "@/componentes/anuncio";
+import { BotoesCaptar } from "@/componentes/captar";
 import { CAMPOS_PESSOA, Formulario, type GrupoDef } from "@/componentes/formulario";
 import { Abas, Botao, Cabecalho, Confirmar, Copiar, cx, estiloBotao, Fita, Gaveta, Itens, Nota, Selo, Vazio, Quadro } from "@/componentes/ui";
 import { useFotos, useParam } from "@/componentes/uso";
@@ -9,7 +11,8 @@ import { apagar, guardar, reduzirFoto, conferir } from "@/lib/arquivos";
 import { certidoesPadrao } from "@/lib/certidoes";
 import { ETAPAS_CAPTACAO, faltando, TIPOS_IMOVEL } from "@/lib/comercial";
 import { hoje, prazo } from "@/lib/datas";
-import { brl, novoId } from "@/lib/formato";
+import { brl, novoId, num, semAcento } from "@/lib/formato";
+import { linkSeguro } from "@/lib/protecao";
 import { pode, quemPode } from "@/lib/regras";
 import { acao, useSarto } from "@/lib/store";
 import type { Captacao, Parte } from "@/lib/tipos";
@@ -143,6 +146,8 @@ export default function Pagina() {
   const [aba, setAba] = useState<"andamento" | "dados" | "fotos">("andamento");
   const [apaga, setApaga] = useState(false);
   const [cep, setCep] = useState("");
+  const [puxar, setPuxar] = useState(false);
+  const [busca, setBusca] = useState("");
 
   const abrir = (c: Captacao, a: typeof aba = "andamento") => {
     setEd(c);
@@ -221,6 +226,7 @@ export default function Pagina() {
           opcoes: [{ id: "", nome: "Sem corretor" }, ...dados.corretores.map((c) => ({ id: c.id, nome: c.nome }))],
         },
         { k: "origem", nome: "Origem", tipo: "opcoes", col: 2, opcoes: ["Indicação", "Varredura", "Cliente da casa", "Placa", "Site", "Instagram", "Outro"] },
+        { k: "anuncioUrl", nome: "Anúncio de origem", col: 4, se: (v) => !!v.anuncioUrl, dica: "Link do portal de onde a captação saiu" },
         { k: "codigo", nome: "Código no JetImob", col: 2 },
       ],
     },
@@ -265,6 +271,9 @@ export default function Pagina() {
   return (
     <>
       <Cabecalho area="COMERCIAL CAPTAÇÃO" titulo="Captação" texto="Do primeiro contato à publicação, com o checklist do manual de captação.">
+        <Botao onClick={() => setPuxar(true)}>
+          <Radar size={16} /> Puxar da varredura
+        </Botao>
         <Botao tom="cheio" onClick={() => abrir(nova(), "dados")}>
           <Plus size={16} /> Nova captação
         </Botao>
@@ -422,6 +431,81 @@ export default function Pagina() {
           setEd(null);
         }}
       />
+      <Gaveta larga aberta={puxar} titulo="Puxar da varredura" sub="Imóveis dos portais. A captação já entra com os dados do anúncio." onFecha={() => setPuxar(false)}>
+        <input
+          type="search"
+          className="campo mb-4"
+          placeholder="Bairro, empreendimento, anunciante ou título"
+          aria-label="Buscar na varredura"
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+        />
+        {dados.anuncios.length === 0 ? (
+          <Vazio>
+            A varredura ainda não trouxe anúncios.{" "}
+            <Link href="/varredura" className="underline underline-offset-4">
+              Abrir a varredura
+            </Link>
+          </Vazio>
+        ) : (
+          <ul className="divide-y divide-linha">
+            {dados.anuncios
+              .filter((a) => a.status !== "descartado" && (!busca || semAcento(`${a.titulo} ${a.bairro} ${a.empreendimento ?? ""} ${a.anunciante}`).includes(semAcento(busca))))
+              .sort((x, y) => Number(y.particular) - Number(x.particular) || y.vistoEm.localeCompare(x.vistoEm))
+              .slice(0, 40)
+              .map((a) => {
+                const u = linkSeguro(a.url);
+                const ja = dados.captacoes.find((c) => c.anuncioUrl && c.anuncioUrl === a.url);
+                return (
+                  <li key={a.id} className="flex flex-wrap items-center gap-x-4 gap-y-2 py-3">
+                    <FotoAnuncio foto={a.foto} className="h-16 w-20 rounded-lg" />
+                    <div className="min-w-0 flex-1 basis-56">
+                      <p className="font-medium leading-snug">{a.titulo}</p>
+                      <p className="text-[13px] text-cinza">
+                        {[
+                          a.negocio === "aluguel" ? "Aluguel" : "Venda",
+                          a.empreendimento || a.bairro,
+                          brl(a.preco, false),
+                          a.area ? `${num(a.area)} m²` : "",
+                          a.particular ? "do dono" : a.anunciante,
+                        ]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </p>
+                      {u && (
+                        <a href={u} target="_blank" rel="noreferrer" className="mt-1 inline-flex min-h-8 items-center gap-1 text-[12px] underline underline-offset-4">
+                          Ver no {a.portal} <ExternalLink size={12} aria-hidden />
+                        </a>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {ja ? (
+                        <Botao
+                          pequeno
+                          onClick={() => {
+                            setPuxar(false);
+                            abrir(ja);
+                          }}
+                        >
+                          Já em captação: abrir
+                        </Botao>
+                      ) : (
+                        <BotoesCaptar
+                          a={a}
+                          onCaptou={(c) => {
+                            avisar(`Na captação de ${c.finalidade === "venda" ? "venda" : "locação"}`);
+                            setPuxar(false);
+                            abrir(c, "dados");
+                          }}
+                        />
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
+          </ul>
+        )}
+      </Gaveta>
     </>
   );
 }
