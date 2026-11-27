@@ -21,6 +21,17 @@ jobs:
         with:
           languages: javascript-typescript, actions
       - uses: github/codeql-action/analyze@v4
+  segredos:
+    name: Segredos no histórico
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   dependencias:
     name: Dependências
     runs-on: ubuntu-latest

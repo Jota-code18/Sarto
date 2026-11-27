@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Formulario, type GrupoDef } from "@/componentes/formulario";
 import { Botao, Cabecalho, Cartao, Confirmar, Copiar, cx, estiloBotao, Fita, Gaveta, Nota, Numero, Numeros, Selo, type Tom, Vazio } from "@/componentes/ui";
 import { useParam } from "@/componentes/uso";
-import { abrir, apagar, guardar, textoDoPdf } from "@/lib/arquivos";
+import { abrir, apagar, conferir, guardar, textoDoPdf } from "@/lib/arquivos";
 import {
   certidoesPadrao,
   conferirLeitura,
@@ -127,7 +127,8 @@ function FichaCert({ ds, c, onFecha }: { ds: Dossie; c: Certidao; onFecha: () =>
 
   const ler = async (arq?: File) => {
     if (!arq) return;
-    if (arq.size > 15e6) return avisar("Arquivo acima de 15 MB", "erro");
+    const motivo = await conferir(arq, ["pdf"]);
+    if (motivo) return avisar(motivo, "erro");
     setLendo(true);
     setVisto(false);
     try {

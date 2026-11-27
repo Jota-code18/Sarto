@@ -3,7 +3,7 @@ import { FileDown, FileUp, Plus, Printer } from "lucide-react";
 import { useState } from "react";
 import { Abas, Botao, Cabecalho, Confirmar, cx, estiloBotao, Fita, Gaveta, Nota, Selo, type Tom, Vazio } from "@/componentes/ui";
 import { useParam } from "@/componentes/uso";
-import { docxDeTexto, guardar, pegar, preencherDocx, textoDoDocx } from "@/lib/arquivos";
+import { docxDeTexto, guardar, pegar, preencherDocx, textoDoDocx, conferir } from "@/lib/arquivos";
 import { agora, brHora } from "@/lib/datas";
 import { baixarArquivo, novoId } from "@/lib/formato";
 import { camposDaVenda, camposDe, camposDoContrato, camposVazios, horasAte, MARCA, nomeCampo, preencher } from "@/lib/juridico";
@@ -287,6 +287,8 @@ function EditarModelo({ m, onFecha }: { m: Modelo; onFecha: () => void }) {
   const gabi = pode(perfil, "minuta");
   const subir = async (arq?: File) => {
     if (!arq) return;
+    const motivo = await conferir(arq, ["docx"]);
+    if (motivo) return avisar(motivo, "erro");
     try {
       const texto = await textoDoDocx(arq);
       const chave = await guardar(arq, "modelo");

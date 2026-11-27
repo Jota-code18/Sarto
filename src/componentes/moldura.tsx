@@ -125,6 +125,11 @@ function QuemSou() {
             </option>
           ))}
       </select>
+      <form method="post" action="/sair" className="mt-3">
+        <button type="submit" className="min-h-11 w-full rounded-lg border border-tecido text-[13px] text-papel/85 hover:bg-tecido lg:min-h-9">
+          Sair deste aparelho
+        </button>
+      </form>
     </label>
   );
 }

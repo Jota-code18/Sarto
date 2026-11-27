@@ -84,6 +84,42 @@ test.describe("varredura completa", () => {
 });
 
 test.describe("cadastro", () => {
+  test("script no nome do cliente vira texto, nunca roda", async ({ page }) => {
+    const ataque = `<img src=x onerror="window.__xss=1">"><script>window.__xss=2</script>`;
+    await page.goto("/leads");
+    await page
+      .getByRole("button", { name: /Novo lead/ })
+      .first()
+      .click();
+    const g = page.getByRole("dialog");
+    await g.getByLabel(/^Nome/).fill(ataque);
+    await g.getByLabel(/^WhatsApp/).fill("62999990001");
+    await g.getByLabel(/^De onde veio/).selectOption({ index: 1 });
+    await g.getByRole("button", { name: "Salvar lead" }).click();
+    await page.reload();
+    await expect(page.getByText(ataque).first()).toBeVisible();
+    expect(await page.evaluate(() => (window as unknown as { __xss?: number }).__xss)).toBeUndefined();
+  });
+  test("certidão que não é PDF de verdade é recusada", async ({ page }) => {
+    await page.goto("/certidoes");
+    await page
+      .getByRole("button", { name: /Abrir dossiê/ })
+      .first()
+      .click();
+    const pdf = page.locator('input[type=file][accept="application/pdf"]').first();
+    if (await pdf.count()) {
+      await pdf.setInputFiles({ name: "certidao.pdf", mimeType: "application/pdf", buffer: Buffer.from("<html><script>alert(1)</script></html>") });
+      await expect(page.getByText(/não é PDF/)).toBeVisible();
+    }
+  });
+  test("sair apaga o acesso deste aparelho", async ({ page, isMobile }) => {
+    await entrar(page);
+    if (isMobile) await page.getByRole("button", { name: "Menu" }).click();
+    await page.getByRole("button", { name: "Sair deste aparelho" }).filter({ visible: true }).click();
+    await expect(page).toHaveURL(`${COM_SENHA}/entrar`);
+    await page.goto(`${COM_SENHA}/leads`);
+    await expect(page).toHaveURL(`${COM_SENHA}/entrar`);
+  });
   test("lead salvo continua depois de recarregar", async ({ page }) => {
     await page.goto("/leads");
     await page

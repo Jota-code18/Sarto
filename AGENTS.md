@@ -14,7 +14,7 @@ Vale para qualquer pessoa, agente ou modelo que mexa neste repositório. Se uma 
 ## Antes de abrir o PR
 
 ```bash
-npm run verificar   # lint, tipos, arquitetura, código morto, testes e build
+npm run verificar   # lint, tipos, arquitetura, código morto, testes, build e segredos
 npm run e2e         # Playwright em computador e celular
 npm run mutacao     # Stryker, quando mexer em regra de dinheiro, prazo ou permissão
 ```
@@ -32,9 +32,23 @@ Corrigiu um erro? Deixe um teste que falharia sem a correção. Não desligue re
 - Gasto acima do crédito gratuito sem autorização: o teto mensal é `APIFY_TETO_MES` (padrão 4,95), lido em `src/lib/apify.ts`.
 - Preço mínimo na varredura: lote e anúncio só com ágio precisam entrar. O que conta é o empreendimento, em `src/lib/empreendimentos.ts`.
 
+## Segurança do que vem
+
+Vale para login individual, IA no WhatsApp, Asaas e qualquer rota nova. Ver também SECURITY.md.
+
+- **Login:** a mesma mensagem para e-mail inexistente e senha errada. Limite de tentativas. MFA para sócios. Trocar a senha derruba as outras sessões.
+- **Permissão no servidor:** tela escondida não é proteção. Toda leitura e gravação passa pela política do banco (RLS) ou pela rota, nunca só pelo menu. Nada de `/admin` aberto.
+- **ID na URL:** buscar sempre com o filtro de quem pede; nunca confiar que o ID é do usuário.
+- **Perfil e papel** nunca vêm do navegador. Rota que recebe JSON aceita só os campos esperados.
+- **Dinheiro:** valor, multa, juros e repasse calculados no servidor. Webhook do Asaas conferido pelo token e reconsultado na API do Asaas antes de dar baixa; cada pagamento processado uma vez só (pelo id).
+- **IA:** responde só com os dados do cliente da conversa, por ferramentas com a permissão dele. Instrução vinda do cliente ("ignore as regras") não muda nada. Dinheiro, contrato e dado de terceiro passam por uma pessoa. Nunca colocar chave ou dado de outro cliente no texto enviado à IA.
+- **Arquivo enviado:** conferido pelo conteúdo (`src/lib/tipoArquivo.ts`), com limite de tamanho, guardado em bucket privado; nunca aberto como página.
+- **Apagar é apagar:** mensagem e documento removidos saem do banco ou ficam invisíveis pela política; nada de "apagado: true" lido pela tela.
+- **Segredo:** `npm run segredos` roda no CI depois do build e o gitleaks olha o histórico.
+
 ## Produto
 
-Painel interno da Sarto Imóveis (Anápolis, GO): comercial, locação, jurídico, financeiro, marketing e ADM. É um MVP que cresce seção por seção. Textos em português do Brasil, curtos e diretos. Identidade: Poppins, carvão `#262626`, papel `#f5f5f4`, sem cantos arredondados nem sombras; os tokens ficam em `src/app/globals.css`.
+Painel interno da Sarto Imóveis (Anápolis, GO): comercial, locação, jurídico, financeiro, marketing e ADM. É um MVP que cresce seção por seção. Textos em português do Brasil, curtos e diretos. Identidade: Poppins, carvão `#262626`, papel `#f5f5f4`; os tokens de cor, raio e sombra ficam em `src/app/globals.css`.
 
 Toda tela precisa funcionar em 360 px de largura, sem rolagem lateral, com alvo de toque de pelo menos 44 px, e ser usável por teclado.
 

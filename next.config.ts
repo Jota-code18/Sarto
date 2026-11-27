@@ -5,6 +5,8 @@ const config: NextConfig = {
   reactStrictMode: true,
   env: { NEXT_PUBLIC_VERCEL_ENV: process.env.VERCEL_ENV },
   poweredByHeader: false,
+  // o código que vai ao navegador não leva o mapa do fonte
+  productionBrowserSourceMaps: false,
   // a pasta do usuário também tem package-lock.json; fixa a raiz aqui
   turbopack: { root: __dirname },
   async headers() {
@@ -27,5 +29,10 @@ const config: NextConfig = {
 
 // o envio passa por /monitor, no próprio domínio: a política de conteúdo não precisa abrir para fora
 export default process.env.NEXT_PUBLIC_SENTRY_DSN
-  ? withSentryConfig(config, { tunnelRoute: "/monitor", silent: true, telemetry: false, sourcemaps: { disable: !process.env.SENTRY_AUTH_TOKEN } })
+  ? withSentryConfig(config, {
+      tunnelRoute: "/monitor",
+      silent: true,
+      telemetry: false,
+      sourcemaps: { disable: !process.env.SENTRY_AUTH_TOKEN, deleteSourcemapsAfterUpload: true },
+    })
   : config;
