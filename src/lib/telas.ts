@@ -26,6 +26,7 @@ export const MENU: { grupo: string; itens: Item[] }[] = [
     itens: [
       { href: "/locacao", nome: "Contratos", perfis: ["socios", "locacao"] },
       { href: "/locacao/cobrancas", nome: "Cobranças e repasses", perfis: ["socios", "locacao"] },
+      { href: "/locacao/relatorios", nome: "Relatório da locação", perfis: ["socios", "locacao"] },
       { href: "/locacao/funil", nome: "Funil de locação", perfis: ["socios", "locacao", "comercial"] },
       { href: "/locacao/atendimento", nome: "Chamados e multas", perfis: ["socios", "locacao"] },
       { href: "/locacao/obrigacoes", nome: "Informe e DIMOB", perfis: ["socios", "locacao"] },
