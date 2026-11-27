@@ -2,6 +2,7 @@
 import { MessageCircle, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Contato, FotoAnuncio, LinkPortal } from "@/componentes/anuncio";
+import { BotoesCaptar } from "@/componentes/captar";
 import { Coleta } from "@/componentes/coleta";
 import { Formulario, type GrupoDef } from "@/componentes/formulario";
 import {
@@ -30,7 +31,7 @@ import { br, diasEntre, hoje, prazo, segundaDe } from "@/lib/datas";
 import { baixarArquivo, brl, csv, linkWhats, mascaraTel, novoId, num, semAcento } from "@/lib/formato";
 import { linkSeguro } from "@/lib/protecao";
 import { acao, useSarto } from "@/lib/store";
-import type { Anuncio } from "@/lib/tipos";
+import type { Anuncio, Captacao } from "@/lib/tipos";
 import { type Grupo, melhorContato, montarGrupos, precoM2 } from "@/lib/varredura";
 
 const PORTAIS = ["ZAP Imóveis", "Viva Real", "OLX", "62imóveis"];
@@ -135,54 +136,11 @@ export default function Varredura() {
     for (const a of [gr.principal, ...gr.outros]) mudar("anuncios", a.id, { status });
     registrar("Varredura", `marcou "${gr.principal.titulo}" como ${STATUS[status].toLowerCase()}`);
   };
-  const captar = (gr: Grupo) => {
-    const a = gr.principal;
-    const id = novoId();
-    salvar("captacoes", {
-      id,
-      codigo: "",
-      tipo: /condom/i.test(a.tipo)
-        ? "condominio"
-        : /apart|cobert/i.test(a.tipo)
-          ? "apartamento"
-          : /lote/i.test(a.tipo)
-            ? "lote"
-            : /comerc/i.test(a.tipo)
-              ? "comercial"
-              : "casa_rua",
-      finalidade: "venda",
-      titulo: a.titulo,
-      proprietario: { nome: "", doc: "", tel: "", email: "" },
-      cep: "",
-      endereco: "",
-      numero: "",
-      complemento: "",
-      bairro: a.bairro,
-      cidade: a.cidade || "Anápolis",
-      condominioNome: "",
-      valor: a.preco,
-      valorCondominio: 0,
-      iptu: 0,
-      area: a.area,
-      terreno: 0,
-      quartos: a.quartos,
-      suites: 0,
-      banheiros: 0,
-      vagas: 0,
-      matricula: "",
-      descricao: "",
-      diferenciais: "",
-      exclusividade: "",
-      etapa: "visita",
-      checklist: {},
-      fotos: [],
-      corretorId: "",
-      origem: "Varredura",
-      criadoEm: hoje(),
-    });
+  const captar = (gr: Grupo, c: Captacao) => {
     marcar(gr, "captado");
-    avisar("Captado. O imóvel entrou em Captação.");
+    avisar(`Na captação de ${c.finalidade === "venda" ? "venda" : "locação"}. Abrindo o checklist.`);
     setVer(null);
+    window.location.assign(`/captacao?c=${c.id}`);
   };
   const linha = (x: Grupo, i: number) => {
     const a = x.principal;
@@ -421,9 +379,7 @@ export default function Varredura() {
                 Editar dados
               </Botao>
               <Botao onClick={() => marcar(g, "contatado")}>Marcar contatado</Botao>
-              <Botao tom="cheio" onClick={() => captar(g)}>
-                Captado: abrir captação
-              </Botao>
+              <BotoesCaptar a={g.principal} onCaptou={(c) => captar(g, c)} />
             </>
           )
         }

@@ -1,5 +1,7 @@
 import { soDigitos } from "./formato";
-import type { Captacao, Lead, TipoImovel } from "./tipos";
+import { novoId } from "./formato";
+import type { Dia } from "./datas";
+import type { Anuncio, Captacao, Lead, TipoImovel } from "./tipos";
 
 export const TIPOS_IMOVEL: Record<TipoImovel, string> = {
   casa_rua: "Casa de rua",
@@ -114,4 +116,55 @@ export function leadRepetido(novo: Pick<Lead, "tel" | "email" | "id">, todos: Le
   const tel = soDigitos(novo.tel).slice(-8);
   const mail = novo.email.trim().toLowerCase();
   return todos.find((l) => l.id !== novo.id && ((tel.length === 8 && soDigitos(l.tel).slice(-8) === tel) || (mail && l.email.trim().toLowerCase() === mail)));
+}
+
+/** Tipo da captação a partir do tipo escrito no anúncio */
+export function tipoDaCaptacao(tipo: string): TipoImovel {
+  if (/condom/i.test(tipo)) return "condominio";
+  if (/apart|cobert|kitnet|studio|flat|loft/i.test(tipo)) return "apartamento";
+  if (/lote|terreno/i.test(tipo)) return "lote";
+  if (/comerc|sala|galp|loja|pr[eé]dio/i.test(tipo)) return "comercial";
+  return "casa_rua";
+}
+
+/**
+ * Leva um anúncio da varredura para o checklist da captação, de venda ou de locação.
+ * O que o anúncio diz entra preenchido; o resto o corretor completa na visita.
+ */
+export function captacaoDoAnuncio(a: Anuncio, finalidade: Captacao["finalidade"], dia: Dia): Captacao {
+  return {
+    id: novoId(),
+    codigo: "",
+    tipo: tipoDaCaptacao(a.tipo),
+    finalidade,
+    titulo: a.titulo,
+    proprietario: { nome: a.particular && a.anunciante !== "Proprietário" ? a.anunciante : "", doc: "", tel: a.particular ? (a.telefone ?? "") : "", email: "" },
+    cep: "",
+    endereco: "",
+    numero: "",
+    complemento: "",
+    bairro: a.bairro,
+    cidade: a.cidade || "Anápolis",
+    condominioNome: a.empreendimento ?? "",
+    valor: a.preco,
+    valorCondominio: 0,
+    iptu: 0,
+    area: a.area,
+    terreno: 0,
+    quartos: a.quartos,
+    suites: 0,
+    banheiros: 0,
+    vagas: 0,
+    matricula: "",
+    descricao: "",
+    diferenciais: "",
+    exclusividade: "",
+    etapa: "visita",
+    checklist: {},
+    fotos: [],
+    corretorId: "",
+    origem: "Varredura",
+    anuncioUrl: a.url || undefined,
+    criadoEm: dia,
+  };
 }
