@@ -2,6 +2,7 @@
  * Carteira x portais: cruza os imóveis do site com o que o Canal Pro mostra (publicado, bloqueado,
  * não publicado e o motivo) e diz o que fazer em cada caso. Sem dependências: o robô local também usa.
  */
+import type { Campo } from "./qualidade";
 import type { ImovelSite } from "./tipos";
 
 type SituacaoCanal = "publicado" | "nao_publicado" | "bloqueado" | "processando";
@@ -16,9 +17,17 @@ export interface AnuncioCanal {
   destaque: boolean;
   atualizado: string | null;
 }
+interface QualidadeCanal {
+  cod: string;
+  nota: number | null;
+  classe: string;
+  faltando: Campo[];
+}
 export interface LeituraCanal {
   coletadoEm: string;
   anuncios: AnuncioCanal[];
+  /** do relatório "Qualidade dos Anúncios", baixado pelo robô */
+  qualidade?: QualidadeCanal[];
 }
 
 const SITUACOES: Record<string, SituacaoCanal> = { publicado: "publicado", "não publicado": "nao_publicado", bloqueado: "bloqueado", "em processamento": "processando" };
@@ -60,7 +69,7 @@ export function validarLeitura(x: unknown): LeituraCanal | null {
   return Number.isNaN(Date.parse(o.coletadoEm)) ? null : { coletadoEm: new Date(o.coletadoEm).toISOString(), anuncios: [...vistos.values()] };
 }
 
-export type Presenca = "publicado" | "bloqueado" | "nao_publicado" | "processando" | "fora_do_canal" | "so_no_canal" | "sem_leitura";
+export type Presenca = "publicado" | "bloqueado" | "nao_publicado" | "processando" | "fora_do_canal" | "so_no_canal" | "fora_do_relatorio" | "sem_leitura";
 export interface LinhaPresenca {
   cod: string;
   im: ImovelSite | null;
@@ -85,7 +94,10 @@ function oQueFazer(a: AnuncioCanal): string {
 }
 
 /** Cada imóvel do site com a situação no Canal Pro, mais o que só existe no Canal Pro */
-export function presencaNosPortais(carteira: ImovelSite[], leitura: LeituraCanal | null): LinhaPresenca[] {
+/** `comNota`: os códigos do último relatório de qualidade importado, usados quando o robô ainda não rodou */
+export function presencaNosPortais(carteira: ImovelSite[], leitura: LeituraCanal | null, comNota?: Set<string>): LinhaPresenca[] {
+  // sem o robô, o relatório de qualidade importado diz quem está publicado: só anúncio no ar tem nota
+  if (!leitura && comNota?.size) return porRelatorio(carteira, comNota);
   const canal = new Map((leitura?.anuncios ?? []).map((a) => [a.cod.toUpperCase(), a]));
   const linhas: LinhaPresenca[] = carteira.map((im) => {
     const a = canal.get(im.cod.toUpperCase()) ?? null;
@@ -141,4 +153,30 @@ export function presencaNosPortais(carteira: ImovelSite[], leitura: LeituraCanal
         grave: false,
       });
   return linhas;
+}
+
+function porRelatorio(carteira: ImovelSite[], comNota: Set<string>): LinhaPresenca[] {
+  return carteira.map((im) => {
+    const fotos = (im.fotos ?? 0) < 5 ? `só ${im.fotos ?? 0} fotos` : "";
+    if (comNota.has(im.cod.toUpperCase()))
+      return {
+        cod: im.cod,
+        im,
+        canal: null,
+        presenca: "publicado",
+        problema: fotos ? `Publicado, mas ${fotos}` : "",
+        fazer: fotos ? "Subir mais fotos antes que o Canal Pro tire do ar" : "",
+        grave: false,
+      };
+    const fora = im.cidade && !sem(im.cidade).includes(CIDADE);
+    return {
+      cod: im.cod,
+      im,
+      canal: null,
+      presenca: "fora_do_relatorio",
+      problema: `Não está no relatório de qualidade do Canal Pro: bloqueado, sem publicar ou fora do Canal Pro${fora ? ` (imóvel em ${im.cidade})` : ""}${fotos ? `, ${fotos}` : ""}`,
+      fazer: fotos ? "Subir pelo menos 5 fotos no Jetimob" : "Ver o motivo no Canal Pro, ou rodar o robô, que traz o motivo",
+      grave: true,
+    };
+  });
 }

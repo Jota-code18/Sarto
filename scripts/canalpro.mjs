@@ -5,7 +5,7 @@
 //   npm run canalpro          lê e envia; agendado toda segunda depois da carteira
 //
 // Precisa do arquivo .env.robo nesta pasta com PAINEL_URL e CANALPRO_ROBO_TOKEN (nunca vai para o git).
-import { mkdirSync } from "node:fs";
+import { mkdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { chromium } from "@playwright/test";
 
@@ -38,6 +38,14 @@ if (/\/login/.test(page.url())) {
   process.exit(3);
 }
 
+// o Canal Pro às vezes abre um tour de boas-vindas que fica por cima dos botões
+const tirarTour = () =>
+  page.evaluate(() => {
+    for (const e of document.querySelectorAll('[data-testid^="step-tour"], [class*="tour-overlay"], [data-testid="step-tour-overlay"]')) e.remove();
+  });
+await page.keyboard.press("Escape").catch(() => undefined);
+await tirarTour();
+
 // cada cartão começa no endereço ("..., Cidade - Goiás") e vai até o próximo
 const ler = () =>
   page.evaluate(() => {
@@ -61,13 +69,35 @@ for (let pagina = 1; pagina <= 60; pagina++) {
   }
   anterior = lidos[0]?.join("|") ?? "";
   for (const c of lidos) cartoes.set(c.join("|"), c);
-  const proxima = page.locator('[aria-label="próxima página"]').first();
-  if (!(await proxima.count()) || (await proxima.getAttribute("aria-disabled")) === "true") break;
-  await proxima.click();
+  // clique pelo próprio elemento: nenhum aviso por cima atrapalha
+  const avancou = await page.evaluate(() => {
+    const p = document.querySelector('[aria-label="próxima página"]');
+    if (!p || p.getAttribute("aria-disabled") === "true") return false;
+    p.click();
+    return true;
+  });
+  if (!avancou) break;
+}
+// relatório "Qualidade dos Anúncios": nota, classificação e o que falta em cada anúncio
+let relatorio;
+try {
+  await page.goto("https://canal-pro.grupozap.com/ZAP_OLX/0/performance/advertisement-quality", { waitUntil: "domcontentloaded" });
+  await page.waitForTimeout(6000);
+  await tirarTour();
+  const [arquivo] = await Promise.all([
+    page.waitForEvent("download", { timeout: 60000 }),
+    page
+      .getByRole("button", { name: "Exportar relatório" })
+      .first()
+      .evaluate((b) => b.click()),
+  ]);
+  relatorio = readFileSync(await arquivo.path()).toString("base64");
+} catch (e) {
+  console.warn(`Sem o relatório de qualidade desta vez (${e.message.split("\n")[0]}). Vai só a nota dos cartões.`);
 }
 await ctx.close();
 
-const corpo = { coletadoEm: new Date().toISOString(), cartoes: [...cartoes.values()] };
+const corpo = { coletadoEm: new Date().toISOString(), cartoes: [...cartoes.values()], relatorio };
 const r = await fetch(new URL("/api/canalpro", PAINEL_URL), {
   method: "POST",
   headers: { Authorization: `Bearer ${CANALPRO_ROBO_TOKEN}`, "Content-Type": "application/json" },
@@ -78,4 +108,4 @@ if (!r.ok) {
   console.error(`O painel recusou: ${resposta.erro ?? r.status}`);
   process.exit(4);
 }
-console.log(`${resposta.anuncios} anúncios do Canal Pro enviados ao painel (${corpo.cartoes.length} cartões lidos).`);
+console.log(`${resposta.anuncios} anúncios do Canal Pro enviados ao painel (${corpo.cartoes.length} cartões lidos${relatorio ? ", com o relatório de qualidade" : ""}).`);
