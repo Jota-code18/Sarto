@@ -8,10 +8,11 @@ import { useCarteira, useParam } from "@/componentes/uso";
 import { type Captura, notasDaCaptura } from "@/lib/captura";
 import { br, brHora, hoje } from "@/lib/datas";
 import { baixarArquivo, brl, csv, num, semAcento } from "@/lib/formato";
-import { idNota, juntarNotas, lerNotas, mostrarNota, porImovel, type ResumoNota } from "@/lib/notas";
+import { FAIXAS, type FaixaNota, idNota, juntarNotas, lerNotas, mostrarNota, naFaixa, noUltimoRelatorio, porImovel, type ResumoNota } from "@/lib/notas";
 import { type LeituraCanal, type LinhaPresenca, type Presenca, presencaNosPortais } from "@/lib/portais";
 import { linkSeguro } from "@/lib/protecao";
 import { lerArquivo, type Linha } from "@/lib/planilha";
+import { CAMPOS, type Campo, ORDEM_CAMPOS, ondeGanhar } from "@/lib/qualidade";
 import { acao, useSarto } from "@/lib/store";
 import type { ImovelSite, NotaPortal } from "@/lib/tipos";
 
@@ -24,6 +25,7 @@ const NOME_PRESENCA: Record<Presenca, string> = {
   processando: "Em processamento",
   fora_do_canal: "Fora do Canal Pro",
   so_no_canal: "Só no Canal Pro",
+  fora_do_relatorio: "Fora do relatório",
   sem_leitura: "Sem leitura",
 };
 
@@ -45,24 +47,38 @@ export default function Carteira() {
   // a nota do robô vale como a do Canal Pro; o que foi colado à mão continua
   const notas = useMemo(() => {
     if (!canal) return dados.notas;
-    const doRobo = canal.anuncios.map((a) => ({
-      id: idNota(a.cod, "Canal Pro"),
-      cod: a.cod,
-      portal: "Canal Pro",
-      nota: a.nota,
-      motivo: a.situacao === "publicado" ? "" : a.motivo || "Fora do ar",
-      em: canal.coletadoEm.slice(0, 10),
-    }));
+    const qualidade = new Map((canal.qualidade ?? []).map((q) => [q.cod, q]));
+    const antes = new Map(dados.notas.map((n) => [n.id, n]));
+    const doRobo = canal.anuncios.map((a): NotaPortal => {
+      const id = idNota(a.cod, "Canal Pro");
+      const q = qualidade.get(a.cod.toUpperCase());
+      const velha = antes.get(id);
+      return {
+        id,
+        cod: a.cod,
+        portal: "Canal Pro",
+        nota: a.nota ?? q?.nota ?? null,
+        motivo: a.situacao === "publicado" ? "" : a.motivo || "Fora do ar",
+        em: canal.coletadoEm.slice(0, 10),
+        // o que falta vem do relatório do robô; sem ele, do último relatório importado
+        faltando: q?.faltando ?? velha?.faltando,
+        classe: q?.classe || velha?.classe,
+      };
+    });
     const ids = new Set(doRobo.map((n) => n.id));
     return [...dados.notas.filter((n) => !ids.has(n.id)), ...doRobo];
   }, [dados.notas, canal]);
-  const presenca = useMemo(() => presencaNosPortais(carteira, canal), [carteira, canal]);
+  const relatorio = useMemo(() => noUltimoRelatorio(dados.notas), [dados.notas]);
+  const presenca = useMemo(() => presencaNosPortais(carteira, canal, relatorio), [carteira, canal, relatorio]);
   const problemas = presenca.filter((p) => p.problema).sort((a, b) => Number(b.grave) - Number(a.grave));
   const pa = useParam("aba") as Aba | null;
   const [aba, setAba] = useState<Aba>(pa ?? "portais");
   const [q, setQ] = useState("");
   const [tipo, setTipo] = useState("");
   const [op, setOp] = useState<"" | "venda" | "aluguel">("");
+  const [faixa, setFaixa] = useState<FaixaNota>("");
+  const [classe, setClasse] = useState("");
+  const [falta, setFalta] = useState<"" | Campo>("");
   const [ab, setAb] = useState<Item | null>(null);
   const [lim, setLim] = useState(40);
   const [novo, setNovo] = useState<{ portal: string; nota: number; motivo: string }>({ portal: "Canal Pro", nota: 0, motivo: "" });
@@ -91,8 +107,20 @@ export default function Carteira() {
   const lista = base[aba]
     .filter((i) => !tipo || i.im?.tipo === tipo)
     .filter((i) => !op || i.im?.[op])
+    .filter((i) => naFaixa(i.r?.nota, faixa))
+    .filter((i) => !classe || i.r?.classe === classe)
+    .filter((i) => !falta || i.r?.faltando?.includes(falta))
     .filter((i) => !t || semAcento(`${i.cod} ${i.im?.titulo ?? ""} ${i.im?.bairro ?? ""} ${i.im?.cond ?? ""}`).includes(t));
   const tipos = [...new Set(carteira.map((c) => c.tipo))].sort();
+  // o relatório de qualidade do Canal Pro diz o que falta em cada anúncio
+  const comQualidade = itens.filter((i) => i.r?.faltando).map((i) => ({ faltando: i.r?.faltando }));
+  const ganhar = ondeGanhar(comQualidade);
+  const classes = [...new Set(itens.map((i) => i.r?.classe).filter((c): c is string => !!c))].sort();
+  const filtrar = (c: Campo) => {
+    setFalta(c);
+    setAba("nota");
+    setLim(40);
+  };
 
   const guardar = (novas: NotaPortal[], de: string) => {
     if (!novas.length) return avisar("Não achei coluna de código com nota ou alerta neste arquivo", "erro");
@@ -141,6 +169,7 @@ export default function Carteira() {
             ),
         ]
       : []),
+    ...(ganhar.length ? ["", "Onde ganhar nota no Canal Pro:", ...ganhar.map((g) => `- ${g.nome}: ${g.anuncios} anúncios sem. ${g.fazer}`)] : []),
     ...(preco.length
       ? [
           "",
@@ -154,10 +183,12 @@ export default function Carteira() {
     baixarArquivo(
       `carteira-${hoje()}.csv`,
       csv([
-        ["Código", "Nota", "Portal", "Atenção", "Título", "Tipo", "Bairro", "Venda", "Aluguel", "Preço no texto", "Link"],
+        ["Código", "Nota", "Classificação", "Falta no Canal Pro", "Portal", "Atenção", "Título", "Tipo", "Bairro", "Venda", "Aluguel", "Preço no texto", "Link"],
         ...lista.map((i) => [
           i.cod,
           i.r?.nota ?? "",
+          i.r?.classe ?? "",
+          i.r?.faltando?.map((c) => CAMPOS[c].nome).join(", ") ?? "",
           i.r?.todas.map((n) => n.portal).join(", "),
           i.r?.atencao.map((a) => a.motivo).join("; "),
           i.im?.titulo,
@@ -223,11 +254,12 @@ export default function Carteira() {
               <div className="text-[13px] leading-relaxed">
                 <h3 className="mb-1 font-semibold">Canal Pro: nota de qualidade</h3>
                 <p>
-                  A nota que o ZAP, o Viva Real e a OLX usam fica no Canal Pro. Exporte o relatório de anúncios de lá e use Importar nota: o arquivo precisa ter uma coluna de
-                  código e uma de nota ou qualidade (.xlsx ou .csv).
+                  A nota que o ZAP e a OLX usam fica no Canal Pro. O robô do computador da Sarto baixa o relatório de qualidade sozinho. Sem o robô, no Canal Pro abra Desempenho,
+                  Qualidade dos anúncios, clique em Exportar relatório e use Importar nota aqui.
                 </p>
                 <p className="mt-2">
-                  A cada importação o painel guarda a nota anterior e mostra quem subiu e quem caiu. Também dá para digitar a nota de um imóvel, abrindo-o na lista.
+                  Do relatório vêm a nota, a classificação e o que falta em cada anúncio (endereço, IPTU, fotos, descrição, vídeo, tour). O painel não recalcula a nota: o Canal Pro
+                  dá ponto parcial e não publica a conta. A cada importação o painel guarda a nota anterior e mostra quem subiu e quem caiu.
                 </p>
               </div>
             </div>
@@ -260,8 +292,31 @@ export default function Carteira() {
                 { id: "aluguel", nome: "Locação" },
               ]}
             />
+            {aba !== "portais" && comNota.length > 0 && (
+              <>
+                <Escolha rotulo="Faixa de nota" valor={faixa} onMuda={setFaixa} opcoes={FAIXAS} />
+                {classes.length > 0 && (
+                  <Escolha
+                    rotulo="Classificação"
+                    valor={classe}
+                    onMuda={setClasse}
+                    opcoes={[{ id: "", nome: "Toda classificação" }, ...classes.map((c) => ({ id: c, nome: c }))]}
+                  />
+                )}
+                {comQualidade.length > 0 && (
+                  <Escolha
+                    rotulo="O que falta"
+                    valor={falta}
+                    onMuda={setFalta}
+                    opcoes={[{ id: "" as "" | Campo, nome: "Falte o que faltar" }, ...ORDEM_CAMPOS.map((c) => ({ id: c, nome: `Sem ${CAMPOS[c].nome.toLowerCase()}` }))]}
+                  />
+                )}
+              </>
+            )}
             <Botao onClick={exportar}>Exportar</Botao>
           </div>
+
+          {aba !== "portais" && ganhar.length > 0 && <OndeGanhar itens={ganhar} total={comQualidade.length} atual={falta} onEscolhe={filtrar} />}
 
           {aba === "portais" ? (
             <NosPortais
@@ -270,14 +325,17 @@ export default function Carteira() {
                 .filter((p) => !tipo || p.im?.tipo === tipo)}
               todas={presenca}
               canal={canal}
+              relatorioEm={relatorio.size ? dados.notas.find((n) => n.faltando && relatorio.has(n.cod.toUpperCase()))?.em : undefined}
             />
           ) : lista.length === 0 ? (
             <Vazio>
-              {aba === "atencao"
-                ? "Nenhum alerta do Jetimob colado ainda."
-                : aba === "nota"
-                  ? "Nenhuma nota recebida. Importe o relatório do Canal Pro."
-                  : "Nenhum imóvel com esse filtro."}
+              {faixa || classe || falta
+                ? "Nenhum imóvel com esse filtro de nota."
+                : aba === "atencao"
+                  ? "Nenhum alerta do Jetimob colado ainda."
+                  : aba === "nota"
+                    ? "Nenhuma nota recebida. Importe o relatório de qualidade do Canal Pro."
+                    : "Nenhum imóvel com esse filtro."}
             </Vazio>
           ) : (
             <ul className="divide-y divide-linha border-y border-linha">
@@ -298,6 +356,15 @@ export default function Carteira() {
                           {a.motivo}
                         </span>
                       ))}
+                      {i.r?.faltando && i.r.faltando.length > 0 && (
+                        <span className="mt-1 flex flex-wrap gap-1">
+                          {i.r.faltando.map((c) => (
+                            <span key={c} className="rounded-full bg-linho px-2 py-0.5 text-[12px]">
+                              sem {CAMPOS[c].nome.toLowerCase()}
+                            </span>
+                          ))}
+                        </span>
+                      )}
                       {aba === "preco" && i.im?.precoNoTexto && (
                         <span className="mt-0.5 block truncate text-[13px] text-erro">
                           Cadastro {brl(i.im.venda ?? i.im.aluguel, false)}, texto {brl(i.im.precoNoTexto, false)}
@@ -312,7 +379,11 @@ export default function Carteira() {
                       {i.r?.nota != null ? (
                         <>
                           <span className="block text-[22px] font-light leading-none tabular-nums">{mostrarNota(i.r.nota)}</span>
-                          {i.r.anterior != null && <span className="text-[12px] text-cinza">era {mostrarNota(i.r.anterior)}</span>}
+                          {i.r.anterior != null ? (
+                            <span className="text-[12px] text-cinza">era {mostrarNota(i.r.anterior)}</span>
+                          ) : (
+                            i.r.classe && <span className="text-[12px] text-cinza">{i.r.classe}</span>
+                          )}
                         </>
                       ) : i.r?.atencao.length ? (
                         <Selo tom="alerta">Atenção</Selo>
@@ -377,6 +448,29 @@ export default function Carteira() {
             ) : (
               <Nota>Nenhuma nota recebida para este imóvel.</Nota>
             )}
+            {atual.r?.faltando && (
+              <Cartao titulo="Como melhorar no Canal Pro">
+                {atual.r.faltando.length === 0 ? (
+                  <p className="text-[13px]">O relatório do Canal Pro marca todos os itens como completos{atual.r.classe ? ` (${atual.r.classe})` : ""}.</p>
+                ) : (
+                  <ul className="space-y-3">
+                    {atual.r.faltando.map((c) => (
+                      <li key={c} className="text-[13px] leading-relaxed">
+                        <span className="block font-medium">
+                          {CAMPOS[c].nome}
+                          <span className="font-normal text-cinza">
+                            {" "}
+                            · {CAMPOS[c].grupo === CAMPOS[c].nome ? "" : `grupo ${CAMPOS[c].grupo}, `}peso {CAMPOS[c].pontos} de 100
+                          </span>
+                        </span>
+                        {CAMPOS[c].fazer}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <p className="mt-3 text-[12px] text-cinza">Orientação do próprio Canal Pro. Corrija no Jetimob; a nota muda na próxima leitura.</p>
+              </Cartao>
+            )}
             {atual.im?.precoNoTexto && (
               <Nota tom="erro">
                 O cadastro diz {brl(atual.im.venda ?? atual.im.aluguel, false)} e o texto do anúncio diz {brl(atual.im.precoNoTexto, false)}.
@@ -438,14 +532,60 @@ export default function Carteira() {
   );
 }
 
-const ORDEM: Presenca[] = ["bloqueado", "nao_publicado", "fora_do_canal", "processando", "publicado", "so_no_canal", "sem_leitura"];
+const ORDEM: Presenca[] = ["bloqueado", "nao_publicado", "fora_do_canal", "fora_do_relatorio", "processando", "publicado", "so_no_canal", "sem_leitura"];
+
+/** Onde a carteira mais ganha nota, pelo que o relatório de qualidade do Canal Pro marca como faltando */
+function OndeGanhar({ itens, total, atual, onEscolhe }: { itens: ReturnType<typeof ondeGanhar>; total: number; atual: string; onEscolhe: (c: Campo) => void }) {
+  return (
+    <section className="mb-6 rounded-[var(--radius-painel)] bg-linho p-4 sm:p-5" aria-label="Onde ganhar nota">
+      <h2 className="text-[13px] font-semibold uppercase tracking-wide">Onde ganhar nota</h2>
+      <p className="mt-1 text-[13px] text-cinza">Dos {total} anúncios no relatório do Canal Pro. Toque num item para ver quais são.</p>
+      <ul className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+        {itens.map((g) => (
+          <li key={g.campo}>
+            <button
+              type="button"
+              aria-pressed={atual === g.campo}
+              onClick={() => onEscolhe(g.campo)}
+              className="flex min-h-11 w-full items-start gap-3 rounded-[var(--radius-cartao)] bg-giz p-3 text-left hover:shadow-[var(--shadow-suave)] aria-pressed:ring-2 aria-pressed:ring-carvao"
+            >
+              <span className="w-12 shrink-0 text-[22px] font-light leading-none tabular-nums">{g.anuncios}</span>
+              <span className="min-w-0 text-[13px] leading-snug">
+                <span className="block font-medium">
+                  Sem {g.nome.toLowerCase()} <span className="font-normal text-cinza">· peso {g.pontos} de 100</span>
+                </span>
+                {g.fazer}
+              </span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
 
 /** Quais imóveis do site estão fora dos portais, por quê, e o que fazer */
-function NosPortais({ linhas, todas, canal }: { linhas: LinhaPresenca[]; todas: LinhaPresenca[]; canal: LeituraCanal | null }) {
+function NosPortais({ linhas, todas, canal, relatorioEm }: { linhas: LinhaPresenca[]; todas: LinhaPresenca[]; canal: LeituraCanal | null; relatorioEm?: string }) {
   const conta = (p: Presenca) => todas.filter((x) => x.presenca === p).length;
+  const [lim, setLim] = useState(40);
   return (
     <div>
-      {canal ? (
+      {!canal && relatorioEm ? (
+        <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {[
+            ["No relatório do Canal Pro", conta("publicado")],
+            ["Fora do relatório", conta("fora_do_relatorio")],
+          ].map(([n, v]) => (
+            <div key={n as string} className="rounded-2xl bg-linho p-4">
+              <span className="block text-[26px] font-light leading-none tabular-nums">{v}</span>
+              <span className="mt-1.5 block text-[13px]">{n}</span>
+            </div>
+          ))}
+          <p className="col-span-full text-[12px] text-cinza">
+            Pelo relatório de qualidade importado em {br(relatorioEm)}: só anúncio publicado tem nota. O motivo de cada bloqueio vem quando o robô rodar.
+          </p>
+        </div>
+      ) : canal ? (
         <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
           {[
             ["Publicados", conta("publicado")],
@@ -463,8 +603,8 @@ function NosPortais({ linhas, todas, canal }: { linhas: LinhaPresenca[]; todas: 
       ) : (
         <div className="mb-5">
           <Nota tom="alerta">
-            Ainda sem leitura do Canal Pro. Quando o robô rodar no computador da Sarto, esta aba mostra o que está publicado, bloqueado ou fora do Canal Pro, com o motivo. Por
-            enquanto, só o que o site já mostra.
+            Ainda sem leitura do Canal Pro. Importe o relatório de qualidade (Canal Pro, Desempenho, Qualidade dos anúncios, Exportar relatório) ou rode o robô no computador da
+            Sarto: aí esta aba mostra o que está publicado e o que ficou de fora. Por enquanto, só o que o site já mostra.
           </Nota>
         </div>
       )}
@@ -474,6 +614,7 @@ function NosPortais({ linhas, todas, canal }: { linhas: LinhaPresenca[]; todas: 
         <ul className="divide-y divide-linha border-y border-linha">
           {[...linhas]
             .sort((a, b) => ORDEM.indexOf(a.presenca) - ORDEM.indexOf(b.presenca))
+            .slice(0, lim)
             .map((p) => {
               const site = linkSeguro(p.im?.url);
               return (
@@ -502,6 +643,11 @@ function NosPortais({ linhas, todas, canal }: { linhas: LinhaPresenca[]; todas: 
               );
             })}
         </ul>
+      )}
+      {linhas.length > lim && (
+        <div className="mt-4 text-center">
+          <Botao onClick={() => setLim(lim + 60)}>Mostrar mais ({linhas.length - lim})</Botao>
+        </div>
       )}
     </div>
   );

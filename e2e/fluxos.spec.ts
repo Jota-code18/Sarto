@@ -1,6 +1,6 @@
 import { expect, type Page, test } from "@playwright/test";
 import { dadosDemo } from "../src/lib/exemplo.fixture";
-import { comExemplos } from "./apoio";
+import { CABECALHO_QUALIDADE, comExemplos, xlsx } from "./apoio";
 
 const COM_SENHA = "http://localhost:3457";
 
@@ -129,12 +129,45 @@ test.describe("robô do Canal Pro", () => {
     expect((await request.post(url, { data: leitura })).status()).toBe(401);
     expect((await request.post(url, { data: leitura, headers: { authorization: "Bearer chave-errada-chave-errada-123" } })).status()).toBe(401);
     expect((await request.get(url)).status()).toBe(401);
-    const ok = await request.post(url, { data: leitura, headers: { authorization: "Bearer robo-de-teste-com-mais-de-24-letras" } });
-    expect(await ok.json()).toEqual({ ok: true, anuncios: 1 });
+    // o robô manda junto o relatório de qualidade que baixou do Canal Pro
+    const relatorio = xlsx([CABECALHO_QUALIDADE, ["1", "TS1002", "VENDA", "CASA", "SIM", "SIM", "SIM", "SIM", "NÃO", "NÃO", "SIM", "9.1", "Ótima"]]).toString("base64");
+    const ok = await request.post(url, { data: { ...leitura, relatorio }, headers: { authorization: "Bearer robo-de-teste-com-mais-de-24-letras" } });
+    expect(await ok.json()).toEqual({ ok: true, anuncios: 1, qualidade: 1 });
     await entrar(page);
     await page.goto(`${COM_SENHA}/carteira`);
-    await expect(page.getByText("Cód. TS1002").first()).toBeVisible({ timeout: 20000 });
+    await expect(page.getByText(/feita pelo robô/)).toBeVisible({ timeout: 20000 });
+    await page.getByPlaceholder("Código, bairro ou condomínio").fill("TS1002");
+    await expect(page.getByText("Cód. TS1002").first()).toBeVisible();
     await expect(page.getByText(/feita pelo robô do computador da Sarto/)).toBeVisible();
+    await page.getByRole("tab", { name: /Menor nota/ }).click();
+    await expect(page.getByText("sem vídeo", { exact: true })).toBeVisible();
+  });
+});
+
+test.describe("nota do Canal Pro", () => {
+  test("relatório de qualidade importado traz filtros, o que falta e quem está fora", async ({ page }) => {
+    // sem leitura do robô: vale o relatório importado
+    await page.route("**/api/canalpro", (r) => r.fulfill({ json: { leitura: null } }));
+    await page.goto("/carteira");
+    const linhas = [
+      ["1", "TS2001", "VENDA", "CASA", "SIM", "SIM", "NÃO", "NÃO", "NÃO", "NÃO", "SIM", "7.8", "Boa"],
+      ["2", "TS2002", "VENDA", "CASA", "SIM", "SIM", "SIM", "SIM", "NÃO", "NÃO", "SIM", "9.2", "Ótima"],
+    ];
+    await page.getByLabel("Importar nota").setInputFiles({
+      name: "qualidade-dos-anuncios.xlsx",
+      mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      buffer: xlsx([["Qualidade dos Anúncios"], CABECALHO_QUALIDADE, ...linhas]),
+    });
+    await expect(page.getByRole("region", { name: "Onde ganhar nota" })).toBeVisible();
+    await expect(page.getByText("Imóvel TS2002")).toBeVisible();
+    await page.getByLabel("Faixa de nota").selectOption("abaixo8");
+    await expect(page.getByText("Imóvel TS2002")).toBeHidden();
+    await page.getByText("Imóvel TS2001").click();
+    await expect(page.getByText("Como melhorar no Canal Pro")).toBeVisible();
+    await expect(page.getByText("Incluir mais fotos.").last()).toBeVisible();
+    await page.keyboard.press("Escape");
+    await page.getByRole("tab", { name: /Nos portais/ }).click();
+    await expect(page.getByText(/Pelo relatório de qualidade importado em/)).toBeVisible();
   });
 });
 

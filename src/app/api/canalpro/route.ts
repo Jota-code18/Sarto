@@ -1,7 +1,9 @@
 import { cookies } from "next/headers";
 import { COOKIE, passeVale, senhaConfere } from "@/lib/acesso";
 import { guardarRegistro, lerRegistro } from "@/lib/apify";
+import { lerXlsx } from "@/lib/planilha";
 import { validarLeitura } from "@/lib/portais";
+import { faltandoNaLinha } from "@/lib/qualidade";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
@@ -28,12 +30,35 @@ export async function POST(req: Request) {
   }
   const leitura = validarLeitura(corpo);
   if (!leitura?.anuncios.length) return recusa(400, "Nenhum anúncio na leitura");
+  // relatório "Qualidade dos Anúncios" em .xlsx, em base64: nota, classificação e o que falta.
+  // Não é guardado como arquivo: só o código, a nota, a classificação e os SIM/NÃO seguem.
+  const rel = (corpo as { relatorio?: unknown }).relatorio;
+  const bytes = typeof rel === "string" && rel.length < LIMITE ? Buffer.from(rel, "base64") : null;
+  // .xlsx é um zip: o conteúdo precisa começar como zip, seja qual for o nome
+  if (bytes && bytes[0] === 0x50 && bytes[1] === 0x4b) {
+    try {
+      const linhas = await lerXlsx(bytes);
+      leitura.qualidade = linhas
+        .slice(0, 5000)
+        .map((l) => ({
+          cod: String(l.codigo_do_anuncio ?? "")
+            .trim()
+            .toUpperCase(),
+          nota: Number(String(l.nota_de_qualidade ?? "").replace(",", ".")) || null,
+          classe: String(l.classificacao ?? "").slice(0, 40),
+          faltando: faltandoNaLinha(l),
+        }))
+        .filter((q) => q.cod);
+    } catch {
+      // sem relatório, fica a nota dos cartões
+    }
+  }
   try {
     await guardarRegistro("canalpro", leitura);
   } catch {
     return recusa(502, "Não consegui guardar a leitura");
   }
-  return Response.json({ ok: true, anuncios: leitura.anuncios.length });
+  return Response.json({ ok: true, anuncios: leitura.anuncios.length, qualidade: leitura.qualidade?.length ?? 0 });
 }
 
 export async function GET() {

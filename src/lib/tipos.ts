@@ -1,4 +1,5 @@
 import type { Dia } from "./datas";
+import type { Campo } from "./qualidade";
 
 export type Perfil = "socios" | "comercial" | "locacao" | "juridico" | "marketing" | "corretor";
 
@@ -122,6 +123,10 @@ export interface NotaPortal {
   nota: number | null;
   anterior?: number;
   motivo: string;
+  /** o que o Canal Pro marca como faltando (Campo de qualidade.ts) */
+  faltando?: Campo[];
+  /** Ótima, Muito Boa, Boa... como o Canal Pro classifica */
+  classe?: string;
   em: Dia;
 }
 
